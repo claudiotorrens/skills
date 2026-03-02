@@ -3,11 +3,16 @@
   "slug": "hitl-protocol",
   "displayName": "HITL Protocol — Workflows and Human Decisions for Autonomous Agents",
   "latest": {
-    "version": "0.7.1",
-    "publishedAt": 1772003701119,
-    "commit": "https://github.com/openclaw/skills/commit/9d48f68524fec97ce5ae36b54374c3570831aa30"
+    "version": "0.7.2",
+    "publishedAt": 1772450059971,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.7.1",
+      "publishedAt": 1772003701119,
+      "commit": "https://github.com/openclaw/skills/commit/9d48f68524fec97ce5ae36b54374c3570831aa30"
+    },
     {
       "version": "0.6.0",
       "publishedAt": 1771880151235,

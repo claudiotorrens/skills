@@ -385,6 +385,49 @@ POST /api/search
 
 See [Service Integration Guide — Enforcing HITL Choice](skills/references/service-integration.md#enforcing-hitl-choice) for validation gate implementation.
 
+### Optional: Quality Improvement Signal
+
+Services can include `improvement_suggestions` in successful (non-202) responses to give agents structured feedback they can act on — without requiring a new HITL flow.
+
+Declare support in your SKILL.md:
+
+```yaml
+metadata:
+  hitl:
+    supported: true
+    supports_improvement_suggestions: true
+    info: "Returns improvement_suggestions in 201 responses. Agents may offer up to 2 improvement cycles."
+```
+
+**Suggestion object schema:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `field` | string | Which data field can be improved |
+| `issue` | string | What is missing or suboptimal |
+| `agent_action` | string | Exact question/action for the agent to take |
+| `impact` | string | Human-readable benefit (e.g. `"+25 quality points"`) |
+| `priority` | `"high"` / `"medium"` / `"low"` | Order of importance |
+
+**Agent behavior:**
+- Always share the primary result first
+- Offer up to **2 improvement cycles** — one question per suggestion, re-submit with enriched data
+- Stop when `improvement_suggestions` is empty or `maxAttempts` reached
+- Never loop indefinitely
+
+See [Agent Checklist — Quality Improvement Loop](agents/checklist.md#enhanced-quality-improvement-loop) and [Example 13](examples/13-quality-improvement-loop.json).
+
+## RFC Alignment
+
+This protocol and skill documentation are aligned with these core RFCs:
+
+- [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110) — HTTP semantics (`202 Accepted`, conditional requests, retry behavior)
+- [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) + [RFC 8174](https://www.rfc-editor.org/rfc/rfc8174) — normative terms (`MUST`, `SHOULD`, `MAY`)
+- [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339) — timestamp formats used by HITL case lifecycle fields
+- [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750) — bearer token usage for review and inline submit authorization
+
+For the complete implementation matrix, see [README RFC Alignment](README.md#rfc-alignment).
+
 ## Resources
 
 - [Full Specification (v0.7)](spec/v0.7/hitl-protocol.md)

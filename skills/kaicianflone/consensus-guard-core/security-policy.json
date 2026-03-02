@@ -1,8 +1,5 @@
 {
-  "requiredSkillMetadata": [
-    "requires",
-    "install"
-  ],
+  "requiredSkillMetadata": [],
   "forbiddenRuntimeDeps": [
     "openai",
     "anthropic",

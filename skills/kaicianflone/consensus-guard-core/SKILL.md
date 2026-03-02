@@ -89,3 +89,5 @@ This skill exposes a canonical entrypoint:
 - `invoke(input, opts?) -> Promise<OutputJson | ErrorJson>`
 
 `invoke()` is primitives-only and delegates to a caller-provided handler. It does not perform persona generation or model/provider calls.
+
+See also: `SECURITY-ASSURANCE.md` for threat model, runtime boundaries, and hardening guidance.

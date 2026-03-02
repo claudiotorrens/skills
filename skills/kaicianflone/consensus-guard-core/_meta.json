@@ -3,11 +3,16 @@
   "slug": "consensus-guard-core",
   "displayName": "consensus-guard-core",
   "latest": {
-    "version": "1.1.12",
-    "publishedAt": 1772474485971,
-    "commit": "https://github.com/openclaw/skills/commit/c1e91c91afe6f0688e09503dc03d34fe54df6daf"
+    "version": "1.1.13",
+    "publishedAt": 1772474727521,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.1.12",
+      "publishedAt": 1772474485971,
+      "commit": "https://github.com/openclaw/skills/commit/c1e91c91afe6f0688e09503dc03d34fe54df6daf"
+    },
     {
       "version": "1.1.10",
       "publishedAt": 1772344192834,

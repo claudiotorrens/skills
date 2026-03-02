@@ -439,10 +439,95 @@ async def setup_auth(config_file=None, session_file=None):
         print(json.dumps({"status": "authenticated", "user": me.username or str(me.id)}))
 
 
+# ── Output helpers ────────────────────────────────────────────────────────────
+
+def _print_text(result, since_label):
+    """Print human-readable text output to stdout."""
+    items = result if isinstance(result, list) else [result]
+    for ch_result in items:
+        if "error" in ch_result:
+            print(f"[ERROR] {ch_result['channel']}: {ch_result['error']}")
+            continue
+        print(f"\n=== {ch_result['channel']} ({ch_result['count']} posts since {since_label}) ===")
+        for msg in ch_result["messages"]:
+            print(f"\n[{msg['date']}] {msg['link']}")
+            print(msg["text"][:500] + ("..." if len(msg["text"]) > 500 else ""))
+            if "comments" in msg and msg["comments"]:
+                print(f"  [{msg['comment_count']} comments]")
+                for c in msg["comments"]:
+                    user = c.get("from_user") or "anonymous"
+                    print(f"    @{user}: {c['text'][:200]}")
+
+
+def _write_output(result, output_path, fmt, since_label):
+    """Write output to a file and print a short confirmation to stdout."""
+    output_path = os.path.abspath(output_path)
+    with open(output_path, "w", encoding="utf-8") as f:
+        if fmt == "json":
+            json.dump(result, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+        else:
+            import io, contextlib
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                _print_text(result, since_label)
+            f.write(buf.getvalue())
+
+    if isinstance(result, list):
+        count = sum(r.get("count", 0) for r in result if "error" not in r)
+    else:
+        count = result.get("count", 0) if "error" not in result else 0
+    print(json.dumps({"status": "ok", "output_file": output_path, "count": count}, ensure_ascii=False))
+
+
+# ── CLI helpers ──────────────────────────────────────────────────────────────
+
+# Common flags hallucinated by LLM agents instead of --since
+_FLAG_TYPOS = {
+    "--hours": "--since (e.g. --since 24h)",
+    "--days": "--since (e.g. --since 7d)",
+    "--weeks": "--since (e.g. --since 2w)",
+    "--time": "--since (e.g. --since 24h)",
+    "--period": "--since (e.g. --since 24h)",
+    "--after": "--since (e.g. --since 24h)",
+    "--from": "--since (e.g. --since 24h or --since 2026-01-01)",
+    "--media": "--text-only (inverted: use --text-only to exclude media-only posts)",
+}
+
+
+def _check_flag_typos():
+    """Catch common parameter hallucinations from LLM agents and exit with a helpful JSON error."""
+    for arg in sys.argv[1:]:
+        if arg in _FLAG_TYPOS:
+            print(json.dumps({
+                "error": f"Unknown flag: {arg}. Did you mean {_FLAG_TYPOS[arg]}?",
+                "action": "fix_command",
+            }))
+            sys.exit(1)
+
+
+class _JsonArgumentParser(argparse.ArgumentParser):
+    """ArgumentParser that outputs errors as JSON instead of plain text."""
+
+    def error(self, message):
+        # Check for flag typos in the error message
+        for typo, fix in _FLAG_TYPOS.items():
+            if typo in message:
+                print(json.dumps({
+                    "error": f"Unknown flag: {typo}. Did you mean {fix}?",
+                    "action": "fix_command",
+                }))
+                sys.exit(1)
+        print(json.dumps({"error": f"Invalid command: {message}", "action": "fix_command"}))
+        sys.exit(1)
+
+
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(
+    _check_flag_typos()
+
+    parser = _JsonArgumentParser(
         prog="tg-reader",
         description="Read Telegram channel posts for OpenClaw agent"
     )
@@ -470,6 +555,8 @@ def main():
     fetch_p.add_argument("--comment-delay", type=float, default=3,
                         help="Seconds between comment fetches per post (default 3)")
     fetch_p.add_argument("--format", choices=["json", "text"], default="json")
+    fetch_p.add_argument("--output", nargs="?", const="tg-output.json", default=None,
+                        help="Write output to file instead of stdout (default: tg-output.json)")
 
     # info
     info_p = sub.add_parser("info", help="Get channel title, description and subscriber count")
@@ -521,24 +608,12 @@ def main():
             result = asyncio.run(fetch_multiple(args.channels, since_dt, limit, args.text_only, cf, sf,
                                                 delay=args.delay))
 
-        if args.format == "json":
+        if args.output:
+            _write_output(result, args.output, args.format, args.since)
+        elif args.format == "json":
             print(json.dumps(result, ensure_ascii=False, indent=2))
         else:
-            # Human-readable text output
-            items = result if isinstance(result, list) else [result]
-            for ch_result in items:
-                if "error" in ch_result:
-                    print(f"[ERROR] {ch_result['channel']}: {ch_result['error']}")
-                    continue
-                print(f"\n=== {ch_result['channel']} ({ch_result['count']} posts since {args.since}) ===")
-                for msg in ch_result["messages"]:
-                    print(f"\n[{msg['date']}] {msg['link']}")
-                    print(msg["text"][:500] + ("..." if len(msg["text"]) > 500 else ""))
-                    if "comments" in msg and msg["comments"]:
-                        print(f"  [{msg['comment_count']} comments]")
-                        for c in msg["comments"]:
-                            user = c.get("from_user") or "anonymous"
-                            print(f"    @{user}: {c['text'][:200]}")
+            _print_text(result, args.since)
 
 
 if __name__ == "__main__":

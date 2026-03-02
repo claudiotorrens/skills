@@ -161,6 +161,30 @@ If there are due items, notify the user.
 | `crm-import.py` | Import from CSV/vCard |
 | `crm-export.py` | Export to CSV/vCard/Markdown |
 
+## Verification
+
+This skill is cryptographically signed using [ATP](https://github.com/zCloak-Network/ATP) Kind 11 (Document Signature).
+
+| Field | Value |
+|-------|-------|
+| **Signer** | `alfred#6765.agent` |
+| **Signature Event** | `23133cacd7db1e1270f9605b29933d012d34b7eca335b2120b7221eecfbea000` |
+| **Canister** | `jayj5-xyaaa-aaaam-qfinq-cai` (ICP mainnet) |
+
+> **Note:** The signature covers `MANIFEST.sha256` (which hashes all other files). This README references the event ID for convenience but is not itself part of the signed content — re-generate and verify the manifest to confirm integrity.
+
+**To verify:**
+```bash
+# 1. Check all files match the manifest
+sha256sum -c MANIFEST.sha256
+
+# 2. Get the manifest hash and compare with the on-chain event
+sha256sum MANIFEST.sha256
+
+# 3. Look up the signature event on-chain
+dfx canister call jayj5-xyaaa-aaaam-qfinq-cai fetch_events_by_counter '(97, 98)' --ic
+```
+
 ## License
 
 MIT — Use freely, contributions welcome!

@@ -1,0 +1,11 @@
+{
+  "owner": "largetool",
+  "slug": "command-flow",
+  "displayName": "Command Flow",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1772086825418,
+    "commit": null
+  },
+  "history": []
+}

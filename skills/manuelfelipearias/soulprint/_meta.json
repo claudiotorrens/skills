@@ -3,11 +3,16 @@
   "slug": "soulprint",
   "displayName": "Soulprint",
   "latest": {
-    "version": "1.0.23",
-    "publishedAt": 1772337589492,
-    "commit": "https://github.com/openclaw/skills/commit/de47833cb326f9f491a67b12270d69fc12ee9827"
+    "version": "1.0.25",
+    "publishedAt": 1772424237942,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.23",
+      "publishedAt": 1772337589492,
+      "commit": "https://github.com/openclaw/skills/commit/de47833cb326f9f491a67b12270d69fc12ee9827"
+    },
     {
       "version": "1.0.17",
       "publishedAt": 1771990839771,

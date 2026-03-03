@@ -1,3 +1,10 @@
+---
+name: deep-scout
+description: "Multi-stage deep intelligence pipeline (Search → Filter → Fetch → Synthesize). Turns a query into a structured research report with full source citations."
+metadata:
+  {"openclaw": {"requires": {"bins": ["bash", "python3"], "anyBins": ["timeout", "gtimeout"]}}}
+---
+
 # Deep Scout: Multi-Stage Intelligence Pipeline
 
 Search → Filter → Fetch → Synthesize. Turns a natural-language query into a structured research report with full source citations.

@@ -69,6 +69,46 @@ if [[ -z "$QUERY" ]]; then
   exit 1
 fi
 
+# ── Security: sanitize query to mitigate prompt injection ─────────────────────
+sanitize_query() {
+  local q="$1"
+  # Truncate to 500 chars max
+  q="${q:0:500}"
+  # Strip common prompt injection patterns (case-insensitive via python)
+  q=$(echo "$q" | python3 -c "
+import re, sys
+q = sys.stdin.read().strip()
+# Remove role/system injection attempts
+q = re.sub(r'(?i)(ignore\s+(all\s+)?previous|forget\s+(all\s+)?instructions|you\s+are\s+now|system\s*:|<\|im_start\|>|<\|im_end\|>|\[INST\]|\[/INST\]|<<SYS>>|<</SYS>>)', '', q)
+# Remove markdown/HTML attempts to inject blocks
+q = re.sub(r'```[\s\S]*?```', '', q)
+# Collapse whitespace
+q = re.sub(r'\s+', ' ', q).strip()
+print(q)
+" 2>/dev/null || echo "$q")
+  echo "$q"
+}
+
+QUERY=$(sanitize_query "$QUERY")
+
+if [[ -z "$QUERY" ]]; then
+  echo '{"error": "Query was empty after sanitization."}' >&2
+  exit 1
+fi
+
+# ── Security: restrict --output to working directory ──────────────────────────
+if [[ -n "$OUTPUT_FILE" ]]; then
+  # Resolve to absolute path and ensure it stays under the skill dir or cwd
+  RESOLVED_OUTPUT="$(cd "$(dirname "$OUTPUT_FILE")" 2>/dev/null && pwd)/$(basename "$OUTPUT_FILE")" 2>/dev/null || RESOLVED_OUTPUT=""
+  ALLOWED_BASE_1="$(pwd)"
+  ALLOWED_BASE_2="$SKILL_DIR"
+  if [[ -z "$RESOLVED_OUTPUT" ]] || { [[ "$RESOLVED_OUTPUT" != "$ALLOWED_BASE_1"/* ]] && [[ "$RESOLVED_OUTPUT" != "$ALLOWED_BASE_2"/* ]]; }; then
+    echo '{"error": "--output path must be under the current working directory or skill directory. Arbitrary paths are not allowed."}' >&2
+    exit 1
+  fi
+  OUTPUT_FILE="$RESOLVED_OUTPUT"
+fi
+
 # ── Logging ───────────────────────────────────────────────────────────────────
 log() { echo "[deep-scout] $*" >&2; }
 log_json() { echo "$1" | python3 -m json.tool >&2 2>/dev/null || echo "$1" >&2; }
@@ -102,18 +142,18 @@ EOF
 update_state() {
   local key="$1"
   local value="$2"
-  # Use python3 to safely update JSON state
-  python3 -c "
-import json, sys
-with open('$STATE_FILE', 'r') as f:
+  # Use python3 to safely update JSON state (value passed via env to avoid injection)
+  DS_KEY="$key" DS_VALUE="$value" python3 -c "
+import json, os
+state_file = os.environ.get('DS_STATE_FILE', '$STATE_FILE')
+with open(state_file, 'r') as f:
     state = json.load(f)
-# key can be dotted e.g. 'fetched_content.url'
-keys = '$key'.split('.')
+keys = os.environ['DS_KEY'].split('.')
 d = state
 for k in keys[:-1]:
     d = d[k]
-d[keys[-1]] = $value
-with open('$STATE_FILE', 'w') as f:
+d[keys[-1]] = json.loads(os.environ['DS_VALUE'])
+with open(state_file, 'w') as f:
     json.dump(state, f, indent=2)
 " 2>/dev/null || true
 }

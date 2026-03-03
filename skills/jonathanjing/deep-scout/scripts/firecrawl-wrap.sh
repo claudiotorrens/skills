@@ -18,8 +18,14 @@ if ! command -v firecrawl &>/dev/null; then
   exit 0
 fi
 
-# Run firecrawl with timeout
-result=$(timeout 30 firecrawl scrape "$URL" --format markdown 2>/dev/null || echo "")
+# Validate URL format (must start with http:// or https://)
+if [[ ! "$URL" =~ ^https?:// ]]; then
+  echo '{"error": "Invalid URL: must start with http:// or https://"}' >&2
+  exit 1
+fi
+
+# Run firecrawl with timeout (-- prevents URL from being parsed as flags)
+result=$(timeout 30 firecrawl scrape -- "$URL" --format markdown 2>/dev/null || echo "")
 
 if [[ -z "$result" || ${#result} -lt 100 ]]; then
   echo "FIRECRAWL_EMPTY"

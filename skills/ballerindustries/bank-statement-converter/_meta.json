@@ -1,0 +1,11 @@
+{
+  "owner": "ballerindustries",
+  "slug": "bank-statement-converter",
+  "displayName": "Bank Statement Converter",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1772256218536,
+    "commit": null
+  },
+  "history": []
+}

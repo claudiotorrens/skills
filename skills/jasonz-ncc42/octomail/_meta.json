@@ -3,9 +3,15 @@
   "slug": "octomail",
   "displayName": "OctoMail",
   "latest": {
-    "version": "0.1.1",
-    "publishedAt": 1772366181676,
-    "commit": "https://github.com/openclaw/skills/commit/60e0f7fc49a9f29062fb07ff5bc2c40ed9b2da4c"
+    "version": "0.1.2",
+    "publishedAt": 1772498678319,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.1",
+      "publishedAt": 1772366181676,
+      "commit": "https://github.com/openclaw/skills/commit/60e0f7fc49a9f29062fb07ff5bc2c40ed9b2da4c"
+    }
+  ]
 }

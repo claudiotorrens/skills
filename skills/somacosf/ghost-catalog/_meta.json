@@ -1,0 +1,11 @@
+{
+  "owner": "somacosf",
+  "slug": "ghost-catalog",
+  "displayName": "Ghost Catalog",
+  "latest": {
+    "version": "0.0.1",
+    "publishedAt": 1772433139564,
+    "commit": null
+  },
+  "history": []
+}

@@ -1,19 +1,10 @@
 ---
 name: four-meme-ai
 description: |
-  CLI tool to create and trade meme tokens on four.meme (BSC only). Returns structured JSON for config, token info, quotes, events, and TaxToken tax info.
+  CLI tool for creating and trading meme tokens on Four.Meme (BSC), with structured JSON outputs for config, token details, pricing quotes, on-chain events, and TaxToken fee configuration.
 
-  **AGENT MUST**: On first response to any user request related to fourmeme or this skill, **you must first** present to the user, **in this order: User Agreement, then Security Notice** (User Agreement = plugin nature and limitation of liability). **Present them in the user’s language**: use the 繁體中文 block if the user writes in Traditional Chinese, otherwise use the English block (see the bilingual section below). State clearly that by choosing to continue, the user agrees to the User Agreement. Until the user explicitly agrees or confirms to continue, you **must not** run any private-key or on-chain write operations (e.g. create-api, create-chain, buy, sell, send, 8004-register). Read-only commands (e.g. config, token-info, quote-buy, 8004-balance) may run while or after presenting the notice.
+  
 
-  USE FOR:
-  - Creating meme tokens (API + chain) on BSC, including tax-type tokens
-  - Getting buy/sell quotes and token info via TokenManagerHelper3 (BSC only)
-  - Listening to TokenCreate, TokenPurchase, TokenSale, LiquidityAdded (TokenManager2, BSC)
-  - Querying TaxToken fee/tax config on-chain (BSC only)
-  - **Discover → detail → quote → execute**: use token-rankings / token-list / events to find tokens → token-get / token-info for details → quote-buy / quote-sell to estimate → buy / sell to execute (see "Agent workflow: buy/sell from rankings or events" below).
-
-  BSC only (Arbitrum/Base not supported). **Before use, the fourmeme CLI must be installed** (e.g. `npm install -g @four-meme/four-meme-ai@latest`). Create/chain need PRIVATE_KEY. TokenManager V1 not supported.
-  **OpenClaw**: Only **PRIVATE_KEY** is declared in registry metadata (`requires.env`) and is injected when this skill is **enabled**; **BSC_RPC_URL** is optional (set in global env or project `.env`). **Two steps required**: (1) Configure private key in the skill’s `apiKey` or `skills.entries["four-meme-ai"].env`; (2) **Enable this skill** so OpenClaw injects PRIVATE_KEY. See "PRIVATE_KEY and BSC_RPC_URL" and "Declared and optional environment variables" below.
 allowed-tools:
   - Bash(fourmeme *)
   - Bash(npx fourmeme *)
@@ -442,7 +433,8 @@ See [references/tax-token-query.md](references/tax-token-query.md).
 
 ## API and config reference
 
-- **Token detail (REST)**: `GET /private/token/get?address=<token>`, `GET /private/token/getById?id=<requestId>` (requestId from TokenCreate event). List/rankings: [references/token-query-api.md](references/token-query-api.md).
+- **Token detail (REST)**: `GET /private/token/get?address=<token>`, `GET /private/token/getById?id=<requestId>` (requestId from TokenCreate event). Response may include `data.aiCreator` (token created by Agent). List/rankings: [references/token-query-api.md](references/token-query-api.md).
+- **Agent Creator / Agent wallets**: On-chain — token template bit 85 for “created by agent”; AgentIdentifier contract (`isAgent(wallet)`) on BSC to identify agent wallets. See [references/agent-creator-and-wallets.md](references/agent-creator-and-wallets.md) and [references/contract-addresses.md](references/contract-addresses.md).
 - **raisedToken**: `GET https://four.meme/meme-api/v1/public/config` for current raisedToken; use as-is in create body; do not modify its fields.
 
 ## References
@@ -454,8 +446,9 @@ See [references/tax-token-query.md](references/tax-token-query.md).
 | [create-token-scripts.md](references/create-token-scripts.md) | Create token script flow and examples |
 | [token-tax-info.md](references/token-tax-info.md) | Tax token tokenTaxInfo parameters and constraints |
 | [token-query-api.md](references/token-query-api.md) | Token list / detail / rankings REST API |
-| [errors.md](references/errors.md) | buy/sell error codes; X Mode / TaxToken / AntiSniperFeeMode |
+| [errors.md](references/errors.md) | buy/sell error codes; X Mode / TaxToken / AntiSniperFeeMode; Agent Creator |
+| [agent-creator-and-wallets.md](references/agent-creator-and-wallets.md) | Token created by Agent Creator; AgentIdentifier contract and Agent wallets |
 | [execute-trade.md](references/execute-trade.md) | Execute buy/sell CLI and contract usage |
 | [event-listening.md](references/event-listening.md) | TokenManager2 event listening (V2) |
 | [tax-token-query.md](references/tax-token-query.md) | TaxToken on-chain fee/tax query (tax-info) |
-| **Official four.meme API and contracts (online)**: [Protocol Integration](https://four-meme.gitbook.io/four.meme/brand/protocol-integration) | API documents, ABIs: TokenManager, TokenManager2, Helper3, TaxToken, etc. |
+| **Official four.meme API and contracts (online)**: [Protocol Integration](https://four-meme.gitbook.io/four.meme/brand/protocol-integration) | API documents, ABIs: TokenManager, TokenManager2, Helper3, TaxToken, AgentIdentifier, etc. |

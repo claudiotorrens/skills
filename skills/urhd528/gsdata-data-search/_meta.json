@@ -3,9 +3,15 @@
   "slug": "gsdata-data-search",
   "displayName": "gsdata-data-search",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1772501584464,
-    "commit": "https://github.com/openclaw/skills/commit/421630bfe271aa20a3a5708ff9eabd4118aec8c5"
+    "version": "1.0.2",
+    "publishedAt": 1772548096251,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1772501584464,
+      "commit": "https://github.com/openclaw/skills/commit/421630bfe271aa20a3a5708ff9eabd4118aec8c5"
+    }
+  ]
 }

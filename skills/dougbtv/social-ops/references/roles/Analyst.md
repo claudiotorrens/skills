@@ -34,15 +34,15 @@ It does not run daily.
 ## 3. Inputs
 
 Social workspace root:
-`<workspace>/Social/`
+`$SOCIAL_OPS_DATA_DIR/`
 
 Primary data sources:
 
-- `<workspace>/Social/Content/Done/`
-- `<workspace>/Social/Content/Logs/Poster-YYYY-MM-DD.md`
-- `<workspace>/Social/Content/Logs/Responder-YYYY-MM-DD.md`
-- `<workspace>/Social/Content/Logs/Scout-YYYY-MM-DD.md`
-- `<workspace>/Social/Content/Logs/Research-YYYY-MM-DD.md`
+- `$SOCIAL_OPS_DATA_DIR/Content/Done/`
+- `$SOCIAL_OPS_DATA_DIR/Content/Logs/Poster-YYYY-MM-DD.md`
+- `$SOCIAL_OPS_DATA_DIR/Content/Logs/Responder-YYYY-MM-DD.md`
+- `$SOCIAL_OPS_DATA_DIR/Content/Logs/Scout-YYYY-MM-DD.md`
+- `$SOCIAL_OPS_DATA_DIR/Content/Logs/Research-YYYY-MM-DD.md`
 - Moltbook engagement metrics (via API)
 
 Metrics to gather:
@@ -97,7 +97,7 @@ For posts in `Done/`:
 
 Analyst writes to:
 
-`<workspace>/Social/Content/Logs/Analysis-YYYY-WW.md`
+`$SOCIAL_OPS_DATA_DIR/Content/Logs/Analysis-YYYY-WW.md`
 
 Weekly format example:
 
@@ -200,8 +200,8 @@ Analyst must review engagement by submolt during each analysis run.
 
 Inputs:
 
-- `<workspace>/Social/Submolts/Primary.md`
-- `<workspace>/Social/Content/Done/`
+- `$SOCIAL_OPS_DATA_DIR/Submolts/Primary.md`
+- `$SOCIAL_OPS_DATA_DIR/Content/Done/`
 
 Recommend retirement if:
 
@@ -212,5 +212,5 @@ Recommend retirement if:
 **Constraints:**
 
 - Analyst does not directly move submolts.
-- Analyst only recommends — writes recommendations to `<workspace>/Social/Content/Logs/Analysis-YYYY-WW.md`.
+- Analyst only recommends — writes recommendations to `$SOCIAL_OPS_DATA_DIR/Content/Logs/Analysis-YYYY-WW.md`.
 - Content Specialist acts on retirement recommendations.

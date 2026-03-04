@@ -2,7 +2,7 @@
 
 Use this template to create:
 
-`<workspace>/Social/Guidance/Local-File-References.md`
+`$SOCIAL_OPS_DATA_DIR/Guidance/Local-File-References.md`
 
 Purpose:
 - Provide a human-editable list of local files/directories that the **Content Specialist** may read during backlog generation.

@@ -28,24 +28,26 @@ It writes.
 ## 2. Primary Inputs
 
 Social workspace root:
-`<workspace>/Social/`
+`$SOCIAL_OPS_DATA_DIR/`
 
 The Writer must review:
 
-1. `<workspace>/Social/Content/Lanes/` — pick **one lane per run**
-2. `<workspace>/Social/Content/Todo/` — check current queue depth
-3. `<workspace>/Social/Submolts/Primary.md` — for target submolt selection
-4. Recent Research logs — for topical context
+1. `$SOCIAL_OPS_DATA_DIR/Guidance/README.md` — current strategic guidance
+2. `$SOCIAL_OPS_DATA_DIR/Guidance/GOALS.md` — human-defined goals for crew direction
+3. `$SOCIAL_OPS_DATA_DIR/Content/Lanes/` — pick **one lane per run**
+4. `$SOCIAL_OPS_DATA_DIR/Content/Todo/` — check current queue depth
+5. `$SOCIAL_OPS_DATA_DIR/Submolts/Primary.md` — for target submolt selection
+6. Recent Research logs — for topical context
 
 Writer memory:
 
-- **Always** read `<workspace>/Social/Content/Memory/writer.md` — this is the Writer's long-term memory of themes explored, angles tried, and creative direction.
-- Read the last 3 days of `<workspace>/Social/Content/Memory/writer-YYYY-MM-DD.md` daily logs for recent context.
+- **Always** read `$SOCIAL_OPS_DATA_DIR/Content/Memory/writer.md` — this is the Writer's long-term memory of themes explored, angles tried, and creative direction.
+- Read the last 3 days of `$SOCIAL_OPS_DATA_DIR/Content/Memory/writer-YYYY-MM-DD.md` daily logs for recent context.
 - Use memory to **avoid repeating** the same takes and to **build on** prior content — evolve ideas, deepen threads, find new angles on familiar themes.
 
 Optional local content references (human-configurable):
 
-- If present, read `<workspace>/Social/Guidance/Local-File-References.md`.
+- If present, read `$SOCIAL_OPS_DATA_DIR/Guidance/Local-File-References.md`.
 - Treat it as a curated list of local files/directories that may inform post drafting.
 - Only read items that exist and are accessible in the current environment.
 - Skip missing paths without failing the run; note skips in the Writer log.
@@ -69,7 +71,7 @@ One lane. Focus. Quality.
 
 ## 4. Queue Management
 
-Before writing, the Writer checks `<workspace>/Social/Content/Todo/`.
+Before writing, the Writer checks `$SOCIAL_OPS_DATA_DIR/Content/Todo/`.
 
 Rules:
 
@@ -91,15 +93,17 @@ The goal is a balanced, steady pipeline — not a flood.
 
 ### Step 2 — Select Lane
 
-- Review active lanes in `<workspace>/Social/Content/Lanes/`
+- Review active lanes in `$SOCIAL_OPS_DATA_DIR/Content/Lanes/`
 - Pick the lane that most needs content (fewest queued items, best strategic fit)
 
 ### Step 3 — Gather Context
 
-- Read `<workspace>/Social/Content/Memory/writer.md` (long-term memory)
-- Read the last 3 days of `<workspace>/Social/Content/Memory/writer-YYYY-MM-DD.md`
+- Read `$SOCIAL_OPS_DATA_DIR/Content/Memory/writer.md` (long-term memory)
+- Read the last 3 days of `$SOCIAL_OPS_DATA_DIR/Content/Memory/writer-YYYY-MM-DD.md`
 - Read the selected lane definition
-- Read `<workspace>/Social/Guidance/Local-File-References.md` if present
+- Read `$SOCIAL_OPS_DATA_DIR/Guidance/README.md`
+- Read `$SOCIAL_OPS_DATA_DIR/Guidance/GOALS.md`
+- Read `$SOCIAL_OPS_DATA_DIR/Guidance/Local-File-References.md` if present
 - Read listed local references relevant to the chosen lane
 - Scan recent Research logs for topical inspiration
 - Use memory to identify what's been covered recently and find fresh angles
@@ -108,7 +112,7 @@ The goal is a balanced, steady pipeline — not a flood.
 
 Create new post files in:
 
-`<workspace>/Social/Content/Todo/`
+`$SOCIAL_OPS_DATA_DIR/Content/Todo/`
 
 Each post should:
 
@@ -133,13 +137,13 @@ Identity must remain consistent.
 
 After writing, update the Writer's memory:
 
-1. **Daily log** — append to `<workspace>/Social/Content/Memory/writer-YYYY-MM-DD.md`:
+1. **Daily log** — append to `$SOCIAL_OPS_DATA_DIR/Content/Memory/writer-YYYY-MM-DD.md`:
    - What lane was selected and why
    - What posts were written (titles/themes, not full content)
    - What angles or ideas came up that could be explored later
    - What didn't work or felt stale
 
-2. **Long-term memory** — update `<workspace>/Social/Content/Memory/writer.md` if this run produced insights worth keeping:
+2. **Long-term memory** — update `$SOCIAL_OPS_DATA_DIR/Content/Memory/writer.md` if this run produced insights worth keeping:
    - Themes that resonate or are evolving
    - Angles that feel exhausted
    - Creative directions to explore next
@@ -153,7 +157,7 @@ The long-term memory file should stay concise — distill, don't dump. Remove st
 
 Each file:
 
-`<workspace>/Social/Content/Todo/YYYY-MM-DD-XX-LaneName.md`
+`$SOCIAL_OPS_DATA_DIR/Content/Todo/YYYY-MM-DD-XX-LaneName.md`
 
 Frontmatter example:
 
@@ -201,7 +205,7 @@ It fills the pipeline with quality, publish-ready posts.
 
 Each run appends to:
 
-`<workspace>/Social/Content/Logs/Writer-YYYY-MM-DD.md`
+`$SOCIAL_OPS_DATA_DIR/Content/Logs/Writer-YYYY-MM-DD.md`
 
 Log format:
 

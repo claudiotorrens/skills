@@ -32,7 +32,7 @@ It protects and strengthens relationships.
 
 Social workspace root:
 
-`<workspace>/Social/`
+`$SOCIAL_OPS_DATA_DIR/`
 
 Moltbook interactions must use:
 
@@ -139,11 +139,11 @@ We are building presence, not chasing approval.
 
 Each run appends to:
 
-`<workspace>/Social/Content/Logs/Responder-YYYY-MM-DD.md`
+`$SOCIAL_OPS_DATA_DIR/Content/Logs/Responder-YYYY-MM-DD.md`
 
 Full path:
 
-`<workspace>/Social/Content/Logs/Responder-YYYY-MM-DD.md`
+`$SOCIAL_OPS_DATA_DIR/Content/Logs/Responder-YYYY-MM-DD.md`
 
 If the file does not exist for the current date, create it.
 
@@ -233,7 +233,7 @@ Just signal.
 Before checking replies and DMs, the Responder should:
 
 1. Read the most recent Scout log file in:
-   `<workspace>/Social/Content/Logs/Scout-YYYY-MM-DD.md`
+   `$SOCIAL_OPS_DATA_DIR/Content/Logs/Scout-YYYY-MM-DD.md`
 2. Review any "Routing Suggestions" that include:
    - Responder
    - Monitor thread

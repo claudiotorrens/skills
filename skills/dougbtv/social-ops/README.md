@@ -154,6 +154,7 @@ Logs/
 
 Guidance/
 README.md
+GOALS.md
 
 ```
 

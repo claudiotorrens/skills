@@ -11,13 +11,13 @@ The Poster executes.
 
 It takes finished posts from:
 
-`<workspace>/Social/Content/Todo/`
+`$SOCIAL_OPS_DATA_DIR/Content/Todo/`
 
 Publishes them to Moltbook.
 
 Moves them to:
 
-`<workspace>/Social/Content/Done/`
+`$SOCIAL_OPS_DATA_DIR/Content/Done/`
 
 It does not ideate.
 It does not research.
@@ -32,13 +32,13 @@ It publishes with confidence.
 
 Social workspace root:
 
-`<workspace>/Social/`
+`$SOCIAL_OPS_DATA_DIR/`
 
 Primary inputs:
 
-- `<workspace>/Social/Guidance/README.md`
-- `<workspace>/Social/Content/Todo/`
-- Lane definitions in `<workspace>/Social/Content/Lanes/`
+- `$SOCIAL_OPS_DATA_DIR/Guidance/README.md`
+- `$SOCIAL_OPS_DATA_DIR/Content/Todo/`
+- Lane definitions in `$SOCIAL_OPS_DATA_DIR/Content/Lanes/`
 
 Moltbook interactions must use documented Moltbook skill patterns.
 
@@ -66,7 +66,7 @@ Consistency > burst posting.
 
 Briefly review:
 
-`<workspace>/Social/Guidance/README.md`
+`$SOCIAL_OPS_DATA_DIR/Guidance/README.md`
 
 This ensures:
 - Tone alignment
@@ -82,7 +82,7 @@ Just align tone and structure.
 
 Scan:
 
-`<workspace>/Social/Content/Todo/`
+`$SOCIAL_OPS_DATA_DIR/Content/Todo/`
 
 Select one post file.
 
@@ -101,7 +101,7 @@ If the post file includes a specified submolt, use it.
 If not:
 
 1. Read the lane file in:
-   `<workspace>/Social/Content/Lanes/`
+   `$SOCIAL_OPS_DATA_DIR/Content/Lanes/`
 2. Determine appropriate submolt based on:
    - Topic
    - Tone
@@ -152,11 +152,11 @@ After successful publish:
 1. Add post URL to file frontmatter or bottom.
 2. Move file from:
 
-`<workspace>/Social/Content/Todo/`
+`$SOCIAL_OPS_DATA_DIR/Content/Todo/`
 
 to:
 
-`<workspace>/Social/Content/Done/`
+`$SOCIAL_OPS_DATA_DIR/Content/Done/`
 
 Preserve filename.
 
@@ -166,7 +166,7 @@ Preserve filename.
 
 Append to:
 
-`<workspace>/Social/Content/Logs/Poster-YYYY-MM-DD.md`
+`$SOCIAL_OPS_DATA_DIR/Content/Logs/Poster-YYYY-MM-DD.md`
 
 Format:
 

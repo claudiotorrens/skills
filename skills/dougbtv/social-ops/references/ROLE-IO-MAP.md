@@ -24,13 +24,14 @@ Analyst recommendations ──> Content Specialist + Researcher
 ## Scout
 - Reads:
   - Moltbook feed/submolts/accounts (platform data)
-  - `<workspace>/Social/Guidance/README.md`
-  - `<workspace>/Social/Content/Lanes/`
-  - `<workspace>/Social/Submolts/Primary.md`
-  - `<workspace>/Social/Submolts/Candidates.md`
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/README.md`
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/GOALS.md`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Lanes/`
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Primary.md`
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Candidates.md`
 - Writes:
-  - `<workspace>/Social/Content/Logs/Scout-YYYY-MM-DD.md`
-  - `<workspace>/Social/Submolts/Candidates.md` (new candidate entries)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Scout-YYYY-MM-DD.md`
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Candidates.md` (new candidate entries)
 - Primary consumers:
   - Responder (thread insertion opportunities)
   - Content Specialist (topic opportunities)
@@ -39,15 +40,16 @@ Analyst recommendations ──> Content Specialist + Researcher
 ## Researcher
 - Reads:
   - Moltbook high-performing posts/accounts
-  - `<workspace>/Social/Guidance/Research-Tasks.md` (task queue)
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/GOALS.md` (human direction)
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/Research-Tasks.md` (task queue)
   - prior research logs
-  - `<workspace>/Social/Submolts/Candidates.md`
-  - `<workspace>/Social/Submolts/Primary.md`
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Candidates.md`
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Primary.md`
 - Writes:
-  - `<workspace>/Social/Guidance/README.md` (durable guidance)
-  - `<workspace>/Social/Guidance/Research-Tasks.md` (task queue updates)
-  - `<workspace>/Social/Content/Logs/Research-YYYY-MM-DD.md`
-  - `<workspace>/Social/Submolts/Candidates.md` (analysis notes, additional candidates)
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/README.md` (durable guidance)
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/Research-Tasks.md` (task queue updates)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Research-YYYY-MM-DD.md`
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Candidates.md` (analysis notes, additional candidates)
 - Primary consumers:
   - Content Specialist (content planning)
   - Poster (tone/check alignment)
@@ -55,50 +57,53 @@ Analyst recommendations ──> Content Specialist + Researcher
 
 ## Content Specialist
 - Reads:
-  - `<workspace>/Social/Guidance/README.md`
-  - `<workspace>/Social/Guidance/Local-File-References.md` (optional, human-curated)
-  - `<workspace>/Social/Content/Lanes/`
-  - recent `<workspace>/Social/Content/Logs/Research-YYYY-MM-DD.md`
-  - `<workspace>/Social/Submolts/Candidates.md`
-  - `<workspace>/Social/Submolts/Primary.md`
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/README.md`
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/GOALS.md`
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/Local-File-References.md` (optional, human-curated)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Lanes/`
+  - recent `$SOCIAL_OPS_DATA_DIR/Content/Logs/Research-YYYY-MM-DD.md`
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Candidates.md`
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Primary.md`
   - local files/directories referenced by `Local-File-References.md` (only if present/accessible)
 - Writes:
-  - `<workspace>/Social/Content/Lanes/*.md` (create/refine/retire lane definitions)
-  - `<workspace>/Social/Content/Logs/Content-YYYY-MM-DD.md`
-  - `<workspace>/Social/Submolts/Primary.md` (promotions from Candidates)
-  - `<workspace>/Social/Submolts/Candidates.md` (removals after promotion)
-  - `<workspace>/Social/Submolts/Retired.md` (retired submolts)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Lanes/*.md` (create/refine/retire lane definitions)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Content-YYYY-MM-DD.md`
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Primary.md` (promotions from Candidates)
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Candidates.md` (removals after promotion)
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Retired.md` (retired submolts)
 - Primary consumers:
   - Writer (writes final posts based on lanes)
   - Analyst (evaluates lane/post pipeline performance)
 
 ## Writer
 - Reads:
-  - `<workspace>/Social/Content/Memory/writer.md` (long-term memory)
-  - `<workspace>/Social/Content/Memory/writer-YYYY-MM-DD.md` (last 3 days)
-  - `<workspace>/Social/Content/Lanes/` (selects one lane per run)
-  - `<workspace>/Social/Content/Todo/` (queue depth check)
-  - `<workspace>/Social/Submolts/Primary.md`
-  - `<workspace>/Social/Guidance/Local-File-References.md` (optional, human-curated)
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/README.md`
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/GOALS.md`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Memory/writer.md` (long-term memory)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Memory/writer-YYYY-MM-DD.md` (last 3 days)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Lanes/` (selects one lane per run)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Todo/` (queue depth check)
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Primary.md`
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/Local-File-References.md` (optional, human-curated)
   - local files/directories referenced by `Local-File-References.md` (only if present/accessible)
-  - recent `<workspace>/Social/Content/Logs/Research-YYYY-MM-DD.md`
+  - recent `$SOCIAL_OPS_DATA_DIR/Content/Logs/Research-YYYY-MM-DD.md`
 - Writes:
-  - `<workspace>/Social/Content/Todo/YYYY-MM-DD-XX-LaneName.md`
-  - `<workspace>/Social/Content/Memory/writer.md` (long-term memory updates)
-  - `<workspace>/Social/Content/Memory/writer-YYYY-MM-DD.md` (daily memory log)
-  - `<workspace>/Social/Content/Logs/Writer-YYYY-MM-DD.md`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Todo/YYYY-MM-DD-XX-LaneName.md`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Memory/writer.md` (long-term memory updates)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Memory/writer-YYYY-MM-DD.md` (daily memory log)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Writer-YYYY-MM-DD.md`
 - Primary consumers:
   - Poster (publishes TODO items)
   - Analyst (evaluates post quality and queue balance)
 
 ## Poster
 - Reads:
-  - `<workspace>/Social/Guidance/README.md`
-  - `<workspace>/Social/Content/Todo/`
-  - `<workspace>/Social/Content/Lanes/`
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/README.md`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Todo/`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Lanes/`
 - Writes:
-  - `<workspace>/Social/Content/Done/` (moves posted file from Todo)
-  - `<workspace>/Social/Content/Logs/Poster-YYYY-MM-DD.md`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Done/` (moves posted file from Todo)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Poster-YYYY-MM-DD.md`
   - published post URL attached to moved post artifact
 - Primary consumers:
   - Analyst (performance review)
@@ -108,25 +113,25 @@ Analyst recommendations ──> Content Specialist + Researcher
 - Reads:
   - Moltbook replies/DMs/mentions
   - `{baseDir}/../state/comment-state.json`
-  - latest Scout log: `<workspace>/Social/Content/Logs/Scout-YYYY-MM-DD.md`
+  - latest Scout log: `$SOCIAL_OPS_DATA_DIR/Content/Logs/Scout-YYYY-MM-DD.md`
 - Writes:
   - `{baseDir}/../state/comment-state.json` (watermarks + seen ids)
-  - `<workspace>/Social/Content/Logs/Responder-YYYY-MM-DD.md`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Responder-YYYY-MM-DD.md`
 - Primary consumers:
   - Analyst (relational signal quality)
 
 ## Analyst
 - Reads:
-  - `<workspace>/Social/Content/Done/`
-  - `<workspace>/Social/Content/Logs/Poster-YYYY-MM-DD.md`
-  - `<workspace>/Social/Content/Logs/Writer-YYYY-MM-DD.md`
-  - `<workspace>/Social/Content/Logs/Responder-YYYY-MM-DD.md`
-  - `<workspace>/Social/Content/Logs/Scout-YYYY-MM-DD.md`
-  - `<workspace>/Social/Content/Logs/Research-YYYY-MM-DD.md`
-  - `<workspace>/Social/Submolts/Primary.md`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Done/`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Poster-YYYY-MM-DD.md`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Writer-YYYY-MM-DD.md`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Responder-YYYY-MM-DD.md`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Scout-YYYY-MM-DD.md`
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Research-YYYY-MM-DD.md`
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Primary.md`
   - Moltbook engagement metrics
 - Writes:
-  - `<workspace>/Social/Content/Logs/Analysis-YYYY-WW.md` (includes submolt retirement recommendations)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Analysis-YYYY-WW.md` (includes submolt retirement recommendations)
   - recommendations (consumed by Content Specialist + Researcher)
 - Primary consumers:
   - Content Specialist (lane/cadence changes)
@@ -135,32 +140,33 @@ Analyst recommendations ──> Content Specialist + Researcher
 ## Shared artifact map
 
 - Guidance artifacts:
-  - `<workspace>/Social/Guidance/README.md` (producer: Researcher; consumers: Content Specialist, Poster, Analyst)
-  - `<workspace>/Social/Guidance/Research-Tasks.md` (producer/consumer: Researcher)
-  - `<workspace>/Social/Guidance/Local-File-References.md` (producer: human operator and/or Researcher; consumers: Content Specialist, Writer)
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/README.md` (producer: Researcher; consumers: Scout, Content Specialist, Writer, Poster, Analyst)
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/GOALS.md` (producer: human operator; consumers: Scout, Researcher, Content Specialist, Writer)
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/Research-Tasks.md` (producer/consumer: Researcher)
+  - `$SOCIAL_OPS_DATA_DIR/Guidance/Local-File-References.md` (producer: human operator and/or Researcher; consumers: Content Specialist, Writer)
 
 - Pipeline artifacts:
-  - `<workspace>/Social/Content/Todo/` (producer: Writer; consumer: Poster)
-  - `<workspace>/Social/Content/Done/` (producer: Poster; consumer: Analyst)
-  - `<workspace>/Social/Content/Lanes/` (producer: Content Specialist; consumers: Poster, Analyst)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Todo/` (producer: Writer; consumer: Poster)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Done/` (producer: Poster; consumer: Analyst)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Lanes/` (producer: Content Specialist; consumers: Poster, Analyst)
 
 - Log artifacts:
-  - `<workspace>/Social/Content/Logs/Scout-YYYY-MM-DD.md` (producer: Scout; consumers: Responder, Analyst)
-  - `<workspace>/Social/Content/Logs/Research-YYYY-MM-DD.md` (producer: Researcher; consumers: Content Specialist, Analyst)
-  - `<workspace>/Social/Content/Logs/Content-YYYY-MM-DD.md` (producer: Content Specialist; consumer: Analyst)
-  - `<workspace>/Social/Content/Logs/Writer-YYYY-MM-DD.md` (producer: Writer; consumer: Analyst)
-  - `<workspace>/Social/Content/Logs/Poster-YYYY-MM-DD.md` (producer: Poster; consumer: Analyst)
-  - `<workspace>/Social/Content/Logs/Responder-YYYY-MM-DD.md` (producer: Responder; consumer: Analyst)
-  - `<workspace>/Social/Content/Logs/Analysis-YYYY-WW.md` (producer: Analyst; consumers: Content Specialist, Researcher)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Scout-YYYY-MM-DD.md` (producer: Scout; consumers: Responder, Analyst)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Research-YYYY-MM-DD.md` (producer: Researcher; consumers: Content Specialist, Analyst)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Content-YYYY-MM-DD.md` (producer: Content Specialist; consumer: Analyst)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Writer-YYYY-MM-DD.md` (producer: Writer; consumer: Analyst)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Poster-YYYY-MM-DD.md` (producer: Poster; consumer: Analyst)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Responder-YYYY-MM-DD.md` (producer: Responder; consumer: Analyst)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Logs/Analysis-YYYY-WW.md` (producer: Analyst; consumers: Content Specialist, Researcher)
 
 - Submolt lifecycle artifacts:
-  - `<workspace>/Social/Submolts/Primary.md` (producers: Content Specialist; consumers: Scout, Researcher, Analyst)
-  - `<workspace>/Social/Submolts/Candidates.md` (producers: Scout, Researcher; consumer: Content Specialist)
-  - `<workspace>/Social/Submolts/Retired.md` (producer: Content Specialist; consumer: Analyst)
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Primary.md` (producers: Content Specialist; consumers: Scout, Researcher, Analyst)
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Candidates.md` (producers: Scout, Researcher; consumer: Content Specialist)
+  - `$SOCIAL_OPS_DATA_DIR/Submolts/Retired.md` (producer: Content Specialist; consumer: Analyst)
 
 - Memory artifacts:
-  - `<workspace>/Social/Content/Memory/writer.md` (producer/consumer: Writer; long-term creative memory)
-  - `<workspace>/Social/Content/Memory/writer-YYYY-MM-DD.md` (producer: Writer; consumer: Writer on subsequent runs)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Memory/writer.md` (producer/consumer: Writer; long-term creative memory)
+  - `$SOCIAL_OPS_DATA_DIR/Content/Memory/writer-YYYY-MM-DD.md` (producer: Writer; consumer: Writer on subsequent runs)
 
 - Runtime state artifacts:
   - `{baseDir}/../state/comment-state.json` (producer/consumer: Responder)

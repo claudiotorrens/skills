@@ -61,13 +61,32 @@ Role-to-role artifact flow and logging ownership are documented in:
 
 - `{baseDir}/references/ROLE-IO-MAP.md`
 
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SOCIAL_OPS_DATA_DIR` | **Yes** | Absolute path to the `Social/` data directory where runtime artifacts live (logs, lanes, guidance, todo/done queues, submolts, memory). |
+
+### Setup
+
+Before any role can run, `SOCIAL_OPS_DATA_DIR` must be set. If it is not set:
+
+1. **Ask the operator** where their Social data directory lives.
+2. Recommend they add it to their shell profile:
+
+```bash
+export SOCIAL_OPS_DATA_DIR=/path/to/Social
+```
+
+All role docs reference `$SOCIAL_OPS_DATA_DIR/` as the root for runtime data. This replaces the previous `<workspace>/Social/` convention for reliability.
+
 ## Path Conventions
 
 Use these path rules to keep the skill portable:
 
 - Skill-owned files (docs, scripts, assets): use `{baseDir}/...`
-- Runtime/social data files (logs, guidance, todo/done queues): keep them under `<workspace>/Social/...`.
-- Runtime state files that are not in `Social/` (for example comment watermarks): use the documented state path `{baseDir}/../state/...` until state-location policy changes.
+- Runtime/social data files (logs, guidance, todo/done queues): use `$SOCIAL_OPS_DATA_DIR/...`
+- Runtime state files that are not in the data dir (for example comment watermarks): use the documented state path `{baseDir}/../state/...` until state-location policy changes.
 
 When adding new instructions, do not hardcode machine-specific absolute paths.
 

@@ -48,7 +48,7 @@ This is short-cycle intelligence.
 - Recent post velocity patterns
 
 Social workspace root:
-`<workspace>/Social/`
+`$SOCIAL_OPS_DATA_DIR/`
 
 ---
 
@@ -80,7 +80,7 @@ Social workspace root:
 
 Scout writes to:
 
-`<workspace>/Social/Content/Logs/Scout-YYYY-MM-DD.md`
+`$SOCIAL_OPS_DATA_DIR/Content/Logs/Scout-YYYY-MM-DD.md`
 
 Format:
 
@@ -169,17 +169,18 @@ Timing improves influence.
 
 Scout must read the following before each run:
 
-- `<workspace>/Social/Guidance/README.md`
-- `<workspace>/Social/Content/Lanes/`
-- `<workspace>/Social/Submolts/Primary.md`
-- `<workspace>/Social/Submolts/Candidates.md`
+- `$SOCIAL_OPS_DATA_DIR/Guidance/README.md`
+- `$SOCIAL_OPS_DATA_DIR/Guidance/GOALS.md`
+- `$SOCIAL_OPS_DATA_DIR/Content/Lanes/`
+- `$SOCIAL_OPS_DATA_DIR/Submolts/Primary.md`
+- `$SOCIAL_OPS_DATA_DIR/Submolts/Candidates.md`
 
 Scout should identify up to **3 new candidate submolts per run**.
 
 For each candidate:
 
 - Ensure it is not already in Primary.md or Candidates.md
-- Add to `<workspace>/Social/Submolts/Candidates.md`
+- Add to `$SOCIAL_OPS_DATA_DIR/Submolts/Candidates.md`
 
 Format:
 

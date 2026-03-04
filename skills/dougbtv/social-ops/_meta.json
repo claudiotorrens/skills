@@ -3,11 +3,16 @@
   "slug": "social-ops",
   "displayName": "Social Ops",
   "latest": {
-    "version": "0.0.10",
-    "publishedAt": 1772450685718,
-    "commit": "https://github.com/openclaw/skills/commit/1ef46666227e82e12e3cffc068c13120957104bf"
+    "version": "0.0.12",
+    "publishedAt": 1772497929709,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.0.10",
+      "publishedAt": 1772450685718,
+      "commit": "https://github.com/openclaw/skills/commit/1ef46666227e82e12e3cffc068c13120957104bf"
+    },
     {
       "version": "0.0.9",
       "publishedAt": 1772407829817,

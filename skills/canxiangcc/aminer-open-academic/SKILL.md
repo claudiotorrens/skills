@@ -1,8 +1,5 @@
 ---
 name: aminer-data-search
-version: 1.0.4
-author: AMiner
-contact: report@aminer.cn
 description: >
   使用 AMiner 开放平台 API 进行学术数据查询与分析。当用户需要查询学者信息、论文详情、机构数据、期刊内容或专利信息时使用此 skill。
   触发场景：提到 AMiner、学术数据查询、查论文/学者/机构/期刊/专利、学术问答搜索、引用分析、科研机构分析、学者画像、论文引用链、期刊投稿分析等。
@@ -14,64 +11,21 @@ description: >
 
 AMiner 是全球领先的学术数据平台，提供学者、论文、机构、期刊、专利等全维度学术数据。
 本 skill 涵盖全部 28 个开放 API，并将它们组合成 6 大实用工作流。
-使用前请先在控制台生成 token，并建议写入环境变量 `AMINER_API_KEY` 供脚本自动读取。
 
-- **API 文档**：https://open.aminer.cn/open/docs
+- **API 文档**：https://open.aminer.cn/open/doc
 - **控制台（生成 Token）**：https://open.aminer.cn/open/board?tab=control
 
 ---
 
-## 高优先级强制规则（重点）
+## 第一步：获取 Token
 
-以下四条为**最高优先级**，在任何查询任务中都必须优先遵守：
+所有 API 调用需要在请求头中携带 `Authorization: <your_token>`。
 
-1. **Token 安全**：只允许检查 `AMINER_API_KEY` 是否存在，严禁在任何位置泄露 token 明文（包括终端输出、日志、示例结果、调试信息）。
-2. **费用控制**：必须优先采用最优组合查询，禁止无差别全量详情拉取；当命中结果很多且用户未指定数量时，默认仅查询前 10 条详情。
-3. **免费优先**：在用户未明确要求更深字段/更高精度前，优先使用免费接口；仅在免费接口无法满足需求时再升级到收费接口。
-4. **结果链接**：只要使用本 skill 且返回结果中出现实体（论文/学者/专利/期刊），无论任何场景与输出格式，都必须在每个实体后附上可访问 URL。
-
-实体 URL 模板（强制使用）：
-- 论文：`https://www.aminer.cn/pub/{论文id}`
-- 学者：`https://www.aminer.cn/profile/{学者id}`
-- 专利：`https://www.aminer.cn/patent/{专利id}`
-- 期刊：`https://www.aminer.cn/open/journal/detail/{期刊id}`
-
-> 强制执行说明：本规则适用于所有返回结果（含摘要、列表、详情、对比分析、工作流输出、raw 输出转述）。只要出现实体且有可用 ID，就必须附链接。
-
-> 违反以上任一条，视为流程不合规，必须立即中止并修正后再继续。
-
----
-
-## 第一步：先检查环境变量 Token（必须）
-
-在执行任何 API 调用前，必须先检查环境变量 `AMINER_API_KEY` 是否存在（请求头格式：`Authorization: <your_token>`）。
-检查时仅判断“存在/不存在”，禁止输出、回显或记录 token 明文（包括日志、终端输出、示例结果）。
-
-**标准检查写法（推荐直接使用）：**
-```bash
-if [ -z "${AMINER_API_KEY+x}" ]; then
-    echo "AMINER_API_KEY 不存在"
-else
-    echo "AMINER_API_KEY 存在"
-fi
-```
-
-- **若环境变量中已有 token**：继续执行后续查询流程。
-- **若环境变量中无 token**：再检查用户是否显式提供了 `--token`。
-- **若环境变量与 `--token` 都没有**：立即停止，不要继续调用任何 API，也不要进入后续工作流；先引导用户获取 token。
-
-**token 建议配置方式（推荐）：**
+**获取方式：**
 1. 前往 [AMiner 控制台](https://open.aminer.cn/open/board?tab=control) 登录并生成 API Token
-2. 将 token 写入环境变量：`export AMINER_API_KEY="<TOKEN>"`
-3. 脚本默认优先读取环境变量 `AMINER_API_KEY`（若显式传入 `--token`，则以 `--token` 为准）
+2. 若不了解如何操作，请参阅 [开放平台文档](https://open.aminer.cn/open/doc)
 
-**无 token 时的引导话术要求：**
-1. 明确告知“当前缺少 token，无法继续调用 AMiner API”
-2. 引导前往 [AMiner 控制台](https://open.aminer.cn/open/board?tab=control) 登录并生成 API Token
-3. 如需帮助，可参考 [开放平台文档](https://open.aminer.cn/open/docs)
-4. 提示用户拿到 token 后再继续，并可直接回复：`这是我的 token: <TOKEN>`
-
-> token 可在控制台生成并在有效期内复用。未拿到 token 前，不执行任何数据查询步骤。
+> Token 请前往 [控制台](https://open.aminer.cn/open/board?tab=control) 登录后生成，有效期内可重复使用。
 
 ---
 
@@ -80,45 +34,30 @@ fi
 所有工作流均可通过 `scripts/aminer_client.py` 驱动：
 
 ```bash
-# 推荐：先设置环境变量（后续命令可不再重复传 --token）
-export AMINER_API_KEY="<TOKEN>"
-
 # 学者全景分析
-python scripts/aminer_client.py --action scholar_profile --name "Andrew Ng"
+python scripts/aminer_client.py --token <TOKEN> --action scholar_profile --name "Andrew Ng"
 
 # 论文深度挖掘（含引用链）
-python scripts/aminer_client.py --action paper_deep_dive --title "Attention is all you need"
+python scripts/aminer_client.py --token <TOKEN> --action paper_deep_dive --title "Attention is all you need"
 
 # 机构研究力分析
-python scripts/aminer_client.py --action org_analysis --org "清华大学"
+python scripts/aminer_client.py --token <TOKEN> --action org_analysis --org "清华大学"
 
 # 期刊论文监控（指定年份）
-python scripts/aminer_client.py --action venue_papers --venue "Nature" --year 2024
+python scripts/aminer_client.py --token <TOKEN> --action venue_papers --venue "Nature" --year 2024
 
 # 学术智能问答（自然语言提问）
-python scripts/aminer_client.py --action paper_qa --query "transformer架构最新进展"
+python scripts/aminer_client.py --token <TOKEN> --action paper_qa --query "transformer架构最新进展"
 
 # 专利搜索与详情
-python scripts/aminer_client.py --action patent_search --query "量子计算"
+python scripts/aminer_client.py --token <TOKEN> --action patent_search --query "量子计算"
 ```
 
 也可以直接调用单个 API：
 ```bash
-python scripts/aminer_client.py --action raw \
-  --api paper_search --params '{"title": "BERT", "page": 0, "size": 5}'
-
-# 或临时覆盖环境变量，显式传 --token
 python scripts/aminer_client.py --token <TOKEN> --action raw \
   --api paper_search --params '{"title": "BERT", "page": 0, "size": 5}'
 ```
-
-**raw 模式防错规则（强制）：**
-1. 调用前必须先核对函数签名（参数名与类型必须完全匹配），禁止“按语义猜参数”。
-2. raw 参数约束以 `references/api-catalog.md` 为最终准则；若与经验判断冲突，一律以 catalog 为准。
-3. `paper_info` 只用于批量基础信息，参数必须为 `{"ids": [...]}`。
-4. `paper_detail` 只支持单篇详情，参数必须为 `{"paper_id": "..."}`，**严禁**传 `ids`。
-5. 若需要多篇详情：先用低成本接口筛选（如 `paper_info` / `paper_search_pro`），再仅对目标子集调用 `paper_detail`（用户未指定数量时默认前 10 条）。
-6. 执行前先输出“即将调用的函数名 + 参数 JSON”进行自检，再发起请求。
 
 ---
 
@@ -161,24 +100,6 @@ python scripts/aminer_client.py --token <TOKEN> --action raw \
 2. **条件筛选**：`paper_search_pro -> paper_detail`
 3. **自然语言问答**：`paper_qa_search`（若无结果降级 `paper_search_pro`）
 4. **期刊年度分析**：`venue_search -> venue_paper_relation -> paper_detail_by_condition`
-
----
-
-## 工作流外需求处理（必须）
-
-当用户提出的需求**不在上述 6 大工作流内**，或现有工作流无法直接覆盖时，必须执行以下步骤：
-
-1. 先阅读 `references/api-catalog.md`，确认可用接口、参数约束与返回字段。
-2. 根据用户目标选择最合适的 API，并设计最短可行调用链（先定位 ID，再补详情，再做关系扩展）。
-3. 必要时组合多个 API 完成查询，并在结果中标注 `source_api_chain`，清楚说明数据来源路径。
-4. 若存在多种组合方案，优先选择成本更低、稳定性更高、字段满足需求的方案。
-5. 尽可能使用“最优查询组合”，避免无差别全量拉取；先做低成本检索与筛选，再对少量目标做详情补全。
-6. 当结果量很大且用户未指定数量时，默认仅查询前 10 条详情并先返回摘要结果；例如命中 1000 篇论文时，不应对 1000 条全部调用详情接口，以减少用户费用。
-7. 涉及 `raw` 调用时，必须先做参数级校验：例如 `paper_info` 使用 `ids`，`paper_detail` 使用 `paper_id`，不得混用。
-8. 用户未明确要求深度信息时，优先走免费链路（如 `paper_search` / `paper_info` / `venue_search`），确认不足后再补充必要的收费接口。
-9. 最终返回实体列表时，必须附带对应 URL；若缺少实体 ID，应先补齐 ID 再输出结果。
-
-> 禁止因“没有现成工作流”而直接放弃查询；应基于 `api-catalog` 主动完成 API 组合。
 
 ---
 
@@ -301,10 +222,7 @@ python scripts/aminer_client.py --token <TOKEN> --action venue_papers --venue "N
 - `topic_high/middle/low`：精细控制关键词权重（嵌套数组 OR/AND 逻辑）
 - `sci_flag`：只看 SCI 论文
 - `force_citation_sort`：按引用量排序
-- `force_year_sort`：按年份排序
-- `author_terms / org_terms`：按作者名或机构名过滤
-- `author_id / org_id`：按作者 ID 或机构 ID 过滤（推荐用于同名消歧）
-- `venue_ids`：按会议/期刊 ID 过滤
+- `author_terms / org_terms`：限定作者或机构
 
 **命令：**
 ```bash
@@ -390,5 +308,5 @@ python scripts/aminer_client.py --token <TOKEN> --action scholar_patents --name 
 - 完整 API 参数文档：读取 `references/api-catalog.md`
 - Python 客户端源码：`scripts/aminer_client.py`
 - 测试用例：`evals/evals.json`
-- 官方文档：https://open.aminer.cn/open/docs
+- 官方文档：https://open.aminer.cn/open/doc
 - 控制台：https://open.aminer.cn/open/board?tab=control

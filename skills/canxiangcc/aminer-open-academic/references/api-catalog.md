@@ -115,9 +115,6 @@ curl -X GET \
 | force_year_sort | boolean | 否 | 完全按照年份排序 |
 | author_terms | []string | 否 | 作者名查询，数组内为 OR 关系，建议多写变体 |
 | org_terms | []string | 否 | 机构名查询，数组内为 OR 关系 |
-| author_id | []string | 否 | 作者实体 ID 过滤条件；可传单个 ID 或 ID 列表。与 author_terms 同时使用时为 OR 关系 |
-| org_id | []string | 否 | 机构实体 ID 过滤条件；可传单个 ID 或 ID 列表。与 org_terms 同时使用时为 OR 关系 |
-| venue_ids | []string | 否 | 会议/期刊 ID 列表过滤条件 |
 | query | string | 否 | 自然语言原始问题（较慢），系统自动拆解关键词。与 topic_high 同时传时以此参数为准 |
 
 **响应字段：**
@@ -164,12 +161,6 @@ curl -X POST \
 - **价格**：免费
 - **说明**：批量根据论文 ID 获取基础信息（标题、卷号、期刊、作者）
 
-> **强制参数约束（高优先级）**
-> 1. `paper_info` 仅支持批量参数 `ids`（数组），不支持单条 `paper_id`。
-> 2. `paper_detail` 仅支持单条参数 `id`（字符串）；在客户端 `raw` 函数封装中对应参数名 `paper_id`。
-> 3. 严禁把 `ids` 传给 `paper_detail`，否则会触发参数错误（如 `unexpected keyword argument 'ids'`）。
-> 4. 若命中结果很多且用户未指定数量，默认只查询前 10 条详情，避免不必要费用。
-
 **请求参数：**
 
 | 参数名 | 类型 | 必填 | 说明 |
@@ -194,13 +185,6 @@ curl -X POST \
   -H 'Content-Type: application/json;charset=utf-8' \
   -H 'Authorization: <TOKEN>' \
   -d '{"ids": ["53e9ab9bb7602d97023e53b2", "53e9a98eb7602d9703e42e5a"]}'
-```
-
-**raw 调用正确示例（aminer_client.py）：**
-```bash
-# 批量基础信息（正确）
-python scripts/aminer_client.py --action raw \
-  --api paper_info --params '{"ids":["53e9ab9bb7602d97023e53b2","53e9a98eb7602d9703e42e5a"]}'
 ```
 
 ---
@@ -242,17 +226,6 @@ python scripts/aminer_client.py --action raw \
 curl -X GET \
   'https://datacenter.aminer.cn/gateway/open_platform/api/paper/detail?id=53e9ab9bb7602d97023e53b2' \
   -H 'Authorization: <TOKEN>'
-```
-
-**raw 调用正确/错误示例（aminer_client.py）：**
-```bash
-# 单篇详情（正确）
-python scripts/aminer_client.py --action raw \
-  --api paper_detail --params '{"paper_id":"53e9ab9bb7602d97023e53b2"}'
-
-# 错误示例（不要这样做：ids 不能传给 paper_detail）
-python scripts/aminer_client.py --action raw \
-  --api paper_detail --params '{"ids":["53e9ab9bb7602d97023e53b2"]}'
 ```
 
 ---

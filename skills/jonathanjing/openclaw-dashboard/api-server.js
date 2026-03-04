@@ -1333,24 +1333,126 @@ async function notionCount(dbId, startIso, endIso) {
   return total;
 }
 
-// --- Ops: Channel Usage (today, PST) ---
-// Per 1M tokens: [input_cost, output_cost]
-const MODEL_COSTS_IO = {
-  'claude-opus-4-6': [15, 75], 'claude-sonnet-4-6': [3, 15],
-  'gpt-5.3-codex': [2.5, 10], 'gpt-5.3': [2.5, 10],
-  'gpt-5.2-codex': [2.5, 10], 'gpt-5.2': [2.5, 10],
-  'gemini-3.1-pro': [2, 12], 'gemini-3-pro-preview': [2, 12],
-  'gemini-3.0-flash': [0.5, 3], 'gemini-3-flash-preview': [0.5, 3],
-};
 
+let _dynRegistryCache = null;
+let _dynRegistryCacheAt = 0;
+
+function getDynamicModelRegistry(nocache = false) {
+  const now = Date.now();
+  if (!nocache && _dynRegistryCache && (now - _dynRegistryCacheAt) < 60000) return _dynRegistryCache;
+
+  const registry = {};
+  const colors = {};
+  const costs = {};
+  const displayNames = [];
+  const usedColors = new Set();
+
+  function assignColor(alias, provider) {
+    if (colors[alias]) {
+      usedColors.add(colors[alias]);
+      return;
+    }
+    const palettes = {
+      google: ['#3b82f6', '#0ea5e9', '#6366f1', '#4338ca', '#0284c7', '#38bdf8', '#818cf8'],
+      anthropic: ['#ec4899', '#f43f5e', '#d946ef', '#db2777', '#c026d3', '#fb7185', '#e879f9'],
+      openai: ['#10b981', '#22c55e', '#059669', '#16a34a', '#047857', '#34d399', '#4ade80'],
+      'ollama-remote': ['#14b8a6', '#0d9488', '#0f766e', '#115e59', '#0891b2', '#2dd4bf', '#06b6d4'],
+      default: ['#6b7280', '#8b5cf6', '#f59e0b', '#eab308', '#64748b', '#a8a29e', '#94a3b8']
+    };
+    const pStr = (provider || 'default').toLowerCase();
+    const p = palettes[pStr] || palettes.default;
+    
+    // Priority: unassigned color in the palette
+    for (const c of p) {
+      if (!usedColors.has(c)) {
+        colors[alias] = c;
+        usedColors.add(c);
+        return;
+      }
+    }
+    
+    // Fallback: hash if we run out of unique colors
+    let hash = 0;
+    for (let i = 0; i < alias.length; i++) {
+      hash = alias.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    colors[alias] = p[Math.abs(hash) % p.length];
+  }
+  
+  // 1. Load overrides/base costs from models-registry.json
+  try {
+    const rPath = require('path').join(__dirname, 'models-registry.json');
+    if (fs.existsSync(rPath)) {
+      const custom = JSON.parse(fs.readFileSync(rPath, 'utf8'));
+      for (const [key, val] of Object.entries(custom)) {
+        const id = typeof val === 'string' ? val : val.id;
+        const label = val.label || key;
+        registry[key] = { id, label };
+        if (val.color) {
+          colors[key] = val.color;
+          usedColors.add(val.color);
+        }
+        if (val.costIO) costs[key] = val.costIO;
+        else if (typeof val.costPerMToken === 'number') costs[key] = [val.costPerMToken, val.costPerMToken];
+        displayNames.push([key, label]);
+      }
+    }
+  } catch(e) {}
+
+  // 2. Load dynamic config from openclaw.json
+  try {
+    const home = process.env.HOME || '';
+    const cfgPath = require('path').join(home, '.openclaw', 'openclaw.json');
+    if (fs.existsSync(cfgPath)) {
+      const oc = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+      
+      // Local models (from providers)
+      const providers = oc?.models?.providers || {};
+      for (const [provId, p] of Object.entries(providers)) {
+        for (const m of (p.models || [])) {
+          const alias = m.id;
+          if (!registry[alias]) {
+            registry[alias] = { id: m.id, label: m.name || alias };
+            if (m.cost) costs[alias] = [m.cost.input || 0, m.cost.output || 0];
+            displayNames.push([alias, registry[alias].label]);
+          }
+          assignColor(alias, p.provider || provId);
+        }
+      }
+
+      // Cloud models (from agents.defaults.models)
+      const models = oc?.agents?.defaults?.models || {};
+      for (const [id, m] of Object.entries(models)) {
+        const alias = m.alias || id.split('/').pop();
+        const provider = id.split('/')[0];
+        let name = alias.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        name = name.replace('Preview', '').trim();
+        
+        if (!registry[alias]) {
+          registry[alias] = { id, label: name };
+          displayNames.push([alias, name]);
+        }
+        
+        assignColor(alias, provider);
+        
+        if (!costs[alias]) costs[alias] = [0, 0];
+      }
+    }
+  } catch (e) {}
+
+  _dynRegistryCache = { registry, colors, costs, displayNames };
+  _dynRegistryCacheAt = now;
+  return _dynRegistryCache;
+}
 // estimateCost: prefer provider-reported cost.total, then input/output/cache split, then fallback
 function estimateCost(model, totalTokens, inputTokens, outputTokens, costObj) {
   // If provider gives us a cost object with total, use it directly
   if (costObj && typeof costObj.total === 'number') return costObj.total;
 
-  const key = Object.keys(MODEL_COSTS_IO).find(k => (model || '').includes(k));
+  const dyn = getDynamicModelRegistry();
+  const key = Object.keys(dyn.costs).find(k => (model || '').includes(k));
   if (!key) return 0;
-  const [inCost, outCost] = MODEL_COSTS_IO[key];
+  const [inCost, outCost] = dyn.costs[key];
   if (inputTokens || outputTokens) {
     return ((inputTokens || 0) / 1_000_000) * inCost + ((outputTokens || 0) / 1_000_000) * outCost;
   }
@@ -1396,10 +1498,11 @@ function scanSessionUsageToday(sessionFile, todayStartIso) {
         const out = u.output || 0;
         result.input += inp;
         result.output += out;
-        result.totalTokens += u.totalTokens || 0;
+        const tokens = u.totalTokens || u.total_tokens || (inp + out) || 0;
+        result.totalTokens += tokens;
         const m = j.message.model || 'unknown';
-        result.cost += estimateCost(m, u.totalTokens || 0, inp, out, u.cost);
-        result.models[m] = (result.models[m] || 0) + (u.totalTokens || 0);
+        result.cost += estimateCost(m, tokens, inp, out, u.cost);
+        result.models[m] = (result.models[m] || 0) + tokens;
         result.messages++;
       } catch {}
     }
@@ -1411,7 +1514,7 @@ function handleOpsChannels(req, res, method) {
   if (method !== 'GET') return errorReply(res, 405, 'Method not allowed');
 
   const now = Date.now();
-  if (_opsCache && (now - _opsCacheAt) < OPS_CACHE_TTL) {
+  if (!parsed?.query?.nocache && _opsCache && (now - _opsCacheAt) < OPS_CACHE_TTL) {
     return jsonReply(res, 200, _opsCache);
   }
 
@@ -1490,11 +1593,11 @@ let _allTimeCache = null;
 let _allTimeCacheAt = 0;
 const ALLTIME_CACHE_TTL = 300_000; // 5 min
 
-function handleOpsAlltime(req, res, method) {
+function handleOpsAlltime(req, res, method, parsed) {
   if (method !== 'GET') return errorReply(res, 405, 'Method not allowed');
 
   const now = Date.now();
-  if (_allTimeCache && (now - _allTimeCacheAt) < ALLTIME_CACHE_TTL) {
+  if (!parsed?.query?.nocache && _allTimeCache && (now - _allTimeCacheAt) < ALLTIME_CACHE_TTL) {
     return jsonReply(res, 200, _allTimeCache);
   }
 
@@ -1520,9 +1623,9 @@ function handleOpsAlltime(req, res, method) {
           if (j.type !== 'message' || !j.message?.usage) continue;
           const u = j.message.usage;
           const m = j.message.model || 'unknown';
-          const tokens = u.totalTokens || 0;
           const input = (u.input || 0) + (u.cacheRead || 0) + (u.cacheWrite || 0);
           const output = u.output || 0;
+          const tokens = u.totalTokens || u.total_tokens || (input + output) || 0;
           const cost = estimateCost(m, tokens, input, output, u.cost);
 
           totalTokens += tokens;
@@ -1597,8 +1700,8 @@ function handleOpsAlltime(req, res, method) {
     .sort((a, b) => b[1].tokens - a[1].tokens)
     .map(([name, data]) => ({ name, ...data }));
 
-  // Last 14 days for chart
-  const days = Object.keys(daily).sort().slice(-14);
+  // Last 90 days for chart (frontend paginates by week)
+  const days = Object.keys(daily).sort().slice(-90);
   const recentDaily = days.map(d => ({ date: d, ...daily[d] }));
 
   const result = {
@@ -2081,13 +2184,16 @@ function handleOpsSessions(req, res, method) {
           if (role === 'assistant') {
             const u = j.message?.usage;
             if (u) {
-              today.input += (u.input || 0) + (u.cacheRead || 0) + (u.cacheWrite || 0);
-              today.output += u.output || 0;
-              today.totalTokens += u.totalTokens || 0;
+              const inp = (u.input || 0) + (u.cacheRead || 0) + (u.cacheWrite || 0);
+              const out = u.output || 0;
+              const tokens = u.totalTokens || u.total_tokens || (inp + out) || 0;
+              today.input += inp;
+              today.output += out;
+              today.totalTokens += tokens;
               const m = j.message.model || 'unknown';
-              const cost = estimateCost(m, u.totalTokens || 0, (u.input || 0) + (u.cacheRead || 0) + (u.cacheWrite || 0), u.output || 0, u.cost);
+              const cost = estimateCost(m, tokens, inp, out, u.cost);
               today.cost += cost;
-              today.models[m] = (today.models[m] || 0) + (u.totalTokens || 0);
+              today.models[m] = (today.models[m] || 0) + tokens;
             }
             today.messages++;
             if (textStr.trim() === 'NO_REPLY') today.noReply++;
@@ -2171,7 +2277,7 @@ function handleOpsSessions(req, res, method) {
 
 // --- Ops: Config Files Viewer ---
 // --- Ops: System Info ---
-function handleOpsSystem(req, res, method) {
+function handleOpsSystem(req, res, method, parsed) {
   if (method !== 'GET') return errorReply(res, 405, 'Method not allowed');
   const os = require('os');
   const { execFileSync } = require('child_process');
@@ -2190,6 +2296,12 @@ function handleOpsSystem(req, res, method) {
     const dfRaw = execFileSync('df', ['-h', '/'], { encoding: 'utf8', timeout: 3000 });
     const df = dfRaw.trim().split('\n').pop().split(/\s+/);
     disk = { total: df[1], used: df[2], available: df[3], usePct: df[4] };
+  } catch {}
+
+  let models = {};
+  try {
+    const oc = JSON.parse(fs.readFileSync(path.join(process.env.HOME || '', '.openclaw/openclaw.json'), 'utf8'));
+    models = oc?.agents?.defaults?.model || {};
   } catch {}
 
   // macOS system info (no shell)
@@ -2217,6 +2329,7 @@ function handleOpsSystem(req, res, method) {
       usePct: ((usedMem / totalMem) * 100).toFixed(1),
     },
     disk,
+    models,
     nodeVersion: process.version,
     clawVersion,
     dashboardUptime: Math.floor(dashboardUptime),
@@ -2302,11 +2415,26 @@ function handleMetrics(req, res, method) {
 
 function readJsonl(filePath) {
   try {
-    const raw = fs.readFileSync(filePath, 'utf8');
+    let raw = fs.readFileSync(filePath, 'utf8');
+    // Watchdog may write literal \n instead of real newlines between JSON objects.
+    // Normalize: replace }\n{ (literal backslash-n) with real newline.
+    raw = raw.replace(/\}\\n\{/g, '}\n{');
     const lines = raw.split('\n').filter(Boolean);
-    return lines.map(line => {
-      try { return JSON.parse(line); } catch { return null; }
-    }).filter(Boolean);
+    const results = [];
+    for (const line of lines) {
+      try { results.push(JSON.parse(line)); continue; } catch {}
+      // Fallback: split on }{ boundary for any remaining merged objects
+      const fragments = line.split(/\}\s*\{/).map((f, i, arr) => {
+        if (arr.length === 1) return f;
+        if (i === 0) return f + '}';
+        if (i === arr.length - 1) return '{' + f;
+        return '{' + f + '}';
+      });
+      for (const frag of fragments) {
+        try { results.push(JSON.parse(frag)); } catch {}
+      }
+    }
+    return results;
   } catch {
     return [];
   }
@@ -2388,9 +2516,9 @@ function buildWatchdogTimeline(eventsAsc, startMs, endMs, stepMs, initialStatus)
 function handleOpsWatchdog(req, res, method, parsed) {
   if (method !== 'GET') return errorReply(res, 405, 'Method not allowed');
   const reqLimit = parseInt(parsed?.query?.limit || '12', 10);
-  const limit = Number.isFinite(reqLimit) ? Math.min(Math.max(reqLimit, 1), 50) : 12;
+  const limit = Number.isFinite(reqLimit) ? Math.min(Math.max(reqLimit, 1), 500) : 12;
   const reqWindow = parseInt(parsed?.query?.windowMinutes || '15', 10);
-  const windowMinutes = Number.isFinite(reqWindow) ? Math.min(Math.max(reqWindow, 5), 15) : 15;
+  const windowMinutes = Number.isFinite(reqWindow) ? Math.min(Math.max(reqWindow, 5), 1440) : 15;
   const criticalOnly = String(parsed?.query?.criticalOnly || '0') === '1';
 
   let state = null;
@@ -3142,9 +3270,9 @@ const server = http.createServer((req, res) => {
   }
 
   // PWA assets (no auth required)
-  if ((pathname === '/icon.svg' || pathname === '/icon-180.png') && method === 'GET') {
+  if (['/icon.svg', '/icon-180.png', '/marked.min.js', '/purify.min.js'].includes(pathname) && method === 'GET') {
     const file = pathname.slice(1);
-    const ct = file.endsWith('.svg') ? 'image/svg+xml' : 'image/png';
+    const ct = file.endsWith('.js') ? 'application/javascript' : file.endsWith('.svg') ? 'image/svg+xml' : 'image/png';
     try {
       const data = fs.readFileSync(path.join(__dirname, file));
       setCors(res, req);
@@ -3156,7 +3284,7 @@ const server = http.createServer((req, res) => {
     setCors(res, req);
     res.writeHead(200, { 'Content-Type': 'application/manifest+json' });
     return res.end(JSON.stringify({
-      name: "Jony's OpenClaw Dashboard",
+      name: "OpenClaw Dashboard",
       short_name: 'Dashboard',
       start_url: '/',
       display: 'standalone',
@@ -3236,6 +3364,17 @@ button:active{opacity:.8}
     return errorReply(res, 401, 'Unauthorized');
   }
 
+  // If authenticated via ?token= query param, set HttpOnly cookie for session persistence
+  // (so token can be stripped from URL without losing auth on subsequent requests)
+  const parsedAuth = url.parse(req.url, true);
+  if (parsedAuth.query.token === AUTH_TOKEN) {
+    const cookies = parseCookies(req);
+    if (cookies['ds'] !== AUTH_TOKEN) {
+      const cookieAge = 86400 * 7; // 7 days
+      res.setHeader('Set-Cookie', `ds=${encodeURIComponent(AUTH_TOKEN)}; Path=/; Max-Age=${cookieAge}; HttpOnly; SameSite=Strict`);
+    }
+  }
+
   // Serve dashboard HTML at root
   if (pathname === '/' && method === 'GET') {
     const htmlPath = path.join(__dirname, 'agent-dashboard.html');
@@ -3267,15 +3406,16 @@ button:active{opacity:.8}
     if (root === 'cron') return handleCron(req, res, parsed, segments, method);
     if (root === 'vision' && segments[1] === 'stats') return handleVisionStats(req, res, method);
     if (root === 'ops' && segments[1] === 'channels') return handleOpsChannels(req, res, method);
-    if (root === 'ops' && segments[1] === 'alltime') return handleOpsAlltime(req, res, method);
+    if (root === 'ops' && segments[1] === 'alltime') return handleOpsAlltime(req, res, method, parsed);
     if (root === 'ops' && segments[1] === 'audit') return handleOpsAudit(req, res, method);
     if (root === 'ops' && segments[1] === 'secaudit') return handleOpsSecAudit(req, res, method);
     if (root === 'ops' && segments[1] === 'sessions') return handleOpsSessions(req, res, method);
     if (root === 'ops' && segments[1] === 'config') return handleOpsConfig(req, res, method);
     if (root === 'ops' && segments[1] === 'cron') return handleOpsCron(req, res, method);
     if (root === 'ops' && segments[1] === 'cron-costs') return handleOpsCronCosts(req, res, method);
-    if (root === 'ops' && segments[1] === 'system') return handleOpsSystem(req, res, method);
+    if (root === 'ops' && segments[1] === 'system') return handleOpsSystem(req, res, method, parsed);
     if (root === 'ops' && segments[1] === 'watchdog') return handleOpsWatchdog(req, res, method, parsed);
+    if (root === 'ops' && segments[1] === 'models') return jsonReply(res, 200, getDynamicModelRegistry(parsed?.query?.nocache));
     if (root === 'ops' && segments[1] === 'update-openclaw') return handleOpsUpdateOpenClaw(req, res, method);
     if (root === 'ops' && segments[1] === 'session-model') return handleOpsSessionModel(req, res, method);
     if (root === 'ops' && segments[1] === 'cron-model') return handleOpsCronModel(req, res, method);

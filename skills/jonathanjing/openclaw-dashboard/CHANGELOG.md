@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.3] - 2026-03-03
+### Added
+- Simplified installation instructions (Ask OpenClaw / CLI) to SKILL.md and README.md.
+
+## [1.7.2] - 2026-03-03
+
+### ✨ Features
+- **Dynamic Model Registry**: Completely removed hardcoded models, display names, and costs from the Dashboard frontend (`agent-dashboard.html`) and backend (`api-server.js`).
+- **Dynamic Pricing via `models-registry.json`**: Cost estimation logic (I/O) is now decoupled and driven entirely by `models-registry.json`. Updating prices (e.g., from Google/Anthropic pricing pages) or adding new models requires zero JS code changes.
+- **Smart Color Theming**: Dashboard charts now automatically assign distinct colors to models based on their provider family (Google: Blues, Anthropic: Pinks/Reds, OpenAI: Greens, Local: Teals) using an intelligent palette hash algorithm, ensuring models never collide.
+
+
 ## [1.7.0] - 2026-03-01
 
 ### 🔒 Security (VirusTotal Review Round 2)
@@ -18,7 +30,7 @@
 - Added model selector dropdowns for both Sessions and Cron jobs
 - Introduced task-model fit dashboard and redesigned Cron Runs view
 - Added always-visible system info bar above active sessions
-- Renamed product branding to `Jony's OpenClaw Dashboard`
+- Renamed product branding
 - Added mobile display of `匹配` column and improved model/token visibility on smaller screens
 
 ### 💸 Cost Analytics Enhancements

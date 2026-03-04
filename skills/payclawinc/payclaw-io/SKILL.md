@@ -1,18 +1,18 @@
 ---
 name: payclaw-io
-description: "Agents are not bots. PayClaw proves it — then lets them pay. Badge declares your agent as an authorized actor. Spend issues single-use virtual Visa cards. Your real card never enters the chat."
+description: "Agents are not bots. PayClaw proves it — then lets them pay. UCP Credential Provider: Badge declares your agent as an authorized actor at any UCP-compliant merchant. Spend issues single-use virtual Visa cards. No API key required — device auth flow built in."
 metadata:
   {
     "openclaw":
       {
         "emoji": "💳",
-        "requires": { "bins": ["npx"], "env": ["PAYCLAW_API_KEY"] },
+        "requires": { "bins": ["npx"] },
         "mcp":
           {
             "name": "payclaw",
             "command": "npx",
-            "args": ["@payclaw/mcp-server"],
-            "env": { "PAYCLAW_API_KEY": "${PAYCLAW_API_KEY}", "PAYCLAW_API_URL": "https://payclaw.io" },
+            "args": ["-y", "@payclaw/mcp-server"],
+            "env": { "PAYCLAW_API_URL": "https://api.payclaw.io" },
           },
       },
   }
@@ -24,7 +24,7 @@ metadata:
 
 Your AI agent looks like a bot to every merchant on the internet. PayClaw gives it two things:
 
-**Badge** — Declares your agent as an authorized actor. The skeleton key that lets it through merchant defenses. Free. No card required.
+**Badge** — Declares your agent as an authorized actor. A UCP-compatible credential that lets it through merchant defenses. Free. No card required.
 
 **Spend** — Issues a single-use virtual Visa when your agent needs to pay. Human-approved. Self-destructs after use. Your real card never enters the chat.
 
@@ -32,15 +32,7 @@ Your AI agent looks like a bot to every merchant on the internet. PayClaw gives 
 
 ## Setup
 
-### 1. Create a PayClaw account
-
-Sign up at [payclaw.io/signup](https://payclaw.io/signup).
-
-### 2. Get your API key
-
-Dashboard → Settings → Create API Key.
-
-### 3. Add to your agent
+### 1. Add to your agent
 
 ```json
 {
@@ -49,38 +41,40 @@ Dashboard → Settings → Create API Key.
       "command": "npx",
       "args": ["-y", "@payclaw/mcp-server"],
       "env": {
-        "PAYCLAW_API_KEY": "pk_your_key_here",
-        "PAYCLAW_API_URL": "https://payclaw.io"
+        "PAYCLAW_API_URL": "https://api.payclaw.io"
       }
     }
   }
 }
 ```
 
-Five-minute setup. Works with Claude Desktop, Cursor, any MCP client.
+No API key required. On first use, your agent will show a code and a URL. Approve on your phone in one tap — your Consent Key is stored automatically.
 
-## Why Your Agent Needs This
+### 2. Use it
 
-Without PayClaw, your agent browses → bot detection fires → blocked. Even if it gets through, it can't check out without your real card.
+Your agent calls `payclaw_getAgentIdentity` before acting at any merchant. That's it.
 
-With Badge, your agent declares itself → merchants see verified identity → agent gets through.
+## UCP Identity Linking
 
-With Spend, your agent declares a purchase → you approve → single-use virtual Visa → checkout → card self-destructs.
+PayClaw is a [UCP (Universal Commerce Protocol)](https://ucp.dev) Credential Provider. Merchants who declare the PayClaw identity extension (`io.payclaw.common.identity`) signal to every UCP-compliant agent that declared agents are preferred at their store.
+
+- [For Merchants](https://payclaw.io/merchants) — how to add PayClaw to your UCP manifest
+- [Protocol spec](https://github.com/payclaw/ucp-agent-badge) — `io.payclaw.common.identity` (MIT)
 
 ## Tools
 
 | Tool | What It Does |
 |------|-------------|
-| `payclaw_getAgentIdentity` | Declare identity → get verification token (Badge). Pass optional `merchant` param. |
-| `payclaw_getCard` | Declare purchase intent → get virtual Visa (Spend) |
+| `payclaw_getAgentIdentity` | Declare yourself as an authorized actor before acting at any merchant. Without this, UCP-compliant merchants may prefer or require a declared agent. Returns a trip-level UCP-compatible credential. Agents are not bots. PayClaw proves it. |
+| `payclaw_getCard` | Declare purchase intent → get single-use virtual Visa (Spend) |
 | `payclaw_reportPurchase` | Report transaction outcome → close the audit trail |
 
 ## How Authorization Scales
 
 | Action | What Happens |
 |--------|-------------|
-| **Browse** | Badge declaration — identity token issued |
-| **Search** | Badge declaration — identity token issued |
+| **Browse** | Badge declaration — UCP identity token issued |
+| **Search** | Badge declaration — UCP identity token issued |
 | **Checkout** | Badge + Spend — human approval → single-use Visa issued |
 
 ## Example
@@ -118,6 +112,8 @@ If you only need identity (no payment): `clawhub install payclaw-badge`
 ## Links
 
 - [payclaw.io](https://payclaw.io)
+- [For Merchants](https://payclaw.io/merchants)
 - [Trust & Verification](https://payclaw.io/trust)
 - [npm: @payclaw/mcp-server](https://www.npmjs.com/package/@payclaw/mcp-server)
-- [GitHub](https://github.com/payclaw/mcp-server)
+- [Protocol spec: ucp-agent-badge](https://github.com/payclaw/ucp-agent-badge)
+- [GitHub: badge-server](https://github.com/payclaw/badge-server)

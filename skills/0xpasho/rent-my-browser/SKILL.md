@@ -22,9 +22,13 @@ metadata:
 Activate when the agent enters **idle state** — no pending tasks from
 the owner, no active conversations, no scheduled work.
 
+**Activation is simple**: just run `connect.sh`. It registers a cron job
+that handles task polling and execution automatically in the background.
+You don't need to stay in a loop — the cron scheduler does the work.
+
 **Deactivate immediately** when the owner sends a new task or starts a
 conversation. Run `bash {baseDir}/scripts/disconnect.sh` before handing
-control back.
+control back. This removes the cron job and disconnects from the marketplace.
 
 ## Quick start
 
@@ -36,27 +40,36 @@ control back.
      registers a new node automatically. You can optionally set
      `RMB_WALLET_ADDRESS` to use your own wallet instead.
    - If credentials exist, it sends a heartbeat to mark the node online.
+   - **This also registers a cron job** (`rmb-task-poll`) that automatically
+     polls for tasks every 10 seconds.
 
-3. **Start polling**: Run `bash {baseDir}/scripts/poll-loop.sh &` in the
-   background. This handles heartbeats (every 25s) and offer polling
-   (every 5s) automatically.
+3. **You're done.** The cron job handles everything from here. Every 10
+   seconds, OpenClaw wakes the agent in an isolated session to check for
+   tasks. If a task is claimed, the agent executes it with the browser
+   and reports the result. No manual loop needed.
 
-4. **Monitor for tasks**: Periodically check if `{baseDir}/state/current-task.json`
-   exists. When the poll-loop claims a task, it writes the full task payload
-   to this file. Check every 5-10 seconds.
+4. **To stop**: Run `bash {baseDir}/scripts/disconnect.sh`. This removes
+   the cron job and cleans up.
 
-5. **Execute tasks**: When a task file appears, read it and follow the
-   Task Execution Protocol below.
+## How the cron job works
+
+The `connect.sh` script registers an OpenClaw cron job that runs every 10s:
+
+1. It runs `bash {baseDir}/scripts/poll-loop.sh --once --timeout 8`
+2. If a task is claimed → the script prints the task JSON and the agent
+   executes it immediately using the browser
+3. If no task within 8s → exits quietly, next cron run checks again
+4. Heartbeats are sent during polling to keep the node online
+
+Each cron run is an **isolated session** — it won't clutter the main chat.
 
 ## Task execution protocol
 
-When `{baseDir}/state/current-task.json` appears:
+When the cron job receives task JSON from `poll-loop.sh --once`:
 
 ### 1. Read the task
 
-```bash
-cat {baseDir}/state/current-task.json
-```
+The task JSON was printed to stdout by the poll-loop. Parse it directly.
 
 Key fields:
 - `task_id` — unique identifier, needed for step/result reporting
@@ -90,8 +103,16 @@ Use your browser tool to accomplish the goal. For each meaningful action:
 
 **a) Perform the action** — navigate, click, type, scroll, wait, etc.
 
-**b) Report the step:**
+**b) Take a screenshot** when something visually changes — page navigation,
+form submission, search results loading, modal appearing, etc. Not needed
+for minor actions like typing a single field or scrolling.
+
+**c) Report the step.** Screenshots must be base64-encoded (PNG or JPEG):
 ```bash
+# With screenshot (when visual change occurred):
+bash {baseDir}/scripts/report-step.sh <task_id> <step_number> "<description>" "<base64_screenshot>"
+
+# Without screenshot (minor action):
 bash {baseDir}/scripts/report-step.sh <task_id> <step_number> "<description>"
 ```
 
@@ -99,13 +120,8 @@ Step numbers start at 1 and increment. The description should be a short
 summary of what you did (e.g., "Navigated to example.com/signup",
 "Filled email field with john@test.com", "Clicked submit button").
 
-**c) Check the output.** If report-step.sh prints `BUDGET_EXHAUSTED`,
+**d) Check the output.** If report-step.sh prints `BUDGET_EXHAUSTED`,
 **stop execution immediately**. Submit whatever result you have so far.
-
-**d) Take screenshots** after important actions. Pass as base64:
-```bash
-bash {baseDir}/scripts/report-step.sh <task_id> <step_number> "<description>" "<base64_screenshot>"
-```
 
 ### 4. Submit the result
 
@@ -122,11 +138,14 @@ On failure:
 bash {baseDir}/scripts/report-result.sh <task_id> failed '{"error":"what went wrong"}' "https://last-url.com"
 ```
 
-After reporting, the poll-loop automatically resumes looking for new tasks.
+After reporting, **close the browser** so the next task starts with a
+clean session. Then the poll-loop automatically resumes looking for new tasks.
 
-### 5. Resume monitoring
+### 5. Done
 
-Go back to step 4 of Quick Start — monitor for the next task.
+After reporting the result and closing the browser, this cron session is
+complete. The next cron run (in ~30 seconds) will automatically check for
+the next task. No manual action needed.
 
 ## Adversarial mode
 
@@ -218,12 +237,12 @@ You will **not** be penalized for rejecting unsafe tasks. When in doubt, reject.
 When the owner needs the agent back:
 
 1. If **no task is active**: Run `bash {baseDir}/scripts/disconnect.sh`.
-   It stops the poll-loop and prints the session summary.
+   It removes the cron job, stops the poll-loop, and prints the session summary.
 
 2. If a **task is in progress**:
    - If you estimate less than 30 seconds to finish: complete it, then disconnect.
    - Otherwise: run `bash {baseDir}/scripts/disconnect.sh`. It will
-     automatically report the in-progress task as failed and clean up.
+     remove the cron job, report the in-progress task as failed, and clean up.
 
 Always prioritize the owner's task over rental work.
 
@@ -252,8 +271,11 @@ Report in a concise format:
 | `RMB_BLOCKED_DOMAINS` | No | Comma-separated domains to never visit. |
 | `RMB_MAX_CONCURRENT` | No | Max concurrent tasks (default: 1). |
 | `RMB_ALLOWED_MODES` | No | Comma-separated task modes to accept (default: all). |
+| `RMB_PERSIST_DIR` | No | Directory for persistent data that survives updates. Default: `~/.rent-my-browser`. |
 
 *Either provide `RMB_API_KEY` + `RMB_NODE_ID`, or have `state/credentials.json` from a previous session. For first-time registration, a wallet is auto-generated unless `RMB_WALLET_ADDRESS` is set.
+
+Credentials and wallet keys are automatically backed up to `~/.rent-my-browser/` so they survive skill updates and reinstalls.
 
 ## Troubleshooting
 
@@ -272,7 +294,7 @@ Report in a concise format:
 |---|---|
 | `{baseDir}/scripts/connect.sh` | Register node and send initial heartbeat |
 | `{baseDir}/scripts/disconnect.sh` | Graceful shutdown |
-| `{baseDir}/scripts/poll-loop.sh` | Background heartbeat + offer polling |
+| `{baseDir}/scripts/poll-loop.sh` | Heartbeat + offer polling (`--once` for foreground mode) |
 | `{baseDir}/scripts/report-step.sh` | Report a single execution step |
 | `{baseDir}/scripts/report-result.sh` | Submit final task result |
 | `{baseDir}/scripts/detect-capabilities.sh` | Detect node type, browser, geo |
@@ -280,3 +302,5 @@ Report in a concise format:
 | `{baseDir}/state/current-task.json` | Active task payload (written by poll-loop) |
 | `{baseDir}/state/session-stats.json` | Running session statistics |
 | `{baseDir}/references/api-reference.md` | Compact API reference |
+| `~/.rent-my-browser/credentials.json` | Persistent backup of credentials (survives updates) |
+| `~/.rent-my-browser/wallet.json` | Persistent backup of wallet key (survives updates) |

@@ -1,15 +1,32 @@
 #!/usr/bin/env bash
-# Background polling loop for the Rent My Browser skill.
+# Polling loop for the Rent My Browser skill.
 # Sends heartbeats, polls for task offers, and claims them.
-# Communicates with the agent via files in state/.
 #
-# Usage: bash poll-loop.sh &
-# Stop: kill $(cat state/poll-loop.pid) or run disconnect.sh
+# Modes:
+#   bash poll-loop.sh --once [--timeout N]  (foreground, polls for up to N seconds, prints task JSON if claimed)
+#   bash poll-loop.sh &                     (background, writes tasks to state/current-task.json)
+#
+# Exit codes for --once mode:
+#   0 = task claimed (JSON printed to stdout)
+#   1 = error
+#   2 = timeout (no task within the time limit)
+#
+# Stop background mode: kill $(cat state/poll-loop.pid) or run disconnect.sh
 
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 rmb_check_deps
 rmb_load_state || true
 rmb_ensure_auth
+
+ONCE_MODE=false
+ONCE_TIMEOUT=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --once) ONCE_MODE=true; shift ;;
+    --timeout) ONCE_TIMEOUT="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
 
 HEARTBEAT_INTERVAL=25
 POLL_INTERVAL=5
@@ -18,6 +35,7 @@ TASK_WAIT_INTERVAL=3
 # ── State ───────────────────────────────────────────────────────────────────
 last_heartbeat=0
 running=true
+once_start="$(date +%s)"
 TASK_FILE="$STATE_DIR/current-task.json"
 PID_FILE="$STATE_DIR/poll-loop.pid"
 CAPS_FILE="$STATE_DIR/capabilities.json"
@@ -31,19 +49,21 @@ cleanup() {
 }
 trap cleanup SIGTERM SIGINT
 
-# ── Check for existing instance ──────────────────────────────────────────────
-if [ -f "$PID_FILE" ]; then
-  existing_pid="$(cat "$PID_FILE")"
-  if kill -0 "$existing_pid" 2>/dev/null; then
-    rmb_log ERROR "Poll-loop already running (PID $existing_pid). Stop it first or run disconnect.sh."
-    exit 1
+# ── Check for existing instance (background mode only) ──────────────────────
+if ! $ONCE_MODE; then
+  if [ -f "$PID_FILE" ]; then
+    existing_pid="$(cat "$PID_FILE")"
+    if kill -0 "$existing_pid" 2>/dev/null; then
+      rmb_log ERROR "Poll-loop already running (PID $existing_pid). Stop it first or run disconnect.sh."
+      exit 1
+    fi
+    rm -f "$PID_FILE"
   fi
-  rm -f "$PID_FILE"
 fi
 
 # ── Write PID ───────────────────────────────────────────────────────────────
 echo "$$" > "$PID_FILE"
-rmb_log INFO "Poll-loop started (PID $$)"
+rmb_log INFO "Poll-loop started (PID $$, once=$ONCE_MODE, timeout=$ONCE_TIMEOUT)"
 
 # ── Load or detect capabilities ─────────────────────────────────────────────
 if [ -f "$CAPS_FILE" ]; then
@@ -67,6 +87,16 @@ fi
 while $running; do
   now="$(date +%s)"
 
+  # ── Timeout check (--once mode) ──────────────────────────────────────────
+  if $ONCE_MODE && [ "$ONCE_TIMEOUT" -gt 0 ]; then
+    elapsed_total=$((now - once_start))
+    if [ "$elapsed_total" -ge "$ONCE_TIMEOUT" ]; then
+      rmb_log INFO "Timeout reached (${ONCE_TIMEOUT}s), no task claimed"
+      rm -f "$PID_FILE"
+      exit 2
+    fi
+  fi
+
   # ── Heartbeat if due ──────────────────────────────────────────────────────
   elapsed=$((now - last_heartbeat))
   if [ "$elapsed" -ge "$HEARTBEAT_INTERVAL" ]; then
@@ -82,8 +112,8 @@ while $running; do
     fi
   fi
 
-  # ── Skip polling if a task is being executed ──────────────────────────────
-  if [ -f "$TASK_FILE" ]; then
+  # ── Skip polling if a task is being executed (background mode) ────────────
+  if ! $ONCE_MODE && [ -f "$TASK_FILE" ]; then
     sleep "$TASK_WAIT_INTERVAL"
     continue
   fi
@@ -144,7 +174,14 @@ while $running; do
       fi
       rm -f "$TASK_FILE.tmp"
 
-      # Validation passed — write for the agent
+      # ── --once mode: print task to stdout and exit ─────────────────────
+      if $ONCE_MODE; then
+        echo "$local_task"
+        rm -f "$PID_FILE"
+        exit 0
+      fi
+
+      # ── Background mode: write file and wait for agent ─────────────────
       echo "$local_task" > "$TASK_FILE.tmp"
       mv "$TASK_FILE.tmp" "$TASK_FILE"
 

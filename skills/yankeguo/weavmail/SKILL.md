@@ -10,7 +10,7 @@ metadata:
   }
 ---
 
-`weavmail` is a command-line email client designed for AI agents. Use it to read, send, reply to, and organize emails.
+# `weavmail` is a command-line email client designed for AI agents. Use it to read, send, reply to, and organize emails
 
 ## Setup
 
@@ -61,10 +61,10 @@ weavmail mailbox
 Inspect the output and identify the Sent and Trash folders (names vary by provider, e.g. `Sent`, `Sent Messages`, `[Gmail]/Sent Mail`, `Trash`, `Deleted Messages`, `[Gmail]/Trash`). Then save them to the account config:
 
 ```bash
-weavmail account config --sent-mailbox "Sent" --trash-mailbox "Trash"
+weavmail account config --sent-mailbox "Sent" --trash-mailbox "Trash" --archive-mailbox "Archive"
 ```
 
-Both fields are optional — if neither can be identified with confidence, skip this step. They do not affect other functionality when unset.
+All three fields are optional — if any cannot be identified with confidence, skip it. They do not affect other functionality when unset.
 
 ---
 
@@ -77,10 +77,12 @@ weavmail sync
 ```
 
 Options:
+
+- `--account NAMES` — comma-separated account names to sync (default: all configured accounts)
 - `--mailbox FOLDER` — sync a different folder (default: `INBOX`)
 - `--limit N` — number of most-recent messages to fetch (default: `10`)
 
-Each email is saved to `./mails/default_INBOX/<uid>.md` with YAML front matter:
+Each email is saved to `./mails/<account>_<mailbox>/<uid>.md` with YAML front matter:
 
 ```yaml
 ---
@@ -138,6 +140,20 @@ weavmail trash mails/default_INBOX/12345.md
 ```
 
 The trash mailbox is read from the account's `--trash-mailbox` configuration. An error is raised if `--trash-mailbox` is not configured for the account.
+
+The source mailbox is synced after the move — the local file will be deleted automatically.
+
+---
+
+## Archive a Mail
+
+Move an email to the account's archive mailbox, then automatically sync the source mailbox:
+
+```bash
+weavmail archive mails/default_INBOX/12345.md
+```
+
+The archive mailbox is read from the account's `--archive-mailbox` configuration. An error is raised if `--archive-mailbox` is not configured for the account.
 
 The source mailbox is synced after the move — the local file will be deleted automatically.
 
@@ -201,8 +217,11 @@ Then pass `--account` to any command to target that account:
 
 ```bash
 weavmail sync --account work
+weavmail sync --account work,personal   # sync multiple accounts at once
 weavmail mailbox --account work
 weavmail send --account work --to someone@example.com --subject "Hi" --content /tmp/body.txt
 ```
 
-For `move`, `trash`, and `send --reply`, the account is read from the mail file's front matter — no `--account` flag needed. You may pass `--account` as a safeguard: if it doesn't match the account in the front matter, the command will exit with an error.
+`weavmail sync` without `--account` syncs **all** configured accounts automatically.
+
+For `move`, `trash`, `archive`, and `send --reply`, the account is read from the mail file's front matter — no `--account` flag needed. You may pass `--account` as a safeguard: if it doesn't match the account in the front matter, the command will exit with an error.

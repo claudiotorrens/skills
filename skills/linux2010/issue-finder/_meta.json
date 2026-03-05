@@ -1,0 +1,11 @@
+{
+  "owner": "linux2010",
+  "slug": "issue-finder",
+  "displayName": "GitHub Issue Finder",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772601854717,
+    "commit": null
+  },
+  "history": []
+}

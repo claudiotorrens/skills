@@ -1,0 +1,11 @@
+{
+  "owner": "googleworkspace-bot",
+  "slug": "gws-cloudidentity",
+  "displayName": "Gws Cloudidentity",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772665489523,
+    "commit": null
+  },
+  "history": []
+}

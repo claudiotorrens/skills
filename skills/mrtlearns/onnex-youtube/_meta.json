@@ -1,0 +1,11 @@
+{
+  "owner": "mrtlearns",
+  "slug": "onnex-youtube",
+  "displayName": "Onnex YouTube",
+  "latest": {
+    "version": "4.2.2",
+    "publishedAt": 1772622786400,
+    "commit": null
+  },
+  "history": []
+}

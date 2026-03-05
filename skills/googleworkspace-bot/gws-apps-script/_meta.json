@@ -1,0 +1,11 @@
+{
+  "owner": "googleworkspace-bot",
+  "slug": "gws-apps-script",
+  "displayName": "Gws Apps Script",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1772665475398,
+    "commit": null
+  },
+  "history": []
+}

@@ -281,7 +281,7 @@ async function sync(args) {
   
   const tag = generateTag();
   const branch = getInstanceId();
-  safeExec(`git push ${repoUrl} HEAD:${branch}`);
+  safeExec(`git push ${repoUrl} HEAD:${branch} --force`);
   safeExec(`git tag ${tag}`);
   safeExec(`git push ${repoUrl} ${tag}`);
   

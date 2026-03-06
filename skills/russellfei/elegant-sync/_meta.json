@@ -3,9 +3,15 @@
   "slug": "elegant-sync",
   "displayName": "Elegant Sync",
   "latest": {
-    "version": "1.0.3",
-    "publishedAt": 1772267165675,
-    "commit": "https://github.com/openclaw/skills/commit/0a9df0bcba7ec2f2e21c438a043a15f4f55f1c26"
+    "version": "1.0.4",
+    "publishedAt": 1772530063514,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.3",
+      "publishedAt": 1772267165675,
+      "commit": "https://github.com/openclaw/skills/commit/0a9df0bcba7ec2f2e21c438a043a15f4f55f1c26"
+    }
+  ]
 }

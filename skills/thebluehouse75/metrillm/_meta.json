@@ -3,9 +3,15 @@
   "slug": "metrillm",
   "displayName": "MetriLLM",
   "latest": {
-    "version": "0.2.3",
-    "publishedAt": 1772718353321,
-    "commit": "https://github.com/openclaw/skills/commit/124f1fc9c10fdccd8aca15de2f12bc4eb659c606"
+    "version": "0.2.11",
+    "publishedAt": 1772720005980,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.2.3",
+      "publishedAt": 1772718353321,
+      "commit": "https://github.com/openclaw/skills/commit/124f1fc9c10fdccd8aca15de2f12bc4eb659c606"
+    }
+  ]
 }

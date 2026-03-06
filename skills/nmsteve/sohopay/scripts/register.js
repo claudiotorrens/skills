@@ -11,7 +11,7 @@ const NETWORKS = {
         rpcUrl: "https://mainnet.base.org",
         chainId: 8453n, // Base mainnet
         addresses: {
-            borrowerManager: "0xa891C7F98e3Eb42cB61213F28f3B8Aa13a8Be435",
+            borrowerManager: "0xc6ecd37c42ee73714956b6a449b41bc1d46b07b0",
         },
     },
     testnet: {
@@ -19,7 +19,7 @@ const NETWORKS = {
         rpcUrl: "https://sepolia.base.org",
         chainId: 84532n, // Base Sepolia
         addresses: {
-            borrowerManager: "0xa891C7F98e3Eb42cB61213F28f3B8Aa13a8Be435",
+            borrowerManager: "0xc6ecd37c42ee73714956b6a449b41bc1d46b07b0",
         },
     },
 };

@@ -28,7 +28,7 @@ When you issue a `pay` command, the skill performs the following actions:
 2. **Validate Merchant Address**: Confirms that the merchant is a valid EVM address; otherwise it aborts.
 3. **Pre-Flight Checks** (BorrowerManager):
     - Verifies the borrower is **registered** and **active**.
-    - Checks if the **credit limit** (agent spend limit) is sufficient for the requested amount.
+    - Checks if the **credit limit** is sufficient for the requested amount.
     - On demand, can auto-register the agent once via `registerAgent`.
 4. **Generate Authorization**: Creates an EIP-712 typed data message for the payment.
 5. **Sign Off-Chain**: Uses the configured `PRIVATE_KEY` wallet (from environment variables) to sign the authorization message.
@@ -40,11 +40,11 @@ When you issue a `pay` command, the skill performs the following actions:
 The `status` helper reads the **BorrowerManager** profile + USDC wallet balance for the bot:
 
 - Calls the `s_borrowerProfiles(address)` public mapping getter to fetch:  
-  `creditLimit, outstandingDebt, totalSpent, totalRepaid, spendingCount, repaymentCount, lastActivityTime, creditScore, isActive, agentSpendLimit`.
+  `creditLimit, outstandingDebt, totalSpent, totalRepaid, spendingCount, repaymentCount, lastActivityTime, creditScore, isActive, isAgent, transactionIds`.
 - Calls `IERC20(USDC).balanceOf(bot)` to fetch the **USDC wallet balance** for the same address.
 - Prints a human-readable summary so you can see, per network:
   - Whether the bot is registered / active
-  - Credit limit and **agent spend limit**
+  - Credit limit and whether the profile is flagged as an agent
   - **Outstanding debt** and historical spend/repay totals
   - Last activity timestamp and credit score
   - USDC balance available in the wallet
@@ -95,9 +95,9 @@ This is what backs prompts like:
 
 The following values are hardcoded into the script for consistency, and are used on **both** Base mainnet and Base Sepolia:
 
-- **Creditor Contract**: `0xa7cf4D816183F5fC48e46Ccdaeea77311c69B568`
-- **Borrower Manager**: `0xa891C7F98e3Eb42cB61213F28f3B8Aa13a8Be435`
-- **Asset (USDC)**: `0xB8c7a6A36978a7f9dc2C80e44533e7f17e271864` (6 decimals)
+- **Creditor Contract**: `0xdb34d612dd9aa548f6c94af118f82a461a835e09`
+- **Borrower Manager**: `0xc6ecd37c42ee73714956b6a449b41bc1d46b07b0`
+- **Asset (USDC)**: `0x43848d5a4efa0b1c72e1fd8ece1abf42e9d5e221` (6 decimals)
 - **Payment Plan ID**: `0`
 
 ## Setup, Installation & Dependencies

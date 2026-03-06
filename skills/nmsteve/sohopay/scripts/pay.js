@@ -12,9 +12,9 @@ const NETWORKS = {
         rpcUrl: "https://mainnet.base.org",
         chainId: 8453n, // Base mainnet
         addresses: {
-            creditor: "0xa7cf4D816183F5fC48e46Ccdaeea77311c69B568",
-            borrowerManager: "0xa891C7F98e3Eb42cB61213F28f3B8Aa13a8Be435",
-            usdc: "0xB8c7a6A36978a7f9dc2C80e44533e7f17e271864",
+            creditor: "0xdb34d612dd9aa548f6c94af118f82a461a835e09",
+            borrowerManager: "0xc6ecd37c42ee73714956b6a449b41bc1d46b07b0",
+            usdc: "0x43848d5a4efa0b1c72e1fd8ece1abf42e9d5e221",
         },
     },
     testnet: {
@@ -22,9 +22,9 @@ const NETWORKS = {
         rpcUrl: "https://sepolia.base.org",
         chainId: 84532n, // Base Sepolia
         addresses: {
-            creditor: "0xa7cf4D816183F5fC48e46Ccdaeea77311c69B568",
-            borrowerManager: "0xa891C7F98e3Eb42cB61213F28f3B8Aa13a8Be435",
-            usdc: "0xB8c7a6A36978a7f9dc2C80e44533e7f17e271864",
+            creditor: "0xdb34d612dd9aa548f6c94af118f82a461a835e09",
+            borrowerManager: "0xc6ecd37c42ee73714956b6a449b41bc1d46b07b0",
+            usdc: "0x43848d5a4efa0b1c72e1fd8ece1abf42e9d5e221",
         },
     },
 };

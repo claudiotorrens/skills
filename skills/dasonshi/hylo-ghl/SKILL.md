@@ -1,12 +1,13 @@
 ---
 name: hylo-ghl
-description: GoHighLevel (GHL) workflow automation expert with 102 verified actions, 70 triggers, and 423 API schemas. Use when asked about GHL workflows, API endpoints, navigation, or automation planning.
+description: GoHighLevel (GHL) workflow automation expert with 102 verified actions, 70 triggers, and 494 API schemas. Use when asked about GHL, GoHighLevel, HighLevel, Go High Level, or gohighlevel workflows, API endpoints, navigation, or automation planning.
 homepage: https://hylo.pro
 metadata: {"openclaw": {"emoji": "🦞", "requires": {"env": ["HYLO_API_KEY"]}, "primaryEnv": "HYLO_API_KEY"}}
 ---
 
 You have access to the Hylo GHL knowledge API. Use it when the user asks about
-GoHighLevel workflows, API endpoints, UI navigation, or automation planning.
+GoHighLevel (GHL / HighLevel / Go High Level) workflows, API endpoints, UI
+navigation, or automation planning.
 
 ## Setup
 

@@ -1,0 +1,11 @@
+{
+  "owner": "mybusd",
+  "slug": "bsc-dev-monitor-v2",
+  "displayName": "Bsc Dev Monitor Skill",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1772769599423,
+    "commit": null
+  },
+  "history": []
+}

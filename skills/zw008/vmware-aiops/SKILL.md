@@ -3,7 +3,8 @@ name: vmware-aiops
 description: >
   AI-powered VMware vCenter/ESXi monitoring and operations.
   Manage infrastructure via natural language: inventory queries, health monitoring,
-  VM lifecycle (create, delete, power, snapshot, clone, migrate), vSAN management,
+  VM lifecycle (create, delete, power, snapshot, clone, migrate), VM deployment
+  (OVA, template, linked clone, batch), datastore browsing, vSAN management,
   Aria Operations analytics, Kubernetes clusters, and scheduled log scanning.
 installer:
   kind: uv
@@ -21,6 +22,8 @@ AI-powered VMware vCenter and ESXi operations tool. Manage your entire VMware in
 - Query VM, host, datastore, cluster, and network inventory
 - Check health status, active alarms, hardware sensors, and event logs
 - Perform VM lifecycle operations: power on/off, create, delete, snapshot, clone, migrate
+- Deploy VMs from OVA, templates, linked clones, or batch specs
+- Browse datastores and discover ISO/OVA/VMDK images
 - Monitor vSAN health, capacity, disk groups, and performance
 - Access Aria Operations (VCF Operations) for historical metrics, anomaly detection, and capacity planning
 - Manage vSphere Kubernetes Service (VKS) clusters
@@ -31,11 +34,11 @@ AI-powered VMware vCenter and ESXi operations tool. Manage your entire VMware in
 Works with Claude Code, Cursor, Codex, Gemini CLI, Trae, Kimi, and 30+ AI agents:
 
 ```bash
-# Via ClawHub (recommended)
-clawhub install vmware-aiops
-
 # Via Skills.sh
 npx skills add zw008/VMware-AIops
+
+# Via ClawHub
+clawhub install vmware-aiops
 ```
 
 ### Claude Code
@@ -46,64 +49,44 @@ npx skills add zw008/VMware-AIops
 /vmware-ops:vmware-aiops
 ```
 
-## Usage Mode: MCP First, CLI Fallback
+## Usage Mode
 
-**Default: MCP mode** — vmware-aiops runs as an MCP Server registered in the AI tool. All queries and operations go through MCP tool calls directly, no manual CLI needed.
+Choose the best mode based on your AI tool:
 
-**Fallback: CLI mode** — only when MCP connection fails (server crash, config error, etc.), switch to CLI commands via `vmware-aiops` in the terminal.
+| Platform | Recommended Mode | Why |
+|----------|-----------------|-----|
+| Claude Code, Cursor | **MCP** | Structured tool calls, no interactive confirmation needed, seamless experience |
+| Aider, Codex, Gemini CLI, Continue | **CLI** | Lightweight, low context overhead, universal compatibility |
+| Ollama + local models | **CLI** | Minimal context usage, works with any model size |
 
-### MCP Tools (9 tools)
+### Calling Priority
 
-| MCP Tool | Type | Description | Equivalent CLI |
-|----------|------|-------------|----------------|
-| `list_virtual_machines` | Read | List all VMs | `vmware-aiops inventory vms` |
-| `list_esxi_hosts` | Read | List ESXi hosts | `vmware-aiops inventory hosts` |
-| `list_all_datastores` | Read | List datastores | `vmware-aiops inventory datastores` |
-| `list_all_clusters` | Read | List clusters | `vmware-aiops inventory clusters` |
-| `get_alarms` | Read | Active alarms | `vmware-aiops health alarms` |
-| `get_events` | Read | Recent events | `vmware-aiops health events` |
-| `vm_info` | Read | VM details | `vmware-aiops vm info <name>` |
-| `vm_power_on` | **Write** | Power on VM | `vmware-aiops vm power-on <name>` |
-| `vm_power_off` | **Write** | Power off VM | `vmware-aiops vm power-off <name>` |
+- **MCP-native tools** (Claude Code, Cursor): MCP first, CLI fallback
+- **All other tools**: CLI first (MCP not needed)
 
-All tools accept optional `target` parameter (e.g., `"home-esxi"`, `"prod-vcenter"`).
+> **Tip**: If your AI tool supports MCP, check whether `vmware-aiops` MCP server is loaded (`/mcp` in Claude Code). If not, configure it first — MCP provides the best hands-free experience.
 
-### MCP Direct Calling Pattern (Default)
+### CLI Examples
 
-When this skill is activated, **always use direct Python import** to call MCP tools:
+```bash
+# Activate venv first
+source /path/to/VMware-AIops/.venv/bin/activate
 
-```python
-# cd /path/to/VMware-AIops
+# Inventory
+vmware-aiops inventory vms --target home-esxi
+vmware-aiops inventory hosts --target home-esxi
 
-from mcp_server.server import (
-    list_virtual_machines,
-    list_esxi_hosts,
-    list_all_datastores,
-    list_all_clusters,
-    get_alarms,
-    get_events,
-    vm_info,
-    vm_power_on,
-    vm_power_off,
-)
+# Health
+vmware-aiops health alarms --target home-esxi
 
-# Read operations
-result = list_virtual_machines(target='home-esxi')
-alarms = get_alarms(target='home-vcenter')
-info = vm_info(vm_name='my-vm', target='home-esxi')
-
-# Write operations (require user confirmation)
-vm_power_on(vm_name='my-vm', target='home-esxi')
-vm_power_off(vm_name='my-vm', force=False, target='home-esxi')
+# VM operations
+vmware-aiops vm info my-vm --target home-esxi
+vmware-aiops vm power-on my-vm --target home-esxi
 ```
 
-**Calling priority:**
-1. ✅ Direct import from `mcp_server.server` (fastest, default)
-2. ⚠️ CLI fallback: `vmware-aiops inventory vms` (when import fails)
+### MCP Mode (Optional)
 
-### MCP Setup (Claude Code)
-
-Add to `~/.claude/settings.json`:
+For Claude Code / Cursor users who prefer structured tool calls, add to `~/.claude/settings.json`:
 
 ```json
 {
@@ -120,29 +103,18 @@ Add to `~/.claude/settings.json`:
 }
 ```
 
-### When to Fall Back to CLI
-
-- MCP server fails to start or crashes mid-session
-- Need operations not yet exposed via MCP (create, delete, snapshot, clone, migrate, vSAN, Aria, VKS)
-- Need daemon/scan features (`scan now`, `daemon start`)
-- Debugging connection issues (CLI gives more verbose output)
-
-```bash
-# Activate venv and run CLI
-source /path/to/VMware-AIops/.venv/bin/activate
-vmware-aiops inventory vms --target home-esxi
-```
+MCP exposes 20 tools: `list_virtual_machines`, `list_esxi_hosts`, `list_all_datastores`, `list_all_clusters`, `get_alarms`, `get_events`, `vm_info`, `vm_power_on`, `vm_power_off`, `browse_datastore`, `scan_datastore_images`, `list_cached_images`, `deploy_vm_from_ova`, `deploy_vm_from_template`, `deploy_linked_clone`, `attach_iso_to_vm`, `convert_vm_to_template`, `batch_clone_vms`, `batch_linked_clone_vms`, `batch_deploy_from_spec`. All accept optional `target` parameter.
 
 ## Architecture
 
 ```
 User (Natural Language)
   ↓
-AI CLI Tool (Claude Code / Gemini / Codex / Aider / Continue / Trae / Kimi)
+AI Tool (Claude Code / Aider / Gemini / Codex / Cursor / Trae / Kimi)
   ↓
-  ├─ MCP mode (default): MCP Server (stdio) ──→ pyVmomi ──→ vSphere API
+  ├─ CLI mode (default): vmware-aiops CLI ──→ pyVmomi ──→ vSphere API
   │
-  └─ CLI fallback: vmware-aiops CLI ──→ pyVmomi ──→ vSphere API
+  └─ MCP mode (optional): MCP Server (stdio) ──→ pyVmomi ──→ vSphere API
   ↓
 vCenter Server ──→ ESXi Clusters ──→ VMs
     or
@@ -200,7 +172,27 @@ ESXi Standalone ──→ VMs
 | Clone VM | `vm clone <name> --new-name <new>` | — | ✅ | ✅ |
 | vMotion | `vm migrate <name> --to-host <host>` | — | ✅ | ❌ |
 
-### 4. vSAN Management
+### 4. VM Deployment & Provisioning
+
+| Operation | Command | Speed | vCenter | ESXi |
+|-----------|---------|:-----:|:-------:|:----:|
+| Deploy from OVA | `deploy ova <path> --name <vm>` | Minutes | ✅ | ✅ |
+| Deploy from Template | `deploy template <tmpl> --name <vm>` | Minutes | ✅ | ✅ |
+| Linked Clone | `deploy linked-clone --source <vm> --snapshot <snap> --name <new>` | Seconds | ✅ | ✅ |
+| Attach ISO | `deploy iso <vm> --iso "[ds] path/to.iso"` | Instant | ✅ | ✅ |
+| Convert to Template | `deploy mark-template <vm>` | Instant | ✅ | ✅ |
+| Batch Clone | `deploy batch-clone --source <vm> --count <n>` | Minutes | ✅ | ✅ |
+| Batch Deploy (YAML) | `deploy batch spec.yaml` | Auto | ✅ | ✅ |
+
+### 5. Datastore Browser
+
+| Feature | vCenter | ESXi | Details |
+|---------|:-------:|:----:|---------|
+| Browse Files | ✅ | ✅ | List files/folders in any datastore path |
+| Scan Images | ✅ | ✅ | Discover ISO, OVA, OVF, VMDK across all datastores |
+| Local Cache | ✅ | ✅ | Registry at `~/.vmware-aiops/image_registry.json` |
+
+### 6. vSAN Management
 
 | Feature | Details |
 |---------|---------|
@@ -211,7 +203,7 @@ ESXi Standalone ──→ VMs
 
 > Requires pyVmomi 8.0.3+ (vSAN SDK merged). For older versions, install the standalone vSAN Management SDK.
 
-### 5. Aria Operations (VCF Operations)
+### 7. Aria Operations (VCF Operations)
 
 | Feature | Details |
 |---------|---------|
@@ -223,7 +215,7 @@ ESXi Standalone ──→ VMs
 
 > REST API at `/suite-api/`. Auth: `vRealizeOpsToken`. Rebranded as VCF Operations in VCF 9.0.
 
-### 6. vSphere Kubernetes Service (VKS)
+### 8. vSphere Kubernetes Service (VKS)
 
 | Feature | Details |
 |---------|---------|
@@ -234,7 +226,7 @@ ESXi Standalone ──→ VMs
 
 > Kubernetes-native API via kubectl/kubeconfig. VKS 3.6+ uses Cluster API specification.
 
-### 7. Scheduled Scanning & Notifications
+### 9. Scheduled Scanning & Notifications
 
 | Feature | Details |
 |---------|---------|
@@ -309,6 +301,20 @@ vmware-aiops vm snapshot-revert <vm-name> --name <snap-name>
 vmware-aiops vm snapshot-delete <vm-name> --name <snap-name>
 vmware-aiops vm clone <vm-name> --new-name <name>
 vmware-aiops vm migrate <vm-name> --to-host <host>
+
+# Deploy
+vmware-aiops deploy ova <path> --name <vm-name> [--datastore <ds>] [--network <net>]
+vmware-aiops deploy template <template-name> --name <vm-name> [--datastore <ds>]
+vmware-aiops deploy linked-clone --source <vm> --snapshot <snap> --name <new-name>
+vmware-aiops deploy iso <vm-name> --iso "[datastore] path/file.iso"
+vmware-aiops deploy mark-template <vm-name>
+vmware-aiops deploy batch-clone --source <vm> --count <n> [--prefix <prefix>]
+vmware-aiops deploy batch <spec.yaml>
+
+# Datastore
+vmware-aiops datastore browse <ds-name> [--path <subdir>]
+vmware-aiops datastore scan-images [--target <name>]
+vmware-aiops datastore images [--type ova|iso|vmdk] [--ds <name>]
 
 # vSAN
 vmware-aiops vsan health [--target <name>]

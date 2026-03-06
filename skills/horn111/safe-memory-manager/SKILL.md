@@ -1,7 +1,7 @@
 ---
 name: safe-memory-manager
-version: 1.0.5
-description: "A secure memory interface for AI agents. Sanitizes inputs to prevent prompt injection and includes a verifiable ISNAD manifest."
+version: 1.0.6
+description: "Standard utility for secure memory operations. Includes data integrity checks and input cleaning."
 author: LeoAGI
 metadata: { "openclaw": { "emoji": "🛡️", "category": "security" } }
 ---

@@ -1,73 +1,51 @@
 ---
 name: whisper-tailnet-api
-description: Consume the shared Whisper speech-to-text API over Tailnet at http://100.92.116.99:19001. Use when an agent needs remote transcription/translation via /transcribe, health checks, request examples, model/task/language form parameters, or troubleshooting response/output.
+description: Consume the shared Whisper speech-to-text API over Tailnet at http://100.92.116.99:8765 using OpenAI-compatible audio transcription endpoint (/v1/audio/transcriptions). Use when an agent needs remote transcription checks, request examples, language hints, timing tests, or troubleshooting response/output.
 ---
 
-# Whisper STT API over Tailnet
+# Whisper STT API over Tailnet (OpenAI-compatible)
 
-Use this guide on any host to call the shared Whisper transcription server.
+Use this guide to call the shared Whisper server.
 
 ## Endpoint
 
-- **Base URL:** `http://100.92.116.99:19001`
+- **Base URL:** `http://100.92.116.99:8765`
 - **Health:** `GET /health`
-- **Transcribe:** `POST /transcribe` (multipart form)
+- **Transcribe:** `POST /v1/audio/transcriptions` (raw binary body)
 
 ## Quick health check
 
 ```bash
-curl -sS http://100.92.116.99:19001/health
+curl -sS http://100.92.116.99:8765/health
 ```
 
-## Transcribe audio (default model: turbo)
+## Transcribe audio (recommended)
 
 ```bash
-curl -sS -X POST "http://100.92.116.99:19001/transcribe" \
-  -F "file=@/path/to/audio.mp3" \
-  -F "model=turbo" \
-  -F "task=transcribe"
+curl -sS -X POST \
+  --data-binary @/path/to/audio.wav \
+  "http://100.92.116.99:8765/v1/audio/transcriptions?ext=.wav"
 ```
 
-## Translate to English
+## Time the request
 
 ```bash
-curl -sS -X POST "http://100.92.116.99:19001/transcribe" \
-  -F "file=@/path/to/audio.m4a" \
-  -F "model=turbo" \
-  -F "task=translate"
-```
-
-## Optional language hint
-
-```bash
-curl -sS -X POST "http://100.92.116.99:19001/transcribe" \
-  -F "file=@/path/to/audio.wav" \
-  -F "model=turbo" \
-  -F "task=transcribe" \
-  -F "language=ar"
-```
-
-## Request fields
-
-- `file` (required): audio file upload
-- `model` (optional): `turbo`, `base`, `small`, `medium`, `large`
-- `task` (optional): `transcribe` or `translate`
-- `language` (optional): language hint (example: `en`, `fr`, `ar`)
-
-## Response shape
-
-```json
-{
-  "ok": true,
-  "model": "turbo",
-  "task": "transcribe",
-  "language": "en",
-  "text": "transcribed text...",
-  "segments": []
-}
+time curl -sS -X POST \
+  --data-binary @/path/to/audio.wav \
+  "http://100.92.116.99:8765/v1/audio/transcriptions?ext=.wav"
 ```
 
 ## Notes
 
-- Default server model is `turbo` unless overridden.
-- If transcription fails, server returns error JSON with stderr/stdout tail for debugging.
+- Prefer this OpenAI-compatible route over `/transcribe` on this host.
+- Pass file type via `ext` query (example: `.wav`, `.mp3`, `.m4a`).
+- Use `language` query when known to improve accuracy.
+
+## Expected response shape
+
+```json
+{
+  "text": "transcribed text...",
+  "model": "turbo"
+}
+```

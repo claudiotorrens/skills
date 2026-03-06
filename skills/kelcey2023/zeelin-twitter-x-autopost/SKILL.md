@@ -1,11 +1,11 @@
 ---
-name: twitter-x-autopost
-description: "Twitter/X 自动发布 — 通过浏览器操作网页版 Twitter/X，无需 API Key。支持发推、爬热点、AI 撰写推文、定时发布。用户自行登录，Agent 负责内容创作和发布操作。零门槛上手，中英文双语支持。Keywords: auto tweet, scheduled post, trending, browser automation, social media, no API key needed."
+name: ZeeLin Twitter/X AutoPost
+description: "ZeeLin Twitter/X 自动发布 — 通过浏览器操作网页版 Twitter/X，无需 API Key。支持发推、爬热点、AI 撰写推文、定时发布。用户自行登录，Agent 负责内容创作和发布操作。零门槛上手，中英文双语支持。Keywords: Zeelin, ZeeLin, auto tweet, scheduled post, trending, browser automation, social media, no API key needed."
 user-invocable: true
 metadata: {"openclaw":{"emoji":"🐦","skillKey":"twitter-x-autopost"}}
 ---
 
-# Twitter/X 自动发布 🐦
+# ZeeLin Twitter/X 自动发布 🐦
 
 通过浏览器操作网页版 Twitter/X — 无需 API Key，用户登录后 Agent 自动完成发推。
 

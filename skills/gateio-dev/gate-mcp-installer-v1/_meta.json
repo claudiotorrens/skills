@@ -1,0 +1,11 @@
+{
+  "owner": "gateio-dev",
+  "slug": "gate-mcp-installer-v1",
+  "displayName": "Gate mcp Installer-v1",
+  "latest": {
+    "version": "1.1.0",
+    "publishedAt": 1772791629344,
+    "commit": null
+  },
+  "history": []
+}

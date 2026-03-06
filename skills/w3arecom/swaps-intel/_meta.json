@@ -3,11 +3,16 @@
   "slug": "swaps-intel",
   "displayName": "Swaps Intel",
   "latest": {
-    "version": "1.1.2",
-    "publishedAt": 1772629482659,
-    "commit": "https://github.com/openclaw/skills/commit/a3012e3ef4073a51309c46d92b865fc5d534f90b"
+    "version": "1.2.0",
+    "publishedAt": 1772687323361,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.1.2",
+      "publishedAt": 1772629482659,
+      "commit": "https://github.com/openclaw/skills/commit/a3012e3ef4073a51309c46d92b865fc5d534f90b"
+    },
     {
       "version": "1.1.0",
       "publishedAt": 1772087707540,

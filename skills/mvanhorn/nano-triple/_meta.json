@@ -3,9 +3,15 @@
   "slug": "nano-triple",
   "displayName": "Nano Triple",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1769454606776,
-    "commit": "https://github.com/clawdbot/skills/commit/35b3c86399350517d081f23ef86399dbd39e85b1"
+    "version": "1.2.0",
+    "publishedAt": 1772850434110,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1769454606776,
+      "commit": "https://github.com/clawdbot/skills/commit/35b3c86399350517d081f23ef86399dbd39e85b1"
+    }
+  ]
 }

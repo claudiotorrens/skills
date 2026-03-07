@@ -1,0 +1,11 @@
+{
+  "owner": "bigbubbaagent-bot",
+  "slug": "miro-mcp",
+  "displayName": "Miro MCP Integration",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772844721421,
+    "commit": null
+  },
+  "history": []
+}

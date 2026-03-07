@@ -3,11 +3,16 @@
   "slug": "aetherlang",
   "displayName": "AetherLang Ω V3",
   "latest": {
-    "version": "2.0.2",
-    "publishedAt": 1772876829141,
-    "commit": "https://github.com/openclaw/skills/commit/5336863ec017030fcf87297bd61b371516a1df17"
+    "version": "2.0.3",
+    "publishedAt": 1772877161437,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.0.2",
+      "publishedAt": 1772876829141,
+      "commit": "https://github.com/openclaw/skills/commit/5336863ec017030fcf87297bd61b371516a1df17"
+    },
     {
       "version": "3.0.2",
       "publishedAt": 1771376542448,

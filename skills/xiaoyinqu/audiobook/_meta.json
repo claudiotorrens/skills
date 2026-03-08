@@ -3,9 +3,15 @@
   "slug": "audiobook",
   "displayName": "Audiobook",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1772781898350,
-    "commit": "https://github.com/openclaw/skills/commit/4d9bdf662df05542366f72b85cc295988d98e971"
+    "version": "1.0.2",
+    "publishedAt": 1772866144868,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1772781898350,
+      "commit": "https://github.com/openclaw/skills/commit/4d9bdf662df05542366f72b85cc295988d98e971"
+    }
+  ]
 }

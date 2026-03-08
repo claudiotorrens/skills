@@ -1,0 +1,11 @@
+{
+  "owner": "zt1314p-design",
+  "slug": "tencentcloud-ocr-questionmarkagent",
+  "displayName": "TencentCloud QuestionMark OCR",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1772962242998,
+    "commit": null
+  },
+  "history": []
+}

@@ -3,9 +3,15 @@
   "slug": "ampersend",
   "displayName": "ampersend",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772635546930,
-    "commit": "https://github.com/openclaw/skills/commit/afc3058a4bb92f619e16126bce339c39560a3c29"
+    "version": "1.0.1",
+    "publishedAt": 1772825638100,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772635546930,
+      "commit": "https://github.com/openclaw/skills/commit/afc3058a4bb92f619e16126bce339c39560a3c29"
+    }
+  ]
 }

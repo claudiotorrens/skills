@@ -3,11 +3,16 @@
   "slug": "chat-history-analyzer",
   "displayName": "Chat History Analyzer",
   "latest": {
-    "version": "1.0.3",
-    "publishedAt": 1772370454269,
-    "commit": "https://github.com/openclaw/skills/commit/e98d34263b3b19df7b0f3385631c777a13fcb7fb"
+    "version": "1.0.5",
+    "publishedAt": 1772948011732,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.3",
+      "publishedAt": 1772370454269,
+      "commit": "https://github.com/openclaw/skills/commit/e98d34263b3b19df7b0f3385631c777a13fcb7fb"
+    },
     {
       "version": "1.0.1",
       "publishedAt": 1772197387833,

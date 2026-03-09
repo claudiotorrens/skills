@@ -1,0 +1,11 @@
+{
+  "owner": "cndaqiang",
+  "slug": "ollama-web-search",
+  "displayName": "Ollama Web Search",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1772957481640,
+    "commit": null
+  },
+  "history": []
+}

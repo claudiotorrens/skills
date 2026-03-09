@@ -1,0 +1,11 @@
+{
+  "owner": "mazvaris",
+  "slug": "hello-test",
+  "displayName": "Hello Test",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773002848126,
+    "commit": null
+  },
+  "history": []
+}

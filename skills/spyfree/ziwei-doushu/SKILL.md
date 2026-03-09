@@ -1,11 +1,18 @@
 ---
 name: ziwei-doushu
-description: 紫微斗数专业排盘技能（框架化解读版）。默认东八区北京口径（Asia/Shanghai, longitude=120.0），全离线运行（不联网、无 headless 浏览器依赖）；排盘图可选且失败不阻断，输出“排盘事实 + 传统经验框架”供后续二次判断。
+description: Professional Ziwei Doushu consultation skill with offline, Beijing-standard calculation rules. Use when the user wants a polished Ziwei report from birth date and time, including life palace structure, twelve palaces, four transformations, major luck cycles, yearly triggers, optional chart images, and a clear split between chart facts and traditional interpretation.
 ---
 
 # Ziwei Doushu
 
-推荐命令：
+Generate a **professional Ziwei Doushu reading** with a clear split between:
+- chart facts
+- traditional interpretation framework
+- practical trend summary
+
+This skill is designed to feel more like a **clean analyst-style consultation** than a mystical word dump.
+
+## Recommended Command
 
 ```bash
 python scripts/ziwei_chart.py \
@@ -18,45 +25,59 @@ python scripts/ziwei_chart.py \
   --format markdown
 ```
 
-## 默认口径
-- 时区：`Asia/Shanghai`
-- 经度：`120.0`
-- 引擎：`py`
-- 报告默认：优先尝试输出 `JPG` 排盘图（依赖缺失会自动跳过，不影响文本报告）
+## Default Standard
 
-## 常用参数
-- `--engine py|js|dual`：主引擎/备用引擎/双引擎校验
-- `--template lite|pro|executive`：输出密度
-- `--chart none|svg|jpg`：是否输出图盘
-- `--chart-quality 1-100`：JPG 质量，默认 `92`
-- `--chart-backend auto|cairosvg`：JPG 渲染后端
-  - `auto`：使用 `cairosvg`（纯离线、无浏览器）
-- `--format markdown|json`：输出格式
+- Timezone: `Asia/Shanghai`
+- Longitude: `120.0`
+- Default engine: `py`
+- Optional chart export: `jpg` when supported, otherwise text-only output remains valid
 
-## 输出结构
-1. 排盘口径（时区、经度、统一计算时间）
-2. 排盘事实（命身宫、十二宫、三方四正、四化、大限）
-3. 传统研判框架（结论 + 盘面 + 经验，不写死具体建议）
-4. 方法论来源（便于后续二次解读）
+## Deliverables
 
-## 依赖
-```bash
-python -m venv .venv
-.venv/bin/pip install -U iztro-py
-npm install iztro
-```
+A strong output should include:
+1. Calculation standard (timezone / longitude / unified calculation time)
+2. Chart facts
+   - 命宫 / 身宫
+   - 十二宫
+   - 主星组合
+   - 三方四正
+   - 四化
+   - 大限 / 流年触发
+3. Interpretation framework
+   - what the structure suggests
+   - where the reading is robust
+   - where timing sensitivity matters
+4. Practical summary
+   - career
+   - relationships
+   - money
+   - health / energy management
+   - current-year focus and risk boundary
 
-若需 JPG 导出，再安装：
-```bash
-.venv/bin/pip install -U cairosvg pillow
-```
+## Common Parameters
 
-如果未安装图片依赖或图片生成失败，skill 会自动跳过排盘图，不影响文本报告输出。
+- `--engine py|js|dual`: primary / fallback / dual-check
+- `--template lite|pro|executive`: output density
+- `--chart none|svg|jpg`: chart rendering mode
+- `--chart-quality 1-100`: JPG quality, default `92`
+- `--chart-backend auto|cairosvg`: offline backend
+- `--format markdown|json`: final output format
 
-最低建议版本：
-- `iztro-py >= 0.3.4`（Python 主引擎）
-- `iztro >= 2.5.7`（JS 备用引擎）
+## Output Style Guardrails
 
-## 参考
+- Separate **chart facts** from **traditional interpretation**.
+- Present conclusions as trend / structure, not deterministic destiny claims.
+- Make method transparency part of the deliverable.
+- If dual-engine results differ, surface the discrepancy instead of hiding it.
+- If chart export fails, continue with the report.
+
+## Scope Boundary
+
+- Offline only; no network dependency.
+- Produce interpretive analysis only; not medical, legal, or financial advice.
+- Optional image export should enhance delivery, not gate it.
+
+## References
+
 - `references/mapping.md`
 - `references/interpretation-framework.md`

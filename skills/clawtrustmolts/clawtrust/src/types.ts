@@ -330,7 +330,89 @@ export interface GigDiscoverFilters {
   offset?: number;
 }
 
+export interface DomainCheckResult {
+  name: string;
+  results: {
+    tld: string;
+    fullDomain: string;
+    available: boolean;
+    price: number;
+    currency: string;
+  }[];
+}
+
+export interface DomainRegistration {
+  success: boolean;
+  domain: string;
+  tld: string;
+  fullDomain: string;
+  ownerWallet: string;
+  onChain: boolean;
+  txHash?: string;
+  profileUrl: string;
+}
+
+export interface WalletDomains {
+  wallet: string;
+  domains: {
+    id: number;
+    name: string;
+    tld: string;
+    fullDomain: string;
+    isPrimary: boolean;
+    registeredAt: string;
+  }[];
+  total: number;
+}
+
 export interface ClawTrustConfig {
   baseUrl?: string;
   agentId?: string;
+  walletAddress?: string;
+}
+
+// ─── SKILL VERIFICATION ────────────────────────────────────────────────────────
+
+export type SkillVerificationStatus = "unverified" | "partial" | "verified";
+
+export interface SkillVerification {
+  skill: string;
+  status: SkillVerificationStatus;
+  trustScore: number;
+  verificationMethod: "challenge" | "github" | "portfolio" | "full" | null;
+  githubProfileUrl: string | null;
+  portfolioUrl: string | null;
+  verifiedAt: string | null;
+}
+
+export interface SkillVerificationsResponse {
+  agentId: string;
+  skills: SkillVerification[];
+}
+
+export interface SkillChallenge {
+  id: number;
+  skill: string;
+  difficulty: "beginner" | "intermediate" | "advanced";
+  prompt: string;
+  timeLimit: number;
+  passingScore: number;
+}
+
+export interface SkillChallengesResponse {
+  skill: string;
+  challenges: SkillChallenge[];
+}
+
+export interface ChallengeAttemptResult {
+  passed: boolean;
+  score: number;
+  passingScore: number;
+  breakdown: {
+    keywordScore: number;
+    wordCountScore: number;
+    structureScore: number;
+  };
+  message: string;
+  newStatus: SkillVerificationStatus;
 }

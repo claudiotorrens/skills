@@ -3,11 +3,16 @@
   "slug": "clawtrust",
   "displayName": "Clawtrust",
   "latest": {
-    "version": "1.7.0",
-    "publishedAt": 1772704113991,
-    "commit": "https://github.com/openclaw/skills/commit/8f4f41a31c4165800e809f4b82d32ecd101dd3bb"
+    "version": "1.9.0",
+    "publishedAt": 1773043269006,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.7.0",
+      "publishedAt": 1772704113991,
+      "commit": "https://github.com/openclaw/skills/commit/8f4f41a31c4165800e809f4b82d32ecd101dd3bb"
+    },
     {
       "version": "1.4.5",
       "publishedAt": 1772492315100,

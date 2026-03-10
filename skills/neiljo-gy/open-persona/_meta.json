@@ -1,13 +1,18 @@
 {
   "owner": "neiljo-gy",
   "slug": "open-persona",
-  "displayName": "openpersona",
+  "displayName": "Open Persona",
   "latest": {
-    "version": "0.15.1",
-    "publishedAt": 1772270308262,
-    "commit": "https://github.com/openclaw/skills/commit/16e52b89368371d30513767c112c077b46c7dfc0"
+    "version": "0.16.1",
+    "publishedAt": 1772978654331,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.15.1",
+      "publishedAt": 1772270308262,
+      "commit": "https://github.com/openclaw/skills/commit/16e52b89368371d30513767c112c077b46c7dfc0"
+    },
     {
       "version": "0.14.3",
       "publishedAt": 1772031165201,

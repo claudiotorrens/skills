@@ -3,11 +3,16 @@
   "slug": "bria-ai",
   "displayName": "Bria Ai",
   "latest": {
-    "version": "1.2.3",
-    "publishedAt": 1772978620366,
-    "commit": "https://github.com/openclaw/skills/commit/30fbe89c11dd6c868e0df45008df2b73de63272e"
+    "version": "1.2.4",
+    "publishedAt": 1773175296101,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.2.3",
+      "publishedAt": 1772978620366,
+      "commit": "https://github.com/openclaw/skills/commit/30fbe89c11dd6c868e0df45008df2b73de63272e"
+    },
     {
       "version": "1.2.2",
       "publishedAt": 1772699018697,

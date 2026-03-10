@@ -1,61 +1,81 @@
 # openclaw-help
 
-Enhanced `/help` command for OpenClaw.
+> OpenClaw plugin providing a config-driven `/shortcuts` command with safe placeholder defaults.
 
-## Security note
+**Current version:** `0.2.0`
 
-This plugin is intentionally **generic by default**. Do not hardcode personal commands, group names, phone numbers, or private workflow details into the repository.
+---
 
-Instead, customize the output via plugin config.
+## What it does
 
-## Install (dev)
+Registers `/shortcuts` (note: `/help` is a built-in OpenClaw command and cannot be overridden by plugins).
 
-```bash
-openclaw plugins install -l ~/.openclaw/workspace/openclaw-help
-openclaw gateway restart
-```
+Prints:
+- Generic placeholder sections by default
+- Custom sections injected via local config
 
-## ClawHub
+**Security design:** The repo ships with placeholder-only content. All personal shortcuts, project names, command mappings live in your local `openclaw.json` config — never in the repo.
+
+---
+
+## Install
 
 ```bash
 clawhub install openclaw-help
 ```
 
+Or local development:
+```bash
+openclaw plugins install -l ~/.openclaw/workspace/skills/openclaw-help
+openclaw gateway restart
+```
+
+---
+
 ## Configure
 
-The repo stays placeholder-only. You customize `/help` locally via plugin config.
+In `~/.openclaw/openclaw.json` → `plugins.entries.openclaw-help.config`:
 
-Example (using **public** projects as references):
-
-```json
+```json5
 {
-  "plugins": {
-    "entries": {
-      "openclaw-help": {
-        "enabled": true,
-        "config": {
-          "includeTips": true,
-          "sections": [
-            {
-              "title": "Public example projects",
-              "lines": [
-                "- AAHP - protocol + handoff structure example",
-                "- BMAS - research project example"
-              ]
-            },
-            {
-              "title": "Your shortcuts (fill in locally)",
-              "lines": [
-                "- /<project> - your project shortcut",
-                "- /<command> - your custom command"
-              ]
-            }
-          ]
-        }
-      }
+  "enabled": true,
+  "includeTips": false,
+  "sections": [
+    {
+      "title": "📁 Projects",
+      "lines": [
+        "/<project>   - Your project shortcut"
+      ]
+    },
+    {
+      "title": "🛠 Tools",
+      "lines": [
+        "/<command>   - Your custom command"
+      ]
     }
-  }
+  ]
 }
 ```
 
-Security reminder: keep private commands, phone numbers, group IDs, tokens, and internal workflows out of the repo. Store them only in local config.
+---
+
+## OPSEC rule
+
+- Never put personal commands, phone numbers, group IDs, tokens, domains, or internal workflows into this repo
+- Keep all real shortcuts in local config only
+
+---
+
+## Changelog
+
+### v0.2.0
+- **fix:** Register `/shortcuts` instead of `/help` (`/help` is a built-in command, cannot be overridden)
+- **fix:** Return format changed from `{ ok, message }` to `{ text }` (gateway-compatible)
+- **feat:** `requireAuth: false` — uses gateway-level `commands.allowFrom` for authorization
+- **feat:** Initial public release on GitHub + npm + ClawHub
+
+---
+
+## License
+
+MIT

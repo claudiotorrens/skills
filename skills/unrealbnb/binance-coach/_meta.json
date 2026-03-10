@@ -3,11 +3,16 @@
   "slug": "binance-coach",
   "displayName": "BinanceCoach",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773142441851,
-    "commit": "https://github.com/openclaw/skills/commit/59d864cf3c70100884a4b34f0d4a69bcc1047f6e"
+    "version": "1.0.8",
+    "publishedAt": 1773148244748,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773142441851,
+      "commit": "https://github.com/openclaw/skills/commit/59d864cf3c70100884a4b34f0d4a69bcc1047f6e"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773141758002,

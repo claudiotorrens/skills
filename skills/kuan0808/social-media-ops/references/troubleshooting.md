@@ -40,10 +40,10 @@ Run `openclaw doctor` to verify connectivity.
 
 ## Image Generation Fails
 
-**Symptom:** Designer's image generation tool returns errors
+**Symptom:** Creator's image generation tool returns errors
 **Checks:**
 1. Is the API key set? (e.g., `GEMINI_API_KEY` for nano-banana-pro)
-2. Is the skill installed in the Designer's workspace?
+2. Is the skill installed in the Creator's workspace?
 3. Check rate limits / quota
 4. Try simplifying the generation prompt
 
@@ -56,9 +56,9 @@ Run `openclaw doctor` to verify connectivity.
 3. Wait 5 minutes for auto-reindex
 4. Check that shared/ symlinks are valid in each workspace
 
-## Exec Fails for Designer/Engineer (Permission Denied)
+## Exec Fails for Creator/Engineer (Permission Denied)
 
-**Symptom:** Designer's image generation or Engineer's CLI tools fail with exec approval errors
+**Symptom:** Creator's image generation or Engineer's CLI tools fail with exec approval errors
 **Cause:** v2026.2.24+ restricts safe-bin trusted directories to `/bin` and `/usr/bin` only
 **Solution:** Add tool paths to `openclaw.json`:
 ```json

@@ -14,12 +14,13 @@ The social-media-ops system uses a strict **star topology** with persistent A2A 
                     |  - Owner interface    |
                     |  - shared/ writes     |
                     +-----------+-----------+
-                         /  |  |  \  \  \
+                         /  |  |  \
                   sessions_send (persistent)
-                       /    |  |    \  \  \
-              +------+  +---+  +--+  +--+--+  +------+  +--------+
-              |Rsrchr|  |Cont| |Des| |Oper |  | Engr |  |Reviewer|
-              +------+  +----+ +---+ +-----+  +------+  +--------+
+                       /    |  |    \
+              +-------+  +------+  +------+  +------+
+              |Creator|  |Worker|  |Rsrchr|  | Engr |
+              +-------+  +------+  +------+  +------+
+                              + Reviewer (spawned on-demand)
 ```
 
 ## Why Star Topology?
@@ -64,7 +65,7 @@ Owner sends message → Leader receives → Analyzes intent →
 
 ## Parallelism Strategy
 
-- **Independent tasks** → run in parallel across different agents (e.g., Content writes copy while Designer creates visuals)
+- **Independent tasks** → run in parallel across different agents (e.g., Researcher gathers data while Creator produces content)
 - **Dependent tasks** → run in sequence (e.g., Research → Content → Review)
 - **Same agent** → always serial (one task at a time per agent)
 - **Cross-agent** → parallel by default

@@ -77,14 +77,15 @@ After completing a review, you MUST:
    Message:
    [TASK_CALLBACK:{Task ID from the brief}]
    agent: reviewer
-   signal: [APPROVE] or [REVISE]
+   signal: [APPROVE] or [REVISE] or [NEEDS_INFO]
    output: {review summary + specific issues/strengths}
    ```
 2. Include `[KB_PROPOSE]` (if you have shared knowledge update suggestions)
 
 **Critical rules:**
-- **Session key**: Use the `Callback to` value from the brief. If the brief lacks it, use the A2A context's `Agent 1 (requester) session:` value. Last resort fallback: `"agent:main:main"`. **NEVER** use `"main"` — that resolves to your own session, not Leader's.
+- **Session key**: Use the `Callback to` value from the brief. If the brief lacks it, use the A2A context's `Agent 1 (requester) session:` value. Last resort fallback: `"agent:leader:main"`. **NEVER** use `"main"` — that resolves to your own session, not Leader's.
 - Callback is your **only** way to report back to Leader. No callback = Leader doesn't know you finished.
+- Callback must include required fields: task_id, agent, signal, output (files optional).
 - Reviewer does not write memory files. Review results are recorded by Leader.
 
 ### Context Loss Detection
@@ -93,7 +94,7 @@ If you receive a review-related `sessions_send` but cannot recall the original b
 
 1. Send `[CONTEXT_LOST]` signal to Leader:
    ```
-   sessions_send to {Callback to value or agent:main:main} with timeoutSeconds: 0
+   sessions_send to {Callback to value or agent:leader:main} with timeoutSeconds: 0
    Message:
    [CONTEXT_LOST]
    agent: reviewer

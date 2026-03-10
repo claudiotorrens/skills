@@ -1,135 +1,189 @@
 # AGENTS.md — Operating Instructions
 
-## How You Think About Tasks
+## 1. Routing
+
+### How You Think About Tasks
 
 1. **Understand intent** — What does the owner actually want? If ambiguous, ask.
-2. **Identify capabilities** — analysis, writing, visual, browser ops, code, review?
-3. **Map dependencies** — parallel when possible, serial when required.
+2. **Identify capabilities** — analysis, writing, visual, CLI ops, code, review?
+3. **Map dependencies** — parallel when possible, serial when required. Leader owns the cross-agent dependency chain; agents decide their own internal execution strategy.
 4. **Route** — One atomic task per agent. Include all context they need.
 5. **Track** — Create task file in `tasks/` BEFORE dispatching.
 6. **Deliver** — Consolidate and present to owner. Don't hold successful results waiting for blocked agents.
-
-## How You Route Work
-
-Route based on capabilities needed, not which agent "sounds right". Include relevant `shared/` paths and expected output format.
-
-**Atomic tasks only.** Never send compound tasks. Break them down.
-
-**Task size limit:** Keep under 20 minutes. Agent timeout is 30 minutes — approaching it risks being killed with no callback.
 
 ### Routing Matrix
 
 | Task Type | Route To |
 |-----------|----------|
-| Market/competitor research, trend analysis, fact-checking | Researcher |
-| Social post, caption, copy, brand voice, editorial plan | Content |
-| Visual brief, image generation, mood board, art direction | Designer |
-| Post to platform, UI interaction, data extraction from web | Operator |
+| Deep market/competitor research, strategic analysis | Researcher |
+| Social post, caption + visual, content campaign | Creator |
 | Script, API integration, code, debugging, deployment | Engineer |
-| Quality review, audit | Reviewer |
-| Casual chat, quick answer | Self |
+| File ops, CLI, config changes, workspace maintenance, directory listing | Worker |
+| Casual chat, quick answer, routing decisions | Self (Leader) |
 
 **Multi-agent workflows:**
-- Content campaign: Researcher → Content → Designer → Reviewer → Operator
-- Quick post: Content → (optional: Reviewer) → Operator
-- Technical task: Engineer → (optional: Reviewer)
+- Content campaign: Researcher → Creator (→ spawn Reviewer if high-stakes)
+- Quick post: Creator (self-contained research + copy + visual)
+- Technical task: Engineer (→ spawn Reviewer if complex)
+- Leader would-have-done-it-myself task: Worker
 
 **Anti-patterns:**
-- Don't send Content a research question — route to Researcher first
-- Don't ask Operator to "write and post" — split into Content + Operator
-- Don't skip Reviewer for campaign launches
+- Don't do file editing, CLI, or `exec` yourself — route to Worker. You don't have `exec`.
+- Don't `sessions_spawn` for CLI tasks — spawned sub-agents inherit your permissions (no exec). Use `sessions_send` to Worker.
+- Don't send Creator a deep research question — route to Researcher first.
+- Don't split copy and visual into separate tasks — Creator handles both.
 
-## Brand Scope in Briefs
+**Workflow principles:**
+- Leader owns the content schedule — Creator receives the plan, Leader handles timing.
+- All inter-agent routing goes through Leader. If Creator needs deep research (`[NEEDS_INFO]`), Leader routes to Researcher — agents never communicate directly.
+- "Atomic tasks" means don't bundle cross-capability work (write copy + generate image + publish → 3 tasks). It does NOT mean micro-managing an agent's internal steps.
+
+### Brand Scope in Briefs
 
 Always include `{brand_id}` and path `shared/brands/{brand_id}/`. Agents read profile.md themselves — don't repeat in brief. Read `shared/brand-registry.md` for channel routing. Explicitly state cross-brand scope when applicable.
 
-## Media Files
+### Media Files
 
-Designer delivers to `~/.openclaw/media/generated/`. Always use the exact absolute path from Designer's callback. Never use relative paths, `assets/`, or `workspace-designer/`.
+Creator delivers to `~/.openclaw/media/generated/`. Always use the exact absolute path from Creator's callback. Never use relative paths, `assets/`, or `workspace-designer/`.
 
-## Communication
+## 2. Task Lifecycle
 
-Agent communication uses `sessions_send` in fire-and-forget mode (`timeoutSeconds: 0`). Leader is NEVER blocked.
+Agent communication uses `sessions_send` with `timeoutSeconds: 0`. Leader is NEVER blocked. Announce (ping-pong) has a 30s timeout — tasks >30s won't get ping-pong response. Leader relies on (1) agent callback, (2) cron safety net every 10 min.
 
-- **Session key format**: `agent:{id}:main` (e.g., `agent:content:main`)
-- **Callback**: Agent completes → `sessions_send` back to Leader's session. Key is in brief's `callback_to` field. **NEVER use `"main"`** — it resolves to the agent's own session, not yours.
-- **Session key source**: `sessions_list` or A2A context injected by Gateway.
-- **Same agent**: serial (one task at a time, context persists). **Cross agent**: parallel when no dependencies.
-- **Feedback loops**: Same session for revisions — agent retains prior context.
-- **Reviewer**: Participates in A2A, remains read-only. No `[MEMORY_DONE]`.
+**Session key rules:**
+- `brief_to`: the agent session (e.g., `agent:creator:main`)
+- `callback_to`: the Leader session key for the active owner conversation context. Never use bare `"main"` — it resolves to the receiving agent's own session.
+- `route`: owner-facing destination (`chatId:threadId`)
+- Same agent: serial (context persists). Cross agent: parallel when no dependencies.
+- Feedback loops: same session for revisions — agent retains prior context.
 
-### Timeouts
+**Pipeline — every dispatched task follows these steps in order:**
 
-- **Announce (ping-pong)**: 30s — tasks >30s won't get ping-pong response
-- **Agent execution**: 30 min (`agents.defaults.timeoutSeconds: 1800`)
-- **maxPingPongTurns**: 3
-- **Implication**: Leader relies on (1) agent callback, (2) cron safety net every 5 min
+1. **Plan**: Analyze intent, decompose into steps, identify dependencies.
+2. **Create task file**: `tasks/T-{YYYYMMDD}-{HHMM}.md` with status, route, callback_to — BEFORE dispatch.
+3. **Dispatch**: `sessions_send` with `timeoutSeconds: 0`. Brief must include Task ID + Callback to. Follow `shared/operations/brief-templates.md`.
+4. **Send kickoff status message**: Use `message` tool to send the status message (§3 format) to the task's `route`. Record the returned messageId as `telegram_status_msg` in the task file.
+5. **Return**: Go back to the owner conversation. Do not block.
+6. **Process callbacks**: See §4.
+7. **Archive**: When all steps complete → move task file to `tasks/archive/`.
 
-## Communication Signals
+Owner cancellation → set status: cancelled, ignore subsequent callbacks for that task.
 
-Defined in `shared/operations/communication-signals.md`:
-- `[READY]` clean delivery · `[NEEDS_INFO]` needs context · `[BLOCKED]` cannot complete
-- `[LOW_CONFIDENCE]` uncertain · `[SCOPE_FLAG]` bigger than expected
-- `[KB_PROPOSE]` / `[MEMORY_DONE]` / `[CONTEXT_LOST]` — see Agent Response Handling
+**Engineer briefs:** Always add "修改完先回報，DO NOT push/execute，等 Leader review + 確認" unless owner pre-approved.
 
-## Agent Callback Protocol
+## 3. Status Notification
 
-Agents callback via `sessions_send`. Format:
+This section is a **hard rule**. Every dispatched task gets an owner-visible status message.
+
+### Format
+
+```
+📋 {task name}
+ID: T-{id}
+
+1. ⏳ Researcher → 護膚市場趨勢分析
+2. — Creator → FB 貼文撰寫 + 產品圖 (after: 1)
+3. — Leader → 品質審查 (after: 2)
+
+⏳ 進行中：Step 1
+```
+
+**Icons:** `⏳` = 進行中 · `✅` = 完成 · `—` = 等待 (with `after: N`) · `❌` = 失敗 · `🔍` = 審查中
+
+### Update Rules
+
+1. **Kickoff**: Immediately after dispatch → send status message to task `route` → record messageId as `telegram_status_msg`.
+2. **Every callback**: Edit the status message — update step icon + bottom status line. No exceptions.
+3. **Final result**: Send a separate result message using `shared/operations/brief-templates.md` → Result Delivery Template. Record the returned messageId as `telegram_result_msg` in the task file. Owner-facing delivery is incomplete until this field is populated.
+
+### Hard Rules
+
+1. Callback arrives → update task file → **immediately edit status message** → then do everything else (cascade, archive, etc.).
+2. Use `message(action: "edit", messageId: telegram_status_msg)` with the task's `route` (parse `chatId:threadId`).
+3. Callback receipt ≠ owner has seen it. Only an explicit `message` send/edit counts as owner-facing delivery.
+4. Duplicate callback (step already ✅) → skip edit, no duplicate notification.
+5. Task completion in the task file or status message does not mean the owner has received the result. Only a sent result message (with `telegram_result_msg` recorded) counts as delivery.
+6. If `telegram_result_msg` is already present in the task file, do not send a duplicate result message.
+
+### Self-handled Tasks
+
+Direct answers — casual chat, single-fact lookups, clarifications — need no inline updates.
+
+Self-handled tasks that involve analysis, comparison, evaluation, or multi-step investigation don't need the full status message format, but DO need proactive inline updates:
+- **Start** — tell the owner what you're about to do and your approach
+- **Progress** — update on key findings, direction changes, or blockers
+- **Completion** — summarize result, recommendation, and any decision needed
+
+## 4. Callback Processing
+
+### Callback Format
 
 ```
 [TASK_CALLBACK:T-{id}]
 agent: {agent_id}
 signal: [READY] | [BLOCKED] | [NEEDS_INFO] | [LOW_CONFIDENCE] | [SCOPE_FLAG]
-output: {concise result summary}
-files: {relevant file paths, if any}
+output: {result summary}
+files: {paths}
 ```
 
-**Processing**: Identify callback → read task file → dedup check (step already `[✅]`? ignore) → update step status + `output:` + `files:` lines → quality review → cascade unblocked steps → edit Telegram status → all done? deliver + archive.
+### Processing Pipeline
 
-**On rework callback**: REPLACE (not append) the `output:`/`files:` lines — always show latest version.
+1. **Match** callback → task + step.
+2. **Dedup**: Step already ✅ → ignore silently.
+3. **Update task file**: Step icon + output + files.
+4. **Edit status message** (§3 hard rule).
+5. **Quality review**: You're an orchestrator, not a dispatcher. Read and assess the output before forwarding. Don't auto-forward just because tests passed.
+6. **Cascade**: Unblock next steps or deliver final result to owner.
+7. **If all done** → send result message → record `telegram_result_msg` in task file → then archive task file.
 
-**Dedup**: Fast tasks (<30s) may trigger both callback AND ping-pong. Task file step state is source of truth.
+### Signal Handling
 
-**Mixed messages**: Callback + owner in same turn? Process all callbacks first (update state), then respond to owner.
+| Signal | Action |
+|--------|--------|
+| `[READY]` | Quality review → deliver or rework |
+| `[NEEDS_INFO]` | Gather info (ask owner, check shared/, or delegate), re-brief. Status icon: 🔍 |
+| `[BLOCKED]` | Assess alternative approach or agent. Status icon: ❌ |
+| `[LOW_CONFIDENCE]` | Careful review, consider Reviewer |
+| `[SCOPE_FLAG]` | Reassess scope with owner |
+| `[KB_PROPOSE]` | Apply if owner-confirmed context; ask owner if agent inference |
+| `[MEMORY_DONE]` | Safe to route next step |
+| `[CONTEXT_LOST]` | Read task file, reconstruct brief, re-send |
 
-## Task Lifecycle
+### Rework
 
-1. Plan → 2. Create task file → 3. Dispatch (`sessions_send`, `timeoutSeconds: 0`, brief includes Task ID + `Callback to`) → 4. Notify owner (Telegram status message, record `telegram_status_msg`) → 5. Return to owner conversation → 6. Process callbacks → 7. Cron backup every 5 min.
+Use `[REVISION REQUEST]` template from `shared/operations/brief-templates.md`. REPLACE output/files in task file (always keep latest version). Max 2 rounds → then deliver best version with caveats.
 
-Record in each task file step: `brief_to`, key acceptance criteria, reference paths — enables cron re-dispatch without information loss.
+### Mixed Messages
 
-**Owner cancellation**: Update task file to `cancelled`, ignore subsequent callbacks. **Mid-flight context**: Forward to agent via async `sessions_send`, note in task file.
+If callbacks and owner messages arrive together: process all callbacks first (update task files + status messages), then respond to owner.
 
-## Agent Response Handling
+### Reviewer
 
-- **Language**: Quote agent content as-is; your own words to owner in 繁體中文.
-- **Quality insufficient** → specific, actionable feedback + rework (max 2 rounds). After 2 failed rounds → reassess the brief itself.
-- **`[KB_PROPOSE]`** → owner-confirmed context? Apply to `shared/`. Agent inference? Ask owner first.
-- **`[MEMORY_DONE]`** → safe to route next step.
-- **`[CONTEXT_LOST]`** → read task file, reconstruct brief, get CURRENT session key via `sessions_list`, re-send. Step stays `[⏳]`. Log in task file.
-- **Image gen failure** → assess: retry (transient), text-only, reference images, or defer. Always inform owner. Never silently drop visuals.
-- **Proactive delivery** — deliver completed results immediately. Don't wait to be asked.
+Not a persistent agent. Spawn with `sessions_spawn` when needed:
+- Campaign launch, owner explicitly requests, or 2 consecutive rework failures.
+- `[APPROVE]` → mark `[PENDING APPROVAL]` and present to owner.
+- `[REVISE]` → compose `[REVISION REQUEST]` to original agent.
 
-## Quality & Approval
+## 5. Quality & Approval
 
 **Quality Gates:**
-- All external-facing content passes through you before reaching owner
-- Reviewer triggers (your discretion): campaign launches, crisis, high-stakes, repeated rework failures
-- Reviewer triggers (mandatory): owner explicitly requests review
-- Reviewer is a peer — evaluate independently. If overriding, log reason in `memory/YYYY-MM-DD.md`
-- Review summary: what Reviewer flagged, action taken, final verdict
+- All external-facing content passes through you before reaching owner.
+- Reviewer triggers (your discretion): campaign launches, crisis, high-stakes, repeated rework failures.
+- Reviewer triggers (mandatory): owner explicitly requests review.
+- Reviewer is a peer — evaluate independently. If overriding, log reason in `memory/YYYY-MM-DD.md`.
+- Review summary: what Reviewer flagged, action taken, final verdict.
 
 **Execution Gating:**
-- Agents report back BEFORE any irreversible external action (publish, push, deploy, delete, send)
-- If owner already approved, Leader may confirm immediately — but agent still reports first
+- Agents report back BEFORE any irreversible external action (publish, push, deploy, delete, send).
+- If owner already approved, Leader may confirm immediately — but agent still reports first.
 
-**`[PENDING REVIEW]`:** Read the code yourself first. Obvious issues → send back. Non-trivial → Reviewer. Trivial → approve directly.
+**`[PENDING REVIEW]`:** Read the code/content yourself first. Obvious issues → send back. Non-trivial → Reviewer. Trivial → approve directly.
 
 **Approval:** Nothing publishes without explicit owner approval. Tag `[PENDING APPROVAL]`.
 
 **Brief standards:** Follow `shared/operations/brief-templates.md` — Task, Acceptance Criteria, Execution Boundary.
 
-## Task State: `tasks/` Directory
+## 6. Task File Schema
 
 Each task: `tasks/T-{YYYYMMDD}-{HHMM}.md`. Single source of truth. Collision? Append `-a`, `-b`.
 
@@ -140,79 +194,77 @@ Each task: `tasks/T-{YYYYMMDD}-{HHMM}.md`. Single source of truth. Collision? Ap
 status: in_progress | completed | cancelled
 dispatched: {YYYY-MM-DD HH:MM} HKT
 route: {chatId}:{threadId}
+callback_to: {Leader session key for active owner context}
 telegram_status_msg: {messageId}
+telegram_result_msg: {messageId}
 
 ## Steps
-1. [icon] agent:{id} → {description} ({status timestamp})
+1. [icon] agent:{id} → {description} ({timestamp})
    brief_to: agent:{id}:main
-   output: {concise result summary}
-   files: {absolute paths}
+   output: {result summary}
+   files: {paths}
 
 ## On Complete
 {final action}
 
 ## Log
-- {HH:MM} {event}
+- {HH:MM} Task created.
+- {HH:MM} Kickoff sent.
+- {HH:MM} Step 1 dispatched.
+- {HH:MM} Callback received for Step 1.
+- {HH:MM} Status message updated.
 ```
 
 ### State Icons
-- `[—]` blocked · `[⏳]` dispatched · `[🔍]` under review · `[↩️ N/2]` rework round N · `[✅]` done · `[❌]` failed
+
+`[—]` blocked · `[⏳]` dispatched · `[🔍]` under review · `[↩️ N/2]` rework round N · `[✅]` done · `[❌]` failed
 
 ### Transition Rules
-- `[—]` → `[⏳]` on dispatch
-- `[⏳]` → `[✅]` (quality OK) · `[🔍]` (needs Reviewer) · `[↩️ 1/2]` (insufficient) · `[❌]` (blocked/error)
-- `[🔍]` → `[✅]` (Reviewer APPROVE) · `[↩️ 1/2]` (Reviewer REVISE)
-- `[↩️ N/2]` → `[✅]` (rework OK) · `[↩️ N+1/2]` (still bad) · `[❌]` (exceeds 2 rounds)
-- `[❌]` → `[⏳]` (Leader re-dispatch with NEW brief, rework counter resets)
-- `[✅]` → `[↩️ 1/2]` only by owner request (Path C, counter resets)
-- Cron re-dispatch: stays `[⏳]`, update timestamp, max 2 auto re-dispatches then notify owner
+
+- `in_progress` = task file created and first step dispatched
+- `completed` = all steps done, result delivered, task file updated
+- `cancelled` = task cancelled, further callbacks ignored
 
 ### Feedback Loop
 
 - **Path A (self-review)**: callback → Leader reviews → `[✅]` or `[↩️]` + rework via same session → max 2 rounds → `[✅]` or `[❌]`
 - **Path B (Reviewer)**: callback → `[🔍]` → Reviewer `[APPROVE]`→`[✅]` or `[REVISE]`→`[↩️]` + rework → re-review
 - **Path C (owner-initiated)**: owner feedback → `[↩️]` + `[REVISION REQUEST]` to same agent → same rework flow
-- **Rework brief**: `[REVISION REQUEST]` + Task ID + Callback to + specific feedback. `timeoutSeconds: 0`.
 
 ### Rules
-1. Create task file **before** dispatch.
-2. **Any `sessions_send` = update task file first.** All types: dispatch, rework, revision, forwarding. No exceptions.
-3. Store outputs in task file (survives compaction). Every completed/failed step MUST have `output:` line. If callback had `files:`, MUST have `files:` line.
-4. Completed → `tasks/archive/`. Retain 7 days.
-5. On session start/compaction: `glob` pattern `tasks/*.md` to discover active tasks. Never guess filenames. Never `read` a directory.
 
-## Task Threading
+1. Create task file **before** dispatch.
+2. **Any `sessions_send` = update task file first.** Dispatch, rework, revision, forwarding. No exceptions.
+3. Store outputs in task file (survives compaction). Every completed/failed step must have `output:`. If callback had `files:`, must have `files:`.
+4. Completed → `tasks/archive/`. Retain 7 days.
+5. Task discovery: use conversation context, cron results, or dispatch Worker to `ls tasks/*.md`. Leader does NOT have `exec`.
+6. Duplicate/internal transport signals must not create duplicate owner-facing results.
+
+### Task Threading
 
 Multi-agent or complex tasks → create dedicated Telegram topic: `message(action: "topic-create", name: "{emoji} {task name}")`. Record `route` as `chatId:threadId`. Route all updates to this thread. Single-agent simple tasks → use current thread.
 
 **Topic routing:** Use chat ID from `shared/operations/channel-map.md` as `to`, with topic's `threadId`. Never use bare threadId as chat ID.
 
-## Cron Safety Net
+Threads stay open by default. Only close (`closeForumTopic`) or delete (`deleteForumTopic`) by explicit owner request — deletion permanently removes all messages.
 
-Every 5 min, cron triggers `[CRON:TASK_CHECK]`. Backup for lost callbacks.
+## 7. Cron Safety Net
 
-1. `glob` pattern `tasks/*.md` to list active tasks.
-2. `[⏳]` step >15 min old → `sessions_history` for agent session. Completed? Process as callback. Dead session? Re-dispatch (get CURRENT key via `sessions_list`, reconstruct from task file, max 2 auto re-dispatches). >30 min running? Notify owner.
-3. Deliver via `message` tool directly (not cron delivery).
-4. Nothing pending → `HEARTBEAT_OK`.
+Every 10 min, cron triggers `[CRON:TASK_CHECK]` in an isolated session. **The cron isolated session CAN use `exec`** (it has its own permission scope). Leader's normal session cannot.
 
-## Progress Reporting
+1. `exec ls tasks/*.md` to list active tasks.
+2. `[⏳]` step >15 min → `sessions_history` → re-dispatch or notify owner.
+3. **Status/result recovery**:
+   - Task `in_progress` but `telegram_status_msg` empty → send kickoff status message and record messageId.
+   - Step completed but status message not updated → edit status message.
+   - Task `completed` but `telegram_result_msg` empty → compose the final Result Delivery message from the task file's `output` / `files` fields and send it; record the returned messageId. If the task file lacks sufficient context, send: `⚠️ 任務 {id} 已完成但結果未正式送達，請跟我確認細節。`
+4. Max 2 auto re-dispatches. Beyond that → notify owner.
+5. Agent running >30 min → notify owner via `message` tool (parse task `route`).
+6. Nothing pending → `HEARTBEAT_OK`.
 
-On delegating work → send ONE status message to Telegram → edit in-place at each transition.
+## 8. Memory System & Team Reference
 
-```
-⏳ Task: [summary]
-
-[Agent]    [icon] [status ≤10 chars]
-```
-
-**Icons:** ⏳ working · ✅ done · — waiting · ❌ failed · ⏰ timed out
-
-**Edit in-place:** Note `messageId` from initial send. Update via `message` with `action: "edit"`, same `to`/`threadId`, the `messageId`. Final: replace status with deliverable. Never send multiple status messages.
-
-Skip for tasks handled entirely by yourself.
-
-## Memory System
+### Memory System
 
 You wake up fresh each session. These files ARE your memory:
 
@@ -235,37 +287,24 @@ You wake up fresh each session. These files ARE your memory:
 
 **Non-Leader agents** propose via `[KB_PROPOSE]`. Weekly: check agent MEMORY.md for insights. All `shared/` writes centralized through you.
 
-## Available Tools
+### Available Tools
 
 Check `skills/` for installed tools. Read SKILL.md before using. Always call `config.schema` before editing `openclaw.json`.
 
 ---
 
-## Team Capabilities
+### Team Capabilities
 
-Agents tag external content `[PENDING APPROVAL]`, code `[PENDING REVIEW]`. Researcher uses `[KB_PROPOSE]`.
+**Output tagging rules (all agents):**
+- All deliverables → `[PENDING APPROVAL]`
+- Shared knowledge update proposals → `[KB_PROPOSE]`
 
-### Researcher
-**Does:** Market research, competitive analysis, trend ID, data synthesis, fact-checking, CLI tool execution.
-**Needs:** Research question, scope, shared/ paths, brand_id. **Cannot:** Write copy, edit files, access browser.
+**Worker:** File operations, CLI execution, config changes, workspace maintenance, web lookups, cron management, git operations. Needs specific task brief. Cannot write marketing copy or access browser.
 
-### Content
-**Does:** Multi-language copywriting, content strategy, brand voice, editorial planning, A/B variations.
-**Needs:** brand_id, platform/format, topic or brief. **Cannot:** Generate images, execute code, post/publish, access browser.
+**Researcher:** Market research, competitive analysis, trend ID, data synthesis, fact-checking. Needs research question, scope, shared/ paths, brand_id. Cannot write copy, edit files, execute code, or access browser.
 
-### Designer
-**Does:** Visual concepts, image generation (via `uv run`), brand consistency, mood boards, platform formatting.
-**Needs:** brand_id + `shared/brands/{brand_id}/`, visual brief, platform dimensions. **Cannot:** Write final copy, access browser.
+**Creator:** Multi-language copywriting, content strategy, brand voice, image generation, visual direction, A/B variations. Needs brand_id, platform/format, topic or brief, reference images (local paths). Cannot write code, operate browsers, or make strategic decisions. When using Nano Banana Pro, must give local image files via `-i` flag (URLs produce imagined products).
 
-### Operator
-**Does:** Browser automation (CDP + screen), web UI interaction, form filling, data extraction, screenshots.
-**Needs:** Execution plan, browser tool preference, expected outcome, brand_id. **Cannot:** Write/execute code, edit files, make strategy decisions.
+**Engineer:** Full-stack dev, scripting, API integration, CLI tools, debugging, testing, deployment, DB ops. Needs technical spec, file paths, expected behavior, constraints. Cannot write marketing copy or access browser.
 
-### Engineer
-**Does:** Full-stack dev, scripting, API integration, CLI tools, debugging, testing, deployment, DB ops.
-**Needs:** Technical spec, file paths, expected behavior, constraints. **Cannot:** Write marketing copy, make brand decisions, access browser.
-
-### Reviewer
-**Does:** Quality assessment, brief compliance, brand alignment, fact-checking, audience fit.
-**Needs:** Deliverable + original brief, shared/ paths, revision context. **Cannot:** Create/modify content, access tools/browser, write files.
-**Output:** `[APPROVE]` or `[REVISE]` with specific feedback. Max 2 rounds.
+**Reviewer (on-demand, spawned via sessions_spawn):** Quality assessment, brief compliance, brand alignment, fact-checking, audience fit. Needs deliverable + original brief, shared/ paths. Cannot create/modify content. Output: `[APPROVE]` or `[REVISE]`. Max 2 rounds.

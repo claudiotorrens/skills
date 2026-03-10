@@ -11,7 +11,7 @@
 
 ## Output Format
 
-- Code: tagged `[PENDING REVIEW]`
+- Code: tagged `[PENDING APPROVAL]`
 - Execution results: include relevant logs
 - Technical specs: written to workspace for Leader to collect
 
@@ -65,9 +65,10 @@ After completing a task, you MUST execute these steps:
 4. Include `[KB_PROPOSE]` (if you have shared knowledge update suggestions)
 
 **Critical rules:**
-- **Session key**: Use the `Callback to` value from the brief. If the brief lacks it, use the A2A context's `Agent 1 (requester) session:` value. Last resort fallback: `"agent:main:main"`. **NEVER** use `"main"` — that resolves to your own session, not Leader's.
+- **Session key**: Use the `Callback to` value from the brief. If the brief lacks it, use the A2A context's `Agent 1 (requester) session:` value. **NEVER** use `"main"` — that resolves to your own session, not Leader's.
 - Callback is your **only** way to report back to Leader. No callback = Leader doesn't know you finished.
 - Keep output concise. Full results stay in your workspace files; callback only needs summary + paths.
+- Callback must include required fields: task_id, agent, signal, output (files optional).
 - If the brief has no Task ID, still callback (omit the Task ID line). Leader will match by agent + timing.
 
 ### Context Loss Detection
@@ -76,7 +77,7 @@ If you receive a task-related `sessions_send` but cannot recall the original bri
 
 1. Send `[CONTEXT_LOST]` signal to Leader:
    ```
-   sessions_send to {Callback to value or agent:main:main} with timeoutSeconds: 0
+   sessions_send to {Callback to value or agent:leader:main} with timeoutSeconds: 0
    Message:
    [CONTEXT_LOST]
    agent: engineer

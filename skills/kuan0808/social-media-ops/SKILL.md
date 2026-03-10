@@ -1,6 +1,6 @@
 ---
 name: social-media-ops
-description: Set up a complete multi-brand social media management team on OpenClaw. Scaffolds 7 specialized AI agents (Leader, Researcher, Content Strategist, Visual Designer, Operator, Engineer, Reviewer) in a star topology with persistent A2A sessions, 3-layer memory system, shared knowledge base, approval workflows, and brand isolation. Use when setting up a new social media operations team, adding the multi-agent framework to an existing OpenClaw instance, or when the user mentions social media management, multi-brand operations, or content team setup.
+description: Set up a complete multi-brand social media management team on OpenClaw. Scaffolds 5 specialized agents (Leader, Creator, Worker, Researcher, Engineer) + on-demand Reviewer in a star topology with persistent A2A sessions, 3-layer memory system, shared knowledge base, approval workflows, and brand isolation. Use when setting up a new social media operations team, adding the multi-agent framework to an existing OpenClaw instance, or when the user mentions social media management, multi-brand operations, or content team setup.
 metadata:
   {
     "openclaw": {
@@ -18,7 +18,7 @@ metadata:
 
 This skill sets up a complete AI-powered social media operations team on OpenClaw. It creates:
 
-- **7 specialized agents** in a star topology (Leader + 6 specialists)
+- **5 specialized agents** in a star topology (Leader + 4 specialists) + on-demand Reviewer
 - **Persistent A2A sessions** for context-preserving multi-agent workflows
 - **3-layer memory system** (MEMORY.md + daily notes + shared knowledge base)
 - **Shared knowledge base** with brand profiles, operations guides, and domain knowledge
@@ -28,7 +28,7 @@ This skill sets up a complete AI-powered social media operations team on OpenCla
 
 ## Optional Dependencies
 
-- **Image generation tool for Designer agent**: The Designer agent requires an image generation tool installed in its `workspace-designer/skills/` directory to produce images. Recommended: `nano-banana-pro` (Gemini-based, free tier). Without it, Designer produces text visual briefs only and cannot generate images.
+- **Image generation tool for Creator agent**: The Creator agent requires an image generation tool installed in its `workspace-creator/skills/` directory to produce images. Recommended: `nano-banana-pro` (Gemini-based, free tier). Without it, Creator produces text visual briefs only and cannot generate images.
 
 ## Prerequisites
 
@@ -63,23 +63,27 @@ If any prerequisite is missing, guide the user to resolve it before continuing.
 
 ### Step 2: Team Setup
 
-**All 7 agents are installed automatically.** Do not ask the user to choose a team size.
+**All 5 agents are installed automatically.** Do not ask the user to choose a team size.
 
 The full team:
 
 | Agent | Role |
 |-------|------|
 | Leader | Orchestration, routing, quality gates |
+| Creator | Content + visual (copywriting, image gen, platform formatting) |
+| Worker | Execution for Leader (files, CLI, config, maintenance) |
 | Researcher | Market research, competitor analysis |
-| Content | Content strategy, copywriting |
-| Designer | Visual briefs, image generation |
-| Operator | Platform operations, scheduling |
 | Engineer | Technical integrations, automation |
-| Reviewer | Independent quality review |
+
+**On-demand:**
+
+| Agent | Role |
+|-------|------|
+| Reviewer | Independent quality review (spawned when needed) |
 
 **Model** — All agents inherit the model configured during `openclaw onboard` (at `agents.defaults.model`). No per-agent model setup is needed.
 
-> **Advanced note:** If you later want to run a leaner team, re-run `scaffold.sh --agents leader,content,designer,engineer` to scaffold a subset.
+> **Advanced note:** If you later want to run a leaner team, re-run `scaffold.sh --agents leader,creator,engineer` to scaffold a subset.
 
 ### Step 3: Run Scaffold
 
@@ -259,7 +263,7 @@ Leader uses **fully async dispatch** (`sessions_send` with `timeoutSeconds: 0`) 
 - Leader is **never blocked** waiting for an agent — always available to the owner.
 - Agents **callback** to Leader via `sessions_send` when done (event-driven, not polling). Leader processes callbacks per the "Agent Callback Protocol" flow in AGENTS.md.
 - Each task is tracked in a separate file: `tasks/T-{YYYYMMDD}-{HHMM}.md`. Completed tasks are archived to `tasks/archive/`.
-- **Stale task detection** is handled by a cron job (`stale-task-check`, every 5 minutes) that scans `tasks/` for steps stuck in `[⏳]` state. Runs as Leader (not operator).
+- **Stale task detection** is handled by a cron job (`stale-task-check`, every 10 minutes) that scans `tasks/` for steps stuck in `[⏳]` state. Runs as Leader.
 - **HEARTBEAT.md** ships empty by default — periodic checks are handled by cron jobs instead of heartbeat polls.
 
 ### Secrets Management (Optional)
@@ -332,15 +336,13 @@ After installation, the following structure is created:
 │       ├── domain/{id}-industry.md  # Industry knowledge
 │       ├── operations/              # Ops guides
 │       └── errors/solutions.md      # Error KB
-├── workspace-researcher/            # Researcher
+├── workspace-creator/               # Creator
 │   ├── SOUL.md, AGENTS.md, MEMORY.md
 │   ├── memory/, skills/
 │   └── shared -> ../workspace/shared/
-├── workspace-content/               # Content Strategist
+├── workspace-worker/                # Worker
 │   └── (same structure)
-├── workspace-designer/              # Visual Designer
-│   └── (same structure)
-├── workspace-operator/              # Operator
+├── workspace-researcher/            # Researcher
 │   └── (same structure)
 ├── workspace-engineer/              # Engineer
 │   └── (same structure)

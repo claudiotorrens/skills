@@ -1,6 +1,6 @@
 # Communication Signals — Standard Vocabulary
 
-All agents use these signals to flag status in their output. Clean deliveries use `[READY]` or no tag.
+All agents use these signals to flag status in their output.
 
 ## Signal Definitions
 
@@ -20,8 +20,7 @@ Used by Reviewer and in the approval pipeline:
 |--------|---------|
 | `[APPROVE]` | Deliverable meets requirements, ready for owner review |
 | `[REVISE]` | Material issues found, specific fixes listed |
-| `[PENDING APPROVAL]` | Content awaiting explicit owner approval |
-| `[PENDING REVIEW]` | Code awaiting review before deployment |
+| `[PENDING APPROVAL]` | Deliverable awaiting approval before next step (content, code, or any output) |
 
 ## Session Management Signals
 
@@ -32,6 +31,22 @@ Used in persistent A2A sessions (`sessions_send`):
 | `[KB_PROPOSE]` | Agent proposes a shared knowledge base update | All agents (including Reviewer) | Parse proposal; apply directly if from owner-confirmed context, ask owner if from agent inference |
 | `[MEMORY_DONE]` | Agent has finished writing its own memory files | All agents except Reviewer | Safe to route next step or next task |
 | `[CONTEXT_LOST]` | Agent's session was compacted, context lost | All agents | Re-send current task state from `tasks/T-{id}.md` |
+
+## Internal vs Owner-Facing
+
+- Raw callbacks, duplicate callbacks, and transport chatter are internal signals — NOT owner-facing delivery.
+- Owner delivery = using `message` tool to send/edit to the task's `route`.
+- Step already ✅ and duplicate callback arrives → silently ignore, no duplicate notification.
+
+## Notification Event Mapping (Leader)
+
+Leader edits the status message on every callback. Separate new messages only for:
+
+| Event | Typical Trigger |
+|-------|------------------|
+| `NEEDS_INFO` | Agent callback `signal: [NEEDS_INFO]` |
+| `BLOCKED` | Agent callback `signal: [BLOCKED]` |
+| `DONE` | Task reaches completed state (Result Delivery Template) |
 
 ### KB_PROPOSE Format
 
@@ -61,6 +76,6 @@ Fields:
 ## Usage Rules
 
 - Include the signal at the **top** of your response
-- `[READY]` is the default — omit it if delivery is clean and straightforward
+- Include one primary signal explicitly in callbacks (`[READY]`, `[BLOCKED]`, etc.)
 - Only use one primary signal per response (session management signals like `[MEMORY_DONE]` and `[KB_PROPOSE]` can accompany a primary signal)
 - Signals are for Leader consumption — they drive routing and escalation decisions

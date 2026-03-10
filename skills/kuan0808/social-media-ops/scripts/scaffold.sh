@@ -3,12 +3,12 @@ set -euo pipefail
 
 # scaffold.sh — Social Media Ops Skill Scaffolding
 # Creates directory structure, copies templates, and sets up symlinks.
-# Always installs all 7 agents (Leader + 6 specialists).
+# Always installs all 5 agents (Leader + 4 specialists) + on-demand Reviewer.
 
 # ── Defaults ──────────────────────────────────────────────────────────
 
 BASE_DIR="${HOME}/.openclaw"
-AGENTS="leader,researcher,content,designer,operator,engineer,reviewer"
+AGENTS="leader,researcher,creator,worker,engineer,reviewer"
 SKILL_DIR=""
 QUIET=false
 DRY_RUN=false
@@ -27,8 +27,8 @@ Options:
   -h, --help          Show this help
 
 Advanced:
-  --agents LIST       Override agent list (default: all 7)
-                      Example: leader,content,designer,engineer
+  --agents LIST       Override agent list (default: all 5 + reviewer)
+                      Example: leader,creator,engineer
 
 Examples:
   scaffold.sh --skill-dir /path/to/social-media-ops

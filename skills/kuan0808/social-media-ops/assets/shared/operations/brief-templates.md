@@ -53,7 +53,94 @@ _Standard templates for dispatching tasks to agents. Leader reads this before co
 
 ---
 
+## Owner-Facing Templates (Leader → Owner)
+
+_These are owner-visible workflow messages. They are not agent briefs._
+
+### Kickoff / Status Message Template
+
+_This is the status message sent to Telegram and edited in-place on every callback._
+
+```markdown
+📋 {task name}
+ID: T-{id}
+
+1. ⏳ {Agent} → {step description}
+2. — {Agent} → {step description} (after: 1)
+3. — Leader → {step description} (after: 2)
+
+⏳ 進行中：Step 1
+```
+
+**Icons:** ⏳ = 進行中 · ✅ = 完成 · — = 等待 · ❌ = 失敗 · 🔍 = 審查中
+
+**Rules:**
+1. Send immediately after dispatch → record returned messageId as `telegram_status_msg` in task file.
+2. On every callback → edit this message (update icon + bottom status line).
+3. On completion → send a separate Result Delivery message (see below).
+
+### Progress Template
+
+```markdown
+進度更新：{task summary}
+
+- 已完成：{completed step/result}
+- 目前在做：{active step}
+- 依賴狀態：{dependency status if relevant}
+- 等待中：{agent/blocker/decision if any}
+- 下一次回報：{next expected update}
+```
+
+### Result Delivery Template
+
+```markdown
+✅ 任務完成
+
+Task ID: {id}
+結果摘要：
+- {what was done}
+- {key output / file / commit / path}
+- {important status: pending approval / local only / not pushed / not deployed / etc.}
+
+我的判斷：
+{quality / recommendation / caveat}
+
+你現在要決定的是：
+{approval / revision / next step}
+```
+
+**Task-type hints** (include when relevant, don't force):
+- Code/config/git: commit hash, modified files, push status
+- Content/media: deliverable file paths, approval status
+- Research: headline conclusion, report path
+
+### Blocked / Needs-Info Template
+
+```markdown
+這單目前卡在：{reason}
+
+我需要你補：
+1. {item}
+2. {item}
+
+拿到後我就直接接著做，不重開流程。
+```
+
+---
+
 ## Agent-Specific Templates
+
+## Callback Payload Contract (All Agents)
+
+Callbacks sent via `sessions_send` must include:
+
+- `task_id` (canonical: `[TASK_CALLBACK:T-{id}]`)
+- `agent`
+- `signal`
+- `output`
+- `files` (optional)
+
+If a callback is malformed (missing required fields), Leader should request a resend.
 
 ### Engineer
 
@@ -90,36 +177,6 @@ _Standard templates for dispatching tasks to agents. Leader reads this before co
 - Wait for Leader review before any external action
 ```
 
-### Designer
-
-```markdown
-**Task:** [description]
-
-**Context:**
-- Brand: {brand_id} — read `shared/brands/{brand_id}/profile.md` for visual identity
-- Reference images: [local paths or URLs]
-
-**Visual Spec:**
-- Dimensions: [WxH px]
-- Format: [PNG/JPG/sprite sheet]
-- Style: [pixel art / photo-realistic / flat design / etc.]
-- Color palette: [specific colors or "follow brand profile"]
-- Resolution: [1x / 2x / specific DPI]
-
-**Acceptance Criteria:**
-- [ ] Matches specified dimensions and format
-- [ ] Consistent with brand visual identity
-- [ ] [specific visual requirement]
-
-**Output:**
-- Save to: ~/.openclaw/media/generated/[path]
-- Report back with exact file path(s)
-
-**Execution Boundary:**
-- Deliver: image files + file paths
-- If generation fails or quality is low, report [BLOCKED] or [LOW_CONFIDENCE] with explanation
-```
-
 ### Researcher
 
 ```markdown
@@ -152,7 +209,7 @@ _Standard templates for dispatching tasks to agents. Leader reads this before co
 - Use [KB_PROPOSE] for any domain knowledge worth persisting
 ```
 
-### Content
+### Creator
 
 ```markdown
 **Task:** [description]
@@ -162,9 +219,15 @@ _Standard templates for dispatching tasks to agents. Leader reads this before co
 **Content Spec:**
 - Platform: [Facebook / Instagram / TikTok / blog]
 - Format: [post / caption / article / ad copy]
-- Language: [from brand profile, e.g., Thai]
+- Language: [from brand profile]
 - Length: [word/character limit or range]
-- Variants: [A/B versions needed? how many?]
+- Variants: [A/B versions needed?]
+
+**Visual Spec:**
+- Dimensions: [WxH px]
+- Style: [photo-realistic / flat / lifestyle]
+- Reference images: [local paths — must be downloaded first]
+- Product focus: [specific product or general brand]
 
 **Context:**
 - Research input: [path to researcher output, if available]
@@ -172,55 +235,46 @@ _Standard templates for dispatching tasks to agents. Leader reads this before co
 - Campaign context: [if part of larger campaign]
 
 **Acceptance Criteria:**
-- [ ] Matches brand voice and tone
+- [ ] Copy matches brand voice and tone
 - [ ] Correct language and platform conventions
-- [ ] Within specified length
-- [ ] [specific messaging requirement]
+- [ ] Visual matches brand identity
+- [ ] Copy and visual are coherent together
+- [ ] [specific requirement]
 
 **Output:**
-- Final copy in markdown, clearly formatted
+- Copy text + image file paths as one package
 - Hashtag recommendations if applicable
 
 **Execution Boundary:**
-- Deliver: copy text
+- Deliver: copy + image files + file paths
 - DO NOT: publish to any platform
-- Signal [NEEDS_INFO] if research input is insufficient
+- If image generation fails, report [BLOCKED] with explanation
 ```
 
-### Operator
+### Worker
 
 ```markdown
 **Task:** [description]
 
-**Execution Plan:**
-1. [Step 1 — specific action]
-2. [Step 2 — specific action]
-3. ...
-
 **Context:**
-- Target platform/URL: [URL]
-- Login: [credential reference or "already logged in"]
-- Brand: {brand_id} (if applicable)
-
-**Expected Outcome:**
-- [What the screen should show when done]
-- [What data to extract, if applicable]
+- Files to modify: [paths]
+- Reference: [spec, config, or instruction]
 
 **Acceptance Criteria:**
 - [ ] [specific verifiable outcome]
-- [ ] Screenshot captured as evidence (if applicable)
+- [ ] [file state after completion]
 
 **Output:**
-- Report: what was done, step by step
-- Screenshots if applicable
-- Extracted data in specified format
+- Report: what was changed/created
+- File paths of modified/created files
 
 **Execution Boundary:**
-- DO NOT: publish content, submit forms, delete data, make purchases — unless explicitly instructed per step
-- If unexpected screen/error appears, stop and report immediately
+- Deliver: results + file paths
+- DO NOT: push to git, deploy, restart services — unless explicitly instructed
+- DO NOT: expand scope beyond what's listed
 ```
 
-### Reviewer
+### Reviewer (on-demand, spawned)
 
 ```markdown
 **Review Task:** [what to review]
@@ -276,15 +330,14 @@ _Use this template when sending rework/revision requests to agents after quality
 
 | Agent | Common boundaries |
 |-------|------------------|
-| Engineer | No git push, no deploy, no global installs, no file changes outside scope |
-| Designer | Deliver files only, report [BLOCKED] if generation fails |
+| Worker | No git push, no deploy, no service restart, no scope expansion |
 | Researcher | Report only, use [KB_PROPOSE] for knowledge updates |
-| Content | Text delivery only, no publishing |
-| Operator | No publishing, no form submission, no deletion without explicit per-step instruction |
-| Reviewer | Read-only, no modifications to deliverable |
+| Creator | Draft delivery only, no publishing, report [BLOCKED] if image gen fails |
+| Engineer | No git push, no deploy, no global installs, no changes outside scope |
+| Reviewer | Read-only, no modifications |
 
 These are defaults. Each brief may override based on task context (e.g., owner pre-approved a push → brief can say "push allowed after tests pass").
 
 ---
 
-_Version: 2.1 | Updated: 2026-03-04 — Added Rework Brief template_
+_Version: 3.0 | Updated: 2026-03-08 — Status message template, removed status_mode_

@@ -33,7 +33,7 @@ The system uses a three-layer memory architecture to balance persistence, recenc
 | Agent | Own memory/ | Own MEMORY.md | shared/ | Mechanism |
 |-------|------------|---------------|---------|-----------|
 | Leader | Direct | Direct | Direct | Owner feedback → direct; agent KB_PROPOSE → evaluate |
-| Content, Designer, Operator | Direct | Direct | Propose only | `[KB_PROPOSE]` → Leader |
+| Creator, Worker | Direct | Direct | Propose only | `[KB_PROPOSE]` → Leader |
 | Researcher | Direct | Direct | Propose only | `[KB_PROPOSE]` → Leader |
 | Engineer | Direct | Direct | Propose + errors/ | `[KB_PROPOSE]` → Leader; `shared/errors/solutions.md` direct |
 | Reviewer | None | None | Propose only | `[KB_PROPOSE]` → Leader; review results recorded by Leader |

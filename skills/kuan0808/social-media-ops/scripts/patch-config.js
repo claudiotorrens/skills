@@ -4,7 +4,7 @@
  *
  * Usage:
  *   node patch-config.js --config ~/.openclaw/openclaw.json
- *   node patch-config.js --config ~/.openclaw/openclaw.json --agents leader,content,designer,engineer
+ *   node patch-config.js --config ~/.openclaw/openclaw.json --agents leader,creator,engineer
  *   node patch-config.js --dry-run --config ~/.openclaw/openclaw.json
  *
  * Options:
@@ -27,9 +27,8 @@ const { execSync } = require("child_process");
 const DEFAULT_AGENTS = [
   "leader",
   "researcher",
-  "content",
-  "designer",
-  "operator",
+  "creator",
+  "worker",
   "engineer",
   "reviewer",
 ];
@@ -37,9 +36,8 @@ const DEFAULT_AGENTS = [
 const AGENT_TOOL_DENY = {
   leader: ["exec", "apply_patch", "browser"],
   researcher: ["exec", "edit", "apply_patch", "browser"],
-  content: ["exec", "edit", "apply_patch", "browser"],
-  designer: ["edit", "apply_patch", "browser"],
-  operator: ["exec", "edit", "apply_patch"],
+  creator: ["apply_patch", "browser"],
+  worker: ["apply_patch", "browser"],
   engineer: ["browser"],
   reviewer: ["exec", "edit", "apply_patch", "write", "browser"],
 };
@@ -47,9 +45,8 @@ const AGENT_TOOL_DENY = {
 const AGENT_NAMES = {
   leader: "Leader",
   researcher: "Researcher",
-  content: "Content",
-  designer: "Designer",
-  operator: "Operator",
+  creator: "Creator",
+  worker: "Worker",
   engineer: "Engineer",
   reviewer: "Reviewer",
 };
@@ -226,7 +223,7 @@ function patchConfig(config, args) {
   console.log("[SET]  tools.agentToAgent");
 
   // v2026.2.24+ restricts safe-bin trusted dirs to /bin, /usr/bin only.
-  // Designer and Engineer need Homebrew paths for exec (uv run, CLI tools).
+  // Creator and Engineer need Homebrew paths for exec (uv run, CLI tools).
   if (!patched.tools.exec) patched.tools.exec = {};
   if (!patched.tools.exec.safeBinTrustedDirs) {
     patched.tools.exec.safeBinTrustedDirs = [
@@ -236,7 +233,7 @@ function patchConfig(config, args) {
       "/usr/local/bin",
     ];
     console.log(
-      "[SET]  tools.exec.safeBinTrustedDirs (Homebrew paths for Designer/Engineer exec)"
+      "[SET]  tools.exec.safeBinTrustedDirs (Homebrew paths for Creator/Engineer exec)"
     );
   }
 

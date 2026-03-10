@@ -1,0 +1,15 @@
+{
+  "name": "stdb_search",
+  "description": "Search local SpacetimeDB memories.",
+  "command": "npx tsx tools/stdb_search.ts",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "The string query to search for."
+      }
+    },
+    "required": ["query"]
+  }
+}

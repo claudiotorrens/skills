@@ -12,9 +12,12 @@ Patent Pending. All Auto Tunes LLC. U.S. #63/988,484.
 
 1. Sign up at [goldhold.ai](https://goldhold.ai) (Lite tier is free)
 2. Go to goldhold.ai/account -> GUMP Credentials -> copy your API key
-3. Store the key in one of:
-   - `~/.goldhold/config.json`: `{"api_key": "your-key-here"}`
-   - Environment variable: `GOLDHOLD_API_KEY=your-key-here`
+3. Set the key as an environment variable (recommended):
+   - `GOLDHOLD_API_KEY=your-key-here`
+   - On Linux/Mac: add to `~/.bashrc` or `~/.zshrc`
+   - On Windows: use System Environment Variables
+
+**Do not store API keys in plaintext config files.** Use environment variables or your platform's secrets manager.
 
 ## API Basics
 

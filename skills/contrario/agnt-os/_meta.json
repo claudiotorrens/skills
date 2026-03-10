@@ -3,9 +3,15 @@
   "slug": "agnt-os",
   "displayName": "AGENT-OS",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1772879152969,
-    "commit": "https://github.com/openclaw/skills/commit/e824da6bf86b5ec1ae098523a967f43badd32057"
+    "version": "1.0.3",
+    "publishedAt": 1773147157100,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1772879152969,
+      "commit": "https://github.com/openclaw/skills/commit/e824da6bf86b5ec1ae098523a967f43badd32057"
+    }
+  ]
 }

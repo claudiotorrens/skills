@@ -7,36 +7,52 @@ description: |
   
   功能：新建笔记、查询笔记、删除笔记、管理标签和知识库。
   支持类型：纯文本笔记、链接笔记（自动抓取网页内容）、图片笔记。
+metadata: {"openclaw": {"requires": {"env": ["GETNOTE_API_KEY", "GETNOTE_CLIENT_ID"]}, "primaryEnv": "GETNOTE_API_KEY", "homepage": "https://biji.com"}}
 ---
 
 # Get笔记 API
 
 ## ⚠️ 必读约束
 
-### 🔑 首次使用配置
+### 🌐 Base URL（重要！所有 API 共用）
 
-**每次收到笔记请求，先检查环境变量**：
-```bash
-echo "API_KEY: $GETNOTE_API_KEY | CLIENT_ID: $GETNOTE_CLIENT_ID | OWNER_ID: $GETNOTE_OWNER_ID"
+```
+https://openapi.biji.com
 ```
 
-**如果 API_KEY 或 CLIENT_ID 为空**，告诉用户：
+**所有 API 请求必须使用此 Base URL**，不要使用 `biji.com` 或其他地址。
 
-> 使用 Get笔记需要先配置凭证。请按以下步骤操作：
-> 
-> 1. 前往 [Get笔记开放平台](https://www.biji.com/openapi) 获取 API Key 和 Client ID
-> 2. 将以下内容添加到你的 `~/.zshrc` 或 `~/.bashrc`：
-> 
-> ```bash
-> export GETNOTE_API_KEY="你的API Key"
-> export GETNOTE_CLIENT_ID="你的Client ID"
-> export GETNOTE_OWNER_ID="你的用户ID"  # 可选，用于安全校验
-> ```
-> 
-> 3. 运行 `source ~/.zshrc` 或重启终端
-> 4. 配置完成后再来找我
+---
 
-**注意**：不要在聊天中发送凭证，请手动配置到环境变量。
+### 🔑 首次安装配置
+
+安装此技能后，需要配置 API 凭证才能使用。
+
+**配置方式**（二选一）：
+
+1. **通过 OpenClaw 配置**（推荐）：在 `~/.openclaw/openclaw.json` 中添加：
+   ```json
+   {
+     "skills": {
+       "entries": {
+         "getnote": {
+           "apiKey": "gk_live_你的key",
+           "env": {
+             "GETNOTE_CLIENT_ID": "cli_你的id"
+           }
+         }
+       }
+     }
+   }
+   ```
+
+2. **通过环境变量**：在 shell 配置文件（`~/.zshrc` 或 `~/.bashrc`）中添加：
+   ```bash
+   export GETNOTE_API_KEY="gk_live_你的key"
+   export GETNOTE_CLIENT_ID="cli_你的id"
+   ```
+
+**获取凭证**：前往 [Get笔记开放平台](https://www.biji.com/openapi) 创建应用获取。
 
 ---
 
@@ -56,11 +72,11 @@ echo "API_KEY: $GETNOTE_API_KEY | CLIENT_ID: $GETNOTE_CLIENT_ID | OWNER_ID: $GET
 
 ## 认证
 
-所有请求需要：
-- `Authorization: $GETNOTE_API_KEY`（或 `gk_live_xxx`）
-- `X-Client-ID: $GETNOTE_CLIENT_ID`（或 `cli_xxx`）
+**所有请求的 Base URL**：`https://openapi.biji.com`（见上方重要提示）
 
-**Base URL**: `https://openapi.biji.com`
+请求头：
+- `Authorization: $GETNOTE_API_KEY`（格式：`gk_live_xxx`）
+- `X-Client-ID: $GETNOTE_CLIENT_ID`（格式：`cli_xxx`）
 
 ### Scope 权限
 
@@ -80,20 +96,23 @@ echo "API_KEY: $GETNOTE_API_KEY | CLIENT_ID: $GETNOTE_CLIENT_ID | OWNER_ID: $GET
 
 ## 快速决策
 
+Base URL: `https://openapi.biji.com`
+
 | 用户意图 | 接口 | 关键点 |
 |---------|------|--------|
-| 「记一下」「保存笔记」 | POST /note/save | 同步返回 |
-| 「保存这个链接」 | POST /note/save | note_type:"link" → **必须轮询** /task/progress |
+| 「记一下」「保存笔记」 | POST /open/api/v1/resource/note/save | 同步返回 |
+| 「保存这个链接」 | POST /open/api/v1/resource/note/save | note_type:"link" → **必须轮询** |
 | 「保存这张图」 | 见「图片笔记流程」 | **4 步流程，必须轮询** |
-| 「查我的笔记」 | GET /note/list | since_id=0 起始，每次 20 条 |
-| 「看原文/转写内容」 | GET /note/detail | audio.original / web_page.content **仅详情接口返回** |
-| 「加标签」 | POST /note/tags/add | |
-| 「删标签」 | POST /note/tags/delete | system 类型不可删 |
-| 「删笔记」 | POST /note/delete | 移入回收站 |
-| 「查知识库」 | GET /knowledge/list | |
-| 「建知识库」 | POST /knowledge/create | 每天限 50 个 |
-| 「笔记加入知识库」 | POST /knowledge/note/batch-add | 每批最多 20 条 |
-| 「从知识库移除」 | POST /knowledge/note/remove | |
+| 「查我的笔记」 | GET /open/api/v1/resource/note/list | since_id=0 起始 |
+| 「看原文/转写内容」 | GET /open/api/v1/resource/note/detail | audio.original / web_page.content |
+| 「加标签」 | POST /open/api/v1/resource/note/tags/add | |
+| 「删标签」 | POST /open/api/v1/resource/note/tags/delete | system 类型不可删 |
+| 「删笔记」 | POST /open/api/v1/resource/note/delete | 移入回收站 |
+| 「查知识库」 | GET /open/api/v1/resource/knowledge/list | |
+| 「建知识库」 | POST /open/api/v1/resource/knowledge/create | 每天限 50 个 |
+| 「笔记加入知识库」 | POST /open/api/v1/resource/knowledge/note/batch-add | 每批最多 20 条 |
+| 「从知识库移除」 | POST /open/api/v1/resource/knowledge/note/remove | |
+| 「查任务进度」 | POST /open/api/v1/resource/note/task/progress | 链接/图片笔记轮询用 |
 
 ---
 
@@ -219,23 +238,56 @@ Content-Type: application/json
 
 ## 异步任务流程
 
-> 💡 **体验优化**：链接笔记和图片笔记需要后台处理。任务提交成功后，**先单独发一条消息**告诉用户「你的链接/图片已经提交，正在抓紧分析中，过会儿来告诉你笔记最终生成结果」，然后后台轮询，完成后**再发一条消息**通知结果。
+> ⚠️ **必须遵循的体验流程**：链接笔记和图片笔记是异步生成的，必须按以下方式与用户沟通。
 
-### 链接笔记（2 步）
+### 链接笔记完整流程
 
+**步骤 1**：提交任务
 ```
-1. POST /note/save {note_type:"link", link_url:"https://..."} → 返回 task_id
-2. 轮询 POST /task/progress {task_id} → 直到 status=success/failed
+POST /open/api/v1/resource/note/save {note_type:"link", link_url:"https://..."}
+```
+返回 task_id 后，**立即发消息给用户**：
+> ✅ 链接已保存，正在抓取原文和生成总结，稍后告诉你结果...
+
+**步骤 2**：后台轮询（10-30 秒间隔）
+```
+POST /open/api/v1/resource/note/task/progress {task_id} → 直到 status=success/failed
 ```
 
-### 图片笔记（4 步）
-
+**步骤 3**：任务完成后，**调详情接口展示价值**
 ```
-1. GET /image/upload_token?mime_type=jpg → 获取上传凭证
+GET /open/api/v1/resource/note/detail?id={note_id}
+```
+然后发第二条消息，包含具体内容：
+> ✅ 笔记生成完成！
+> - 📄 **原文**：已保存 {web_page.content 字数} 字
+> - 📝 **总结**：{content 内容，即 AI 生成的摘要}
+> - 🔗 **来源**：{web_page.url}
+
+### 图片笔记完整流程
+
+**步骤 1-3**：获取凭证 → 上传 OSS → 提交任务
+```
+1. GET /open/api/v1/resource/image/upload_token?mime_type=jpg → 获取上传凭证
 2. POST {host} 上传文件到 OSS
-3. POST /note/save {note_type:"img_text", image_urls:[access_url]} → 返回 task_id
-4. 轮询 POST /task/progress {task_id} → 直到 status=success/failed
+3. POST /open/api/v1/resource/note/save {note_type:"img_text", image_urls:[access_url]} → 返回 task_id
 ```
+拿到 task_id 后，**立即发消息给用户**：
+> ✅ 图片已保存，正在识别内容，稍后告诉你结果...
+
+**步骤 4**：后台轮询
+```
+POST /open/api/v1/resource/note/task/progress {task_id} → 直到 status=success/failed
+```
+
+**步骤 5**：任务完成后，**调详情接口展示价值**
+```
+GET /open/api/v1/resource/note/detail?id={note_id}
+```
+然后发第二条消息：
+> ✅ 图片笔记生成完成！
+> - 📝 **识别内容**：{content 内容}
+> - 🏷️ **标签**：{tags}
 
 ### 图片上传凭证
 

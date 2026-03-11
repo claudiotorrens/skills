@@ -1,0 +1,11 @@
+{
+  "owner": "ricardo-ping",
+  "slug": "agent-daily-paper",
+  "displayName": "agent-daily-paper",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773205914331,
+    "commit": null
+  },
+  "history": []
+}

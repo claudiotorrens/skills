@@ -254,7 +254,7 @@ tasks/
 bash ~/skills/team-dispatch/scripts/watch.sh
 
 # 自定义频率
-INTERVAL=90 GRACE=20 bash ~/skills/team-dispatch/scripts/watch.sh
+INTERVAL=300 GRACE=20 bash ~/skills/team-dispatch/scripts/watch.sh
 ```
 
 ---

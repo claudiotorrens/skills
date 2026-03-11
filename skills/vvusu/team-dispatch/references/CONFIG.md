@@ -34,12 +34,30 @@ bash ~/skills/team-dispatch/scripts/setup-config.sh
 ## Watcher（后台周期任务）
 
 - `team.watcher.enabled` (default: `true`)
-- `team.watcher.backend` (default: `openclaw-cron`)
-  - `openclaw-cron`: 默认推荐（统一管理，开箱即用；但会消耗模型 token）
-  - `auto-system-first`: 系统调度优先（launchd/systemd/cron），失败才 fallback（更省 token）
+- `team.watcher.backend` (default: `auto`)
+  - `auto`: 系统调度优先（launchd/systemd/cron），失败才 fallback 到 openclaw-cron（更省 token）
+  - `openclaw-cron`: OpenClaw 内置 cron（统一管理，开箱即用；但会消耗模型 token）
   - `launchd|systemd|cron`: 强制指定具体系统调度器
 - `team.watcher.interval` (seconds)
 - `team.watcher.grace` (seconds)
+
+## Daily Summary（每日总结）
+
+- `team.dailySummary.enabled` (default: `true`)
+- `team.dailySummary.backend` (default: `openclaw-cron`)
+- `team.dailySummary.cron` (default: `0 22 * * *`)
+  - Cron 表达式，5 字段标准格式：`分 时 日 月 周`
+  - 默认每天 22:00 执行
+  - 示例：`0 9 * * 1-5` 表示工作日每天早上 9 点
+- `team.dailySummary.timezone` (default: 空，使用系统时区)
+  - 可选：IANA 时区标识符，如 `Asia/Shanghai`、`America/New_York`
+- `team.dailySummary.jobName` (default: `team-dispatch.daily-summary`)
+- `team.dailySummary.jobDescription`
+
+功能：每天定时生成 Team Dispatch 日报，汇总：
+- 当天完成的任务（根据 completedAt 判断）
+- 进行中的任务状态
+- 失败或卡住的任务
 
 ## Telegram notification
 

@@ -1,7 +1,34 @@
 # Changelog
 
+## Unreleased
+
+## v1.0.8 (2026-03-09)
+- feat: Add `shield` security audit agent (🛡️ 盾卫)
+- feat: New workflow templates include security audit stage
+- feat: Watcher now sends detailed alerts directly to main agent via `openclaw sessions send`
+- feat: Watcher includes full task context (project, agent, description, error, retries) in alerts
+- refactor: Enhanced `watch.py` with structured TaskDetail and rich alert messages
+- config: Change default watcher interval from 120s to 300s (5 minutes)
+- docs: Update agent count from 6 to 7 in all references
+- docs: Update all interval references from 120 to 300 seconds
+
+## v1.0.7 (2026-03-09)
+- fix(setup.sh): Fix `set -e` exit on `openclaw gateway restart` failure (use `|| true`)
+- chore: Add `scripts/publish-clawhub.mjs` workaround publisher for ClawHub CLI `acceptLicenseTerms` incompatibility
+- docs: Document the local ClawHub publish flow in README
+
+## v1.0.6 (2026-03-09)
+- feat: Add daily summary cron job (configurable via `team.dailySummary`)
+- feat: Configurable periodic tasks with `enabled` flag in config.json
+- refactor: All config languages switched to English
+- refactor: Rename plist to `openclaw.team-dispatch.watch.plist` for consistency
+- fix: Path expansion for `~/work` directory creation
+- fix: Default backend changed from `openclaw-cron` to `auto` (system scheduler preferred)
+- chore: Update default models to `gpt-5.4` (general agents) and `gpt-5.3-codex` (coder)
+- chore: Update default watcher interval to 300 seconds (5 minutes)
+
 ## v1.0.5 (2026-03-09)
-- fix(Clawhub): 将 `team-dispatch.watch.plist` 改为模板 `assets/launchd/team-dispatch.watch.plist.xml`，安装时渲染到 `~/Library/LaunchAgents/` 再 bootstrap（避免 Clawhub 过滤 .plist）
+- fix(Clawhub): 将 plist 改为模板 `assets/launchd/openclaw.team-dispatch.watch.plist.xml`，安装时渲染到 `~/Library/LaunchAgents/` 再 bootstrap（避免 Clawhub 过滤 .plist）
 - fix(Clawhub): 将 Windows watcher 安装脚本改为 `assets/windows/watch-install.ps1.txt`（避免 Clawhub 过滤 .ps1），文档说明复制改名后执行
 
 ## v1.0.4 (2026-03-09)

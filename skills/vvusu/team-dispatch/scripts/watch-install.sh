@@ -6,7 +6,7 @@
 #
 # Usage:
 #   bash <SKILL_DIR>/scripts/watch-install.sh
-#   INTERVAL=90 GRACE=20 bash <SKILL_DIR>/scripts/watch-install.sh
+#   INTERVAL=300 GRACE=20 bash <SKILL_DIR>/scripts/watch-install.sh
 #   bash <SKILL_DIR>/scripts/watch-install.sh --backend auto|openclaw-cron|launchd|systemd|cron
 #   bash <SKILL_DIR>/scripts/watch-install.sh --dry-run
 
@@ -33,13 +33,13 @@ run() {
 
 say() { echo "$@"; }
 
-INTERVAL=${INTERVAL:-90}
+INTERVAL=${INTERVAL:-300}
 GRACE=${GRACE:-20}
 
 SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-PLIST_TPL="$SKILL_DIR/assets/launchd/team-dispatch.watch.plist.xml"
-PLIST_DST="$HOME/Library/LaunchAgents/team-dispatch.watch.plist"
-LABEL="team-dispatch.watch"
+PLIST_TPL="$SKILL_DIR/assets/launchd/openclaw.team-dispatch.watch.plist.xml"
+PLIST_DST="$HOME/Library/LaunchAgents/openclaw.team-dispatch.watch.plist"
+LABEL="openclaw.team-dispatch.watch"
 
 OS="$(uname -s)"
 
@@ -209,11 +209,14 @@ PY
   run launchctl setenv INTERVAL "$INTERVAL"
   run launchctl setenv GRACE "$GRACE"
 
-  # best-effort unload previous
+  # best-effort unload previous (try bootout first, then remove as fallback)
   if [ "$DRY_RUN" = "1" ]; then
     echo "[dry-run] launchctl bootout gui/$(id -u) $LABEL (best-effort)"
   else
-    launchctl bootout "gui/$(id -u)" "$LABEL" >/dev/null 2>&1 || true
+    if ! launchctl bootout "gui/$(id -u)" "$LABEL" >/dev/null 2>&1; then
+      # bootout may fail with EIO if service is in bad state; try remove as fallback
+      launchctl remove "$LABEL" >/dev/null 2>&1 || true
+    fi
   fi
   run launchctl bootstrap "gui/$(id -u)" "$PLIST_DST"
   say "✅ LaunchAgent installed: $LABEL"

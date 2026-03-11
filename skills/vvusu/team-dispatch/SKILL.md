@@ -9,7 +9,7 @@ metadata:
       supported: ["en", "zh"]
 ---
 
-# 🚀 Team Dispatch v1.0.5 — Multi-Agent Workflow Orchestration
+# 🚀 Team Dispatch v1.0.8 — Multi-Agent Workflow Orchestration
 
 **一句需求 → 自动分析 → 智能拆解 → DAG 派发 → 故障重试 → 自动交付。**
 
@@ -59,7 +59,7 @@ bash <SKILL_DIR>/scripts/setup.sh --baseline-models
 | 4 | **用户配置** | 生成 `~/.openclaw/configs/team-dispatch.json`（语言、通知策略、团队显示名） |
 | 5 | **子 Agent agentDir 模板** | 全新安装：`cp -R <SKILL_DIR>/assets/agents/<id> ~/.openclaw/agents/<id>`（内含 workspace 模板 + 预置文件） |
 | 6 | **补齐缺失文件** | 已有 `~/.openclaw/agents/<id>`：仅补齐 `workspace/` 下缺失文件，不覆盖用户改动；并创建 `sessions/` |
-| 7 | **写入 openclaw.json** | 在 `agents.list` 中确保存在 `main`（dispatcher/root）并配置 `main.subagents.allowAgents: ["*"]`；同时写入 6 个子 Agent 配置（含 workspace、identity、model），已存在的补齐缺失字段 |
+| 7 | **写入 openclaw.json** | 在 `agents.list` 中确保存在 `main`（dispatcher/root）并配置 `main.subagents.allowAgents: ["*"]`；同时写入 7 个子 Agent 配置（含 workspace、identity、model），已存在的补齐缺失字段 |
 | 8 | **重启 Gateway** | 配置写入后自动重启 Gateway 使生效 |
 
 ### 子 Agent 完整配置规范
@@ -75,7 +75,7 @@ bash <SKILL_DIR>/scripts/setup.sh --baseline-models
   "name": "main",
   "workspace": "/Users/vvusu/.openclaw/workspace",
   "agentDir": "/Users/vvusu/.openclaw/agents/main/agent",
-  "model": "openai-codex/gpt-5.2",
+  "model": "openai-codex/gpt-5.4",
   "identity": {
     "name": "调度台",
     "emoji": "🎯"
@@ -110,7 +110,7 @@ bash <SKILL_DIR>/scripts/setup.sh --baseline-models
 ### 模型选择策略
 
 - `coder` → `openai-codex/gpt-5.3-codex`（OAuth，专为编码优化）
-- 其他 Agent → `openai-codex/gpt-5.2`（OAuth，通用稳定）
+- 其他 Agent → `openai-codex/gpt-5.4`（OAuth，通用稳定）
 - fallbacks 从用户已配置的 providers 中选取，确保不会 404
 
 ### 工具集分配
@@ -166,6 +166,7 @@ cp -R <SKILL_DIR>/assets/agents/<id> ~/.openclaw/agents/<id>
 | `research` | 露娜 | 🔭 | workspace-research | full | 调研搜索专家 |
 | `trader` | 泰坦 | 📈 | workspace-trader | full | 投资分析专家 |
 | `writer` | 萊拉 | ✒️ | workspace-writer | full | 内容写作专家 |
+| `shield` | 盾卫 | 🛡️ | workspace-shield | full | 安全审计专家 |
 
 ### 检测通过后的输出
 
@@ -177,7 +178,7 @@ cp -R <SKILL_DIR>/assets/agents/<id> ~/.openclaw/agents/<id>
 - 任务目录：✅
 - 项目模板：✅
 - 用户配置：✅（语言：zh/en）
-- 子 Agent Workspace：✅（6 个独立工作目录 + AGENTS.md）
+- 子 Agent Workspace：✅（7 个独立工作目录 + AGENTS.md）
 - 子 Agent 配置：✅（workspace + identity + model 完整）
 - Gateway：✅（已重启生效）
 
@@ -221,8 +222,13 @@ cp -R <SKILL_DIR>/assets/agents/<id> ~/.openclaw/agents/<id>
 
 ### 开发类
 ```
-product(PRD) → coder(编码) → tester(测试)
+product(PRD) → coder(编码) → tester(测试) → shield(安全审计)
                              → writer(文档)
+```
+
+### 安全敏感类（带部署）
+```
+product(PRD) → coder(编码) → tester(测试) → shield(安全审计) → writer(文档)
 ```
 
 ### 研究类
@@ -232,7 +238,7 @@ research(调研) → product(分析框架) → writer(成文)
 
 ### 全栈类
 ```
-research(调研) → product(PRD) → coder(编码) → tester(测试) → writer(文档)
+research(调研) → product(PRD) → coder(编码) → tester(测试) → shield(安全审计) → writer(文档)
 ```
 
 ### 分析类
@@ -462,7 +468,7 @@ tasks/
 | `scripts/setup-config.sh` | 生成用户配置 | 自动跳过已存在 |
 | `scripts/doctor.sh` | 环境健康检查 | `bash <SKILL_DIR>/scripts/doctor.sh` |
 | `scripts/demo-project.sh` | 生成闭环自测 Demo 项目（product → coder → tester） | `bash <SKILL_DIR>/scripts/demo-project.sh` |
-| `scripts/watch.sh` | 低频巡检卡死任务（前台运行） | `INTERVAL=90 GRACE=20 bash <SKILL_DIR>/scripts/watch.sh` |
+| `scripts/watch.sh` | 低频巡检卡死任务（前台运行） | `INTERVAL=300 GRACE=20 bash <SKILL_DIR>/scripts/watch.sh` |
 | `scripts/watch-install.sh` | 安装 watcher（后台常驻，跨平台：macOS/Linux；Windows见ps1） | `bash <SKILL_DIR>/scripts/watch-install.sh` |
 | `scripts/watch-uninstall.sh` | 卸载 watcher（后台常驻） | `bash <SKILL_DIR>/scripts/watch-uninstall.sh` |
 | `assets/windows/watch-install.ps1.txt` | Windows 安装 watcher（Scheduled Task） | `copy <SKILL_DIR>\\assets\\windows\\watch-install.ps1.txt watch-install.ps1; powershell -ExecutionPolicy Bypass -File .\\watch-install.ps1` |

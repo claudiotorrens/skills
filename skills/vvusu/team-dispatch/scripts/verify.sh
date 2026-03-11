@@ -51,7 +51,7 @@ need_file() {
     exit 1
   fi
 }
-need_file "$SKILL_DIR/assets/launchd/team-dispatch.watch.plist.xml"
+need_file "$SKILL_DIR/assets/launchd/openclaw.team-dispatch.watch.plist.xml"
 need_file "$SKILL_DIR/assets/windows/watch-install.ps1.txt"
   bash "$SKILL_DIR/scripts/setup.sh" >/tmp/team-dispatch.verify.setup.log 2>&1 || {
     tail -120 /tmp/team-dispatch.verify.setup.log >&2 || true
@@ -169,7 +169,7 @@ else
 
   if [ -z "$JOB_ID" ]; then
     # attempt install (auto)
-    INTERVAL=90 GRACE=20 bash "$SKILL_DIR/scripts/watch-install.sh" --backend auto >/tmp/team-dispatch.verify.watch-install.log 2>&1 || true
+    INTERVAL=300 GRACE=20 bash "$SKILL_DIR/scripts/watch-install.sh" --backend auto >/tmp/team-dispatch.verify.watch-install.log 2>&1 || true
     JOB_JSON=$(openclaw cron list --json 2>/dev/null)
     JOB_ID=$(printf %s "$JOB_JSON" | node -e "
       let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{

@@ -1,33 +1,41 @@
 {
-  "version": "1.0.5",
-  "language": "zh",
-  "languageNote": "Switch to 'zh' for Chinese output. Default is English. 切换为 'zh' 输出中文，默认为英文。",
+  "version": "1.0.8",
+  "language": "en",
+  "languageNote": "Default language for output. Options: 'en' | 'zh'. Set to 'zh' for Chinese output.",
   "notifyPolicy": "failures-only",
   "paths": {
     "projectsRoot": "~/work",
     "projectsRootNote": "Default real project code directory. Agents should create repos/projects under this folder (e.g. ~/work/<project>)."
   },
-  "notifyPolicyNote": "Options: 'all' | 'failures-only' | 'none'. 选项：'all' 全部通知 | 'failures-only' 仅失败 | 'none' 不通知",
+  "notifyPolicyNote": "Notification policy. Options: 'all' | 'failures-only' | 'none'",
   "team": {
     "watcher": {
       "enabled": true,
-      "backend": "openclaw-cron",
-      "interval": 90,
+      "backend": "auto",
+      "interval": 300,
       "grace": 20,
       "jobName": "Team Dispatch watcher",
       "jobDescription": "Low-frequency reconciliation: scan tasks/active for overdue in-progress tasks and reset to pending when retries remain.",
-      "note": "Cross-platform background watcher installer. backend: openclaw-cron|auto|auto-system-first|launchd|systemd|cron"
+      "note": "Cross-platform background watcher installer. backend: auto|openclaw-cron|launchd|systemd|cron"
+    },
+    "dailySummary": {
+      "enabled": true,
+      "backend": "openclaw-cron",
+      "cron": "0 22 * * *",
+      "timezone": "",
+      "jobName": "team-dispatch.daily-summary",
+      "jobDescription": "Team Dispatch daily summary: aggregate completed tasks, progress, and status for the day"
     },
     "main": {
       "displayName": "main",
-      "displayNameCN": "调度台",
+      "displayNameEN": "Dispatcher",
       "emoji": "🎯",
-      "model": "openai-codex/gpt-5.2"
+      "model": "openai-codex/gpt-5.4"
     },
     "agents": {
       "coder": {
         "displayName": "Coder",
-        "displayNameCN": "闪电",
+        "displayNameEN": "Flash",
         "emoji": "⚡️",
         "theme": "coding expert",
         "toolsProfile": "coding",
@@ -42,53 +50,93 @@
       },
       "product": {
         "displayName": "Product",
-        "displayNameCN": "诺娃",
+        "displayNameEN": "Nova",
         "emoji": "🧭",
         "theme": "product planning",
         "toolsProfile": "full",
-        "model": "openai-codex/gpt-5.2",
+        "model": "openai-codex/gpt-5.4",
         "username": "",
-        "notify": { "telegram": { "enabled": false, "chatId": "" } }
+        "notify": {
+          "telegram": {
+            "enabled": false,
+            "chatId": ""
+          }
+        }
       },
       "tester": {
         "displayName": "Tester",
-        "displayNameCN": "亚特拉斯",
+        "displayNameEN": "Atlas",
         "emoji": "🔍",
         "theme": "testing & verification",
         "toolsProfile": "coding",
-        "model": "openai-codex/gpt-5.2",
+        "model": "openai-codex/gpt-5.4",
         "username": "",
-        "notify": { "telegram": { "enabled": false, "chatId": "" } }
+        "notify": {
+          "telegram": {
+            "enabled": false,
+            "chatId": ""
+          }
+        }
       },
       "research": {
         "displayName": "Research",
-        "displayNameCN": "露娜",
+        "displayNameEN": "Luna",
         "emoji": "🔭",
         "theme": "research & analysis",
         "toolsProfile": "full",
-        "model": "openai-codex/gpt-5.2",
+        "model": "openai-codex/gpt-5.4",
         "username": "",
-        "notify": { "telegram": { "enabled": false, "chatId": "" } }
+        "notify": {
+          "telegram": {
+            "enabled": false,
+            "chatId": ""
+          }
+        }
       },
       "trader": {
         "displayName": "Trader",
-        "displayNameCN": "泰坦",
+        "displayNameEN": "Titan",
         "emoji": "📈",
         "theme": "investment analysis",
         "toolsProfile": "full",
-        "model": "openai-codex/gpt-5.2",
+        "model": "openai-codex/gpt-5.4",
         "username": "",
-        "notify": { "telegram": { "enabled": false, "chatId": "" } }
+        "notify": {
+          "telegram": {
+            "enabled": false,
+            "chatId": ""
+          }
+        }
       },
       "writer": {
         "displayName": "Writer",
-        "displayNameCN": "萊拉",
+        "displayNameEN": "Lyra",
         "emoji": "✒️",
         "theme": "content writing",
         "toolsProfile": "full",
-        "model": "openai-codex/gpt-5.2",
+        "model": "openai-codex/gpt-5.4",
         "username": "",
-        "notify": { "telegram": { "enabled": false, "chatId": "" } }
+        "notify": {
+          "telegram": {
+            "enabled": false,
+            "chatId": ""
+          }
+        }
+      },
+      "shield": {
+        "displayName": "Security",
+        "displayNameEN": "Shield",
+        "emoji": "🛡️",
+        "theme": "security audit",
+        "toolsProfile": "full",
+        "model": "openai-codex/gpt-5.4",
+        "username": "",
+        "notify": {
+          "telegram": {
+            "enabled": false,
+            "chatId": ""
+          }
+        }
       }
     }
   }

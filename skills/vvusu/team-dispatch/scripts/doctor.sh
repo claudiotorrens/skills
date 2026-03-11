@@ -29,7 +29,7 @@ NODE
 echo ""
 echo "=== Suggested stable baseline (if you see 404/quota issues) ==="
 echo "- coder primary = openai-codex/gpt-5.3-codex (OAuth, coding-optimized)"
-echo "- others primary = openai-codex/gpt-5.2 (OAuth, general-purpose)"
+echo "- others primary = openai-codex/gpt-5.4 (OAuth, general-purpose)"
 echo "- fallbacks = bailian/qwen3.5-plus, bailian/kimi-k2.5, zai/glm-4.7"
 
 echo ""

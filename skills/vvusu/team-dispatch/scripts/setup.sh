@@ -9,7 +9,7 @@
 #   2. 创建任务目录 + 复制模板
 #   3. 生成用户配置（team-dispatch.json）
 #   4. 为每个子 Agent 创建独立 agentDir（~/.openclaw/agents/<id>），包含完整 workspace 模板
-#   5. 将 6 个子 Agent 写入 openclaw.json（含 workspace/identity/model）
+#   5. 将 7 个子 Agent 写入 openclaw.json（含 workspace/identity/model）
 #   6. 重启 Gateway 使配置生效
 
 set -e
@@ -88,8 +88,8 @@ PROJECTS_ROOT=$(node -e "
   process.stdout.write(String(j.paths?.projectsRoot||'~/work'));
 ")
 # Expand leading ~/ (do NOT rely on shell tilde expansion, because the value is quoted)
-if [[ "$PROJECTS_ROOT" == "~/"* ]]; then
-  PROJECTS_ROOT="$HOME/${PROJECTS_ROOT#~/}"
+if [[ "$PROJECTS_ROOT" == \~/* ]]; then
+  PROJECTS_ROOT="$HOME/${PROJECTS_ROOT#\~\/}"
 fi
 mkdir -p "$PROJECTS_ROOT"
 echo "   ✅ projectsRoot: $PROJECTS_ROOT"
@@ -218,7 +218,7 @@ const mainAgentPatch = {
   name: 'main',
   workspace: home + '/.openclaw/workspace',
   agentDir: home + '/.openclaw/agents/main/agent',
-  model: mainCfg.model || 'openai-codex/gpt-5.2',
+  model: mainCfg.model || 'openai-codex/gpt-5.4',
   identity: { name: mainName, emoji: mainCfg.emoji || '🎯' },
   subagents: { allowAgents: ['*'] },
 };
@@ -271,8 +271,8 @@ const workers = workerIds.map((id) => {
 
   // Baseline model policy:
   // - coder: openai-codex/gpt-5.3-codex
-  // - others: openai-codex/gpt-5.2
-  const baselinePrimary = id === 'coder' ? 'openai-codex/gpt-5.3-codex' : 'openai-codex/gpt-5.2';
+  // - others: openai-codex/gpt-5.4
+  const baselinePrimary = id === 'coder' ? 'openai-codex/gpt-5.3-codex' : 'openai-codex/gpt-5.4';
   const primaryDefault = baselinePrimary;
   const primary = baseline ? baselinePrimary : (r.model || primaryDefault);
 
@@ -449,7 +449,7 @@ WATCH_BACKEND=$(node -e "
   try{ if (fs.existsSync(up)) u=JSON.parse(fs.readFileSync(up,'utf8')); }catch(e){}
   try{ if (fs.existsSync(sp)) s=JSON.parse(fs.readFileSync(sp,'utf8')); }catch(e){}
   const merged={...s, ...u, team:{...(s.team||{}), ...(u.team||{}), watcher:{...((s.team||{}).watcher||{}), ...(((u.team||{}).watcher)||{})}}};
-  process.stdout.write(String(merged.team?.watcher?.backend||'openclaw-cron'));
+  process.stdout.write(String(merged.team?.watcher?.backend||'auto'));
 ")
 WATCH_INTERVAL=$(node -e "
   const fs=require('fs');
@@ -460,7 +460,7 @@ WATCH_INTERVAL=$(node -e "
   try{ if (fs.existsSync(up)) u=JSON.parse(fs.readFileSync(up,'utf8')); }catch(e){}
   try{ if (fs.existsSync(sp)) s=JSON.parse(fs.readFileSync(sp,'utf8')); }catch(e){}
   const merged={...s, ...u, team:{...(s.team||{}), ...(u.team||{}), watcher:{...((s.team||{}).watcher||{}), ...(((u.team||{}).watcher)||{})}}};
-  process.stdout.write(String(merged.team?.watcher?.interval||90));
+  process.stdout.write(String(merged.team?.watcher?.interval||300));
 ")
 WATCH_GRACE=$(node -e "
   const fs=require('fs');
@@ -487,6 +487,144 @@ else
       || echo "   ⚠️  watcher 安装失败（不影响主功能）。可手动运行: bash $SKILL_DIR/scripts/watch-install.sh"
 fi
 
+# ─── Step 8: 安装每日总结任务（openclaw cron，默每天22点） ───
+echo ""
+echo "📅 Step 8: 每日总结任务（openclaw cron）..."
+
+# 读取每日总结配置（类似 watcher 配置方式）
+DAILY_SUMMARY_ENABLED=$(node -e "
+  const fs=require('fs');
+  const home=process.env.HOME;
+  const up=home+'/.openclaw/configs/team-dispatch.json';
+  const sp='$SKILL_DIR/config.json';
+  let u={}, s={};
+  try{ if (fs.existsSync(up)) u=JSON.parse(fs.readFileSync(up,'utf8')); }catch(e){}
+  try{ if (fs.existsSync(sp)) s=JSON.parse(fs.readFileSync(up,'utf8')); }catch(e){}
+  const merged={...s, ...u, team:{...(s.team||{}), ...(u.team||{}), dailySummary:{...((s.team||{}).dailySummary||{}), ...(((u.team||{}).dailySummary)||{})}}};
+  const ds=merged.team?.dailySummary||{};
+  process.stdout.write(ds.enabled===false?'0':'1');
+")
+DAILY_SUMMARY_CRON=$(node -e "
+  const fs=require('fs');
+  const home=process.env.HOME;
+  const up=home+'/.openclaw/configs/team-dispatch.json';
+  const sp='$SKILL_DIR/config.json';
+  let u={}, s={};
+  try{ if (fs.existsSync(up)) u=JSON.parse(fs.readFileSync(up,'utf8')); }catch(e){}
+  try{ if (fs.existsSync(sp)) s=JSON.parse(fs.readFileSync(sp,'utf8')); }catch(e){}
+  const merged={...s, ...u, team:{...(s.team||{}), ...(u.team||{}), dailySummary:{...((s.team||{}).dailySummary||{}), ...(((u.team||{}).dailySummary)||{})}}};
+  process.stdout.write(String(merged.team?.dailySummary?.cron||'0 22 * * *'));
+")
+DAILY_SUMMARY_TZ=$(node -e "
+  const fs=require('fs');
+  const home=process.env.HOME;
+  const up=home+'/.openclaw/configs/team-dispatch.json';
+  const sp='$SKILL_DIR/config.json';
+  let u={}, s={};
+  try{ if (fs.existsSync(up)) u=JSON.parse(fs.readFileSync(up,'utf8')); }catch(e){}
+  try{ if (fs.existsSync(sp)) s=JSON.parse(fs.readFileSync(sp,'utf8')); }catch(e){}
+  const merged={...s, ...u, team:{...(s.team||{}), ...(u.team||{}), dailySummary:{...((s.team||{}).dailySummary||{}), ...(((u.team||{}).dailySummary)||{})}}};
+  process.stdout.write(String(merged.team?.dailySummary?.timezone||''));
+")
+DAILY_SUMMARY_NAME=$(node -e "
+  const fs=require('fs');
+  const home=process.env.HOME;
+  const up=home+'/.openclaw/configs/team-dispatch.json';
+  const sp='$SKILL_DIR/config.json';
+  let u={}, s={};
+  try{ if (fs.existsSync(up)) u=JSON.parse(fs.readFileSync(up,'utf8')); }catch(e){}
+  try{ if (fs.existsSync(sp)) s=JSON.parse(fs.readFileSync(sp,'utf8')); }catch(e){}
+  const merged={...s, ...u, team:{...(s.team||{}), ...(u.team||{}), dailySummary:{...((s.team||{}).dailySummary||{}), ...(((u.team||{}).dailySummary)||{})}}};
+  process.stdout.write(String(merged.team?.dailySummary?.jobName||'team-dispatch.daily-summary'));
+")
+DAILY_SUMMARY_DESC=$(node -e "
+  const fs=require('fs');
+  const home=process.env.HOME;
+  const up=home+'/.openclaw/configs/team-dispatch.json';
+  const sp='$SKILL_DIR/config.json';
+  let u={}, s={};
+  try{ if (fs.existsSync(up)) u=JSON.parse(fs.readFileSync(up,'utf8')); }catch(e){}
+  try{ if (fs.existsSync(sp)) s=JSON.parse(fs.readFileSync(sp,'utf8')); }catch(e){}
+  const merged={...s, ...u, team:{...(s.team||{}), ...(u.team||{}), dailySummary:{...((s.team||{}).dailySummary||{}), ...(((u.team||{}).dailySummary)||{})}}};
+  process.stdout.write(String(merged.team?.dailySummary?.jobDescription||'Team Dispatch 每日总结：汇总当天完成的任务、进度和状态'));
+")
+
+install_daily_summary_job() {
+  local SKILL_DIR="$1"
+  local JOB_NAME="$2"
+  local CRON_EXPR="$3"
+  local TIMEZONE="$4"
+  local DESC="$5"
+
+  # 检查是否已存在
+  local JOB_ID=$(openclaw cron list --json 2>/dev/null | node -e "
+    const fs=require('fs');
+    let s=''; process.stdin.on('data',d=>s+=d); process.stdin.on('end',()=>{
+      try{const j=JSON.parse(s); const jobs=j.jobs||j; const hit=(jobs||[]).find(x=>x.name==='$JOB_NAME');
+      process.stdout.write(hit?.jobId||hit?.id||'');}catch(e){process.stdout.write('');}
+    });
+  ")
+
+  if [ -n "$JOB_ID" ]; then
+    echo "   ⏭️  每日总结任务已存在: $JOB_ID"
+    return 0
+  fi
+
+  # 构建时区参数
+  local TZ_ARG=""
+  if [ -n "$TIMEZONE" ]; then
+    TZ_ARG="--tz $TIMEZONE"
+  fi
+
+  # 创建每日总结任务
+  local MSG=$(cat <<'EOF'
+请生成 Team Dispatch 的每日总结报告：
+
+1. 扫描 ~/.openclaw/workspace/tasks/active/ 下的所有项目
+2. 汇总今天完成的任务（根据 completedAt 判断）
+3. 列出进行中的任务和当前状态
+4. 识别任何失败或卡住的任务
+5. 生成简洁的日报总结
+
+格式：
+📊 Team Dispatch 日报 (YYYY-MM-DD)
+✅ 今日完成: X 个任务
+🔄 进行中: X 个任务
+⚠️  需关注: X 个问题
+EOF
+)
+
+  JOB_ID=$(openclaw cron add \
+    --name "$JOB_NAME" \
+    --cron "$CRON_EXPR" \
+    $TZ_ARG \
+    --session isolated \
+    --agent main \
+    --message "$MSG" \
+    --no-deliver \
+    --description "$DESC" \
+    --json 2>/dev/null | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{try{const j=JSON.parse(s);process.stdout.write(j.jobId||j.id||'');}catch(e){process.stdout.write('');}});")
+
+  if [ -n "$JOB_ID" ]; then
+    echo "   ✅ 每日总结任务已创建: $JOB_ID"
+    echo "   ⏰ 执行计划: $CRON_EXPR"
+    [ -n "$TIMEZONE" ] && echo "   🌍 时区: $TIMEZONE"
+  else
+    echo "   ⚠️  每日总结任务创建失败（不影响主功能）"
+  fi
+}
+
+if [ "$ERRORS" -ne 0 ]; then
+  echo "   ⏭️  安装存在错误，跳过每日总结任务"
+elif ! command -v openclaw >/dev/null 2>&1; then
+  echo "   ⏭️  未找到 openclaw，跳过每日总结任务"
+elif [ "$DAILY_SUMMARY_ENABLED" = "0" ]; then
+  echo "   ⏭️  config.json 中 dailySummary.enabled=false，跳过"
+else
+  echo "   ▶︎ cron='$DAILY_SUMMARY_CRON'${DAILY_SUMMARY_TZ:+ tz=$DAILY_SUMMARY_TZ}"
+  install_daily_summary_job "$SKILL_DIR" "$DAILY_SUMMARY_NAME" "$DAILY_SUMMARY_CRON" "$DAILY_SUMMARY_TZ" "$DAILY_SUMMARY_DESC"
+fi
+
 echo ""
 if [ "$ERRORS" -eq 0 ]; then
     echo "🎉 安装完成！Team Dispatch v${TD_VERSION:-unknown} 已就绪"
@@ -497,7 +635,7 @@ if [ "$ERRORS" -eq 0 ]; then
     done
     echo ""
     echo "🔄 正在重启 Gateway..."
-    openclaw gateway restart 2>/dev/null && echo "   ✅ Gateway 已重启" || echo "   ⚠️  Gateway 重启需手动执行: openclaw gateway restart"
+    openclaw gateway restart 2>/dev/null || true
     echo ""
     echo "使用方式: 直接向主 Agent 提需求，系统会自动分析、拆解、派发"
 else

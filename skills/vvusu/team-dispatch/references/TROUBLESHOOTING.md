@@ -36,6 +36,6 @@ openclaw gateway restart
 **建议**：
 - 开启 watcher 做低频兜底（只检测卡死/超时）：
   ```bash
-  INTERVAL=90 GRACE=20 bash ~/skills/team-dispatch/scripts/watch.sh
+  INTERVAL=300 GRACE=20 bash ~/skills/team-dispatch/scripts/watch.sh
   ```
 - 或人工补查：查看最近子任务运行记录，并在项目 JSON 中补录 task.result / task.status

@@ -29,7 +29,8 @@ run() {
 say() { echo "$@"; }
 
 SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-LABEL="team-dispatch.watch"
+LABEL="openclaw.team-dispatch.watch"
+OLD_LABEL="team-dispatch.watch"
 OS="$(uname -s)"
 
 watcher_job_name() {
@@ -68,13 +69,15 @@ uninstall_openclaw_cron() {
 }
 
 uninstall_launchd() {
-  # best-effort
+  # best-effort: remove both old and new labels for compatibility
   if [ "$DRY_RUN" = "1" ]; then
     echo "[dry-run] launchctl bootout gui/$(id -u) $LABEL (best-effort)"
+    echo "[dry-run] launchctl bootout gui/$(id -u) $OLD_LABEL (best-effort)"
   else
     launchctl bootout "gui/$(id -u)" "$LABEL" >/dev/null 2>&1 || true
+    launchctl bootout "gui/$(id -u)" "$OLD_LABEL" >/dev/null 2>&1 || true
   fi
-  say "✅ launchd unloaded: $LABEL"
+  say "✅ launchd unloaded: $LABEL (and $OLD_LABEL if existed)"
 }
 
 uninstall_systemd() {

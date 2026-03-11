@@ -126,6 +126,27 @@ bash ~/skills/team-dispatch/scripts/setup.sh
 
 ---
 
+## ☁️ Publish to ClawHub
+
+Because `clawhub` CLI v0.7.0 currently misses the server-required `acceptLicenseTerms` field during publish, this repo includes a safe local publisher.
+
+```bash
+# Check auth first
+clawhub whoami
+
+# Publish current version
+node ~/skills/team-dispatch/scripts/publish-clawhub.mjs \
+  --version 1.0.7 \
+  --changelog "Daily summary cron, configurable periodic tasks, English config cleanup, launchd plist rename, system scheduler preferred by default, model/version defaults update."
+```
+
+Optional flags:
+
+- `--path ~/skills/team-dispatch`
+- `--slug team-dispatch`
+- `--name "Team Dispatch"`
+- `--tags latest`
+
 ## 🚀 Usage
 
 Simply send a request to the main agent:
@@ -254,7 +275,7 @@ tasks/
 bash ~/skills/team-dispatch/scripts/watch.sh
 
 # Custom interval
-INTERVAL=90 GRACE=20 bash ~/skills/team-dispatch/scripts/watch.sh
+INTERVAL=300 GRACE=20 bash ~/skills/team-dispatch/scripts/watch.sh
 ```
 
 ---

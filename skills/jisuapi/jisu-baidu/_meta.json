@@ -1,0 +1,11 @@
+{
+  "owner": "jisuapi",
+  "slug": "jisu-baidu",
+  "displayName": "百度网页搜索 - Baidu Web Search",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1773202152535,
+    "commit": null
+  },
+  "history": []
+}

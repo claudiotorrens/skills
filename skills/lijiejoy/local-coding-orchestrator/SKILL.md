@@ -22,6 +22,68 @@ That includes cases such as:
 
 This skill is for **persistent orchestration**, not just one-off prompt forwarding.
 
+## Strict supervisor boundary
+
+Default stance: this skill is a **supervisor, coordinator, and reviewer of work**, not the hands-on implementer.
+
+That means OpenClaw should normally:
+- define the task
+- choose and launch the right worker
+- reconcile worker output
+- verify objective checks
+- route to review / retry / hardening
+- report progress and decisions back to the user
+
+And OpenClaw should normally **not**:
+- directly edit product code that belongs to the delegated task
+- silently replace a failed worker by doing the implementation itself
+- mix coordinator voice with implementer voice in the same phase
+- report a task as complete based only on a worker saying it is done
+
+## When direct edits are allowed
+
+Direct edits by the supervisor are the exception, not the default.
+
+Allowed cases:
+- fixing the orchestrator skill itself
+- repairing task metadata, task records, or orchestration scripts
+- making tiny non-product changes required to unblock supervision
+- explicit user instruction to take over implementation directly
+
+If the supervisor makes a direct edit, it should say so clearly and distinguish:
+- what was supervisor-layer work
+- what was worker-layer implementation
+
+## Worker-first policy
+
+For coding tasks inside the target repo, prefer this order:
+1. probe with a worker when environment viability is unclear
+2. implement with a worker
+3. review with a reviewer worker or explicit supervisor review phase
+4. harden via a worker retry brief if review requests changes
+
+Do not collapse these into one hand-wavy pass unless the user explicitly asks for speed over strict orchestration.
+
+## Multi-worker orchestration
+
+When the task benefits from multiple tools, the supervisor should assign distinct roles instead of letting every worker do everything.
+
+Recommended pattern:
+- one primary implementer
+- one reviewer / planner
+- one secondary reviewer or alternate implementer
+
+The supervisor should then periodically check progress rather than waiting until the very end.
+
+Periodic supervision means checking:
+- whether repo changes are actually landing
+- whether a worker is stalled or looping
+- whether reviewers agree on the next boundary
+- whether a worker-specific blocker requires rerouting or a tighter brief
+
+The supervisor should synthesize reviewer output into a concrete next step.
+Do not just forward three uncoordinated opinions to the user.
+
 ## What this skill assumes
 
 The machine has local CLIs available for:
@@ -440,8 +502,21 @@ Mitigation:
 - use done policies tied to objective checks
 - separate worker exit from task completion state
 - require explicit supervisor transition to `completed`
+- if a worker only produces analysis or a patch plan, do not mark implementation complete unless repo changes actually landed
 
-### 4. Static retries
+### 4. Adapter-layer execution failure
+
+Problem:
+A worker adapter or wrapper may fail even when the underlying worker logic is still usable.
+Examples include PowerShell wrapper framing, stdout/stderr capture quirks, or PTY / shell integration issues.
+
+Mitigation:
+- classify wrapper failures separately from task failures
+- distinguish adapter failure from implementation failure in supervisor summaries
+- if needed, relaunch the same worker brief through a simpler execution path while preserving supervisor-only boundaries
+- do not silently rewrite task history to make an adapter failure look like product progress
+
+### 5. Static retries
 
 Problem:
 Blindly rerunning the same prompt wastes time and tokens when the first attempt misunderstood the task.
@@ -451,7 +526,7 @@ Mitigation:
 - generate retry briefs for semantic failures
 - preserve evidence from the failed attempt
 
-### 5. Lightweight prototype bias
+### 6. Lightweight prototype bias
 
 Problem:
 The orchestrator may prefer a lightweight prototype path when the task is ambiguous, even if the user would benefit from a more structured stack.
@@ -459,6 +534,17 @@ The orchestrator may prefer a lightweight prototype path when the task is ambigu
 Mitigation:
 - ask or decide explicitly between rapid prototype and maintainable project modes
 - use review output to validate stack choice before implementation
+
+### 7. Write-blocked worker runtimes
+
+Problem:
+A worker may be able to inspect and reason about the target repo but still be unable to apply edits because the runtime is read-only or policy-blocked.
+
+Mitigation:
+- classify this as an environment or policy blocker, not a semantic task failure
+- preserve the worker's exact patch plan as an artifact
+- mark implementation checks as pending when no repo changes landed
+- let the supervisor report that the task is blocked-by-runtime-write-capability rather than blocked-by-unclear-requirements
 
 ## Practical patterns learned
 
@@ -506,6 +592,58 @@ When reporting back to the user, prefer this shape:
 - differences
 - recommendation
 - next action
+- blocker classification when relevant
+- whether implementation actually landed in the repo or only an analysis/patch artifact was produced
+
+## Blocker classification
+
+When a task cannot advance, classify the blocker explicitly.
+Do not collapse all failures into a generic blocked state.
+
+Recommended blocker types:
+- `environment`
+  - runtime missing required capability
+  - repo path unavailable
+  - missing dependencies in allowed environment
+- `policy`
+  - write commands blocked
+  - execution path denied by sandbox or policy gate
+- `adapter`
+  - wrapper script failure
+  - PTY or stdout/stderr integration failure
+  - orchestration-layer execution bug
+- `implementation`
+  - worker found a real product/code issue that still needs changes
+- `semantic`
+  - worker misunderstood the task or changed the wrong scope
+- `mixed`
+  - multiple blocker classes materially apply
+
+Supervisor reporting should name:
+- blocker type
+- evidence
+- whether retrying unchanged would help
+- recommended next action
+
+## Terminal and near-terminal supervisor outcomes
+
+Use explicit end-state wording in summaries even when the internal task state machine remains simple.
+
+Recommended outcome labels:
+- `completed`
+- `completed-with-analysis-only`
+- `blocked-by-environment`
+- `blocked-by-policy`
+- `blocked-by-adapter`
+- `changes-requested`
+- `ready-for-hardening`
+- `retry-with-semantic-brief`
+- `awaiting-writable-runtime`
+
+Notes:
+- `completed-with-analysis-only` is useful when the worker produced a valid artifact, review, or patch plan, but did not land repo changes.
+- `awaiting-writable-runtime` is useful when implementation scope is clear and bounded, but no writable worker runtime is available.
+- `blocked-by-adapter` should be used when the worker path failed in the orchestration wrapper layer and the product task itself may still be viable.
 
 ## Operator quick start
 
@@ -520,12 +658,14 @@ For the current v2 scaffold, the practical operator flow is:
 See also:
 - `docs/README.md`
 - `docs/usage-guide.md`
+- `docs/operator-playbook.md`
 - `docs/status.md`
 - `docs/v2-summary.md`
 - `docs/CHANGELOG.md`
 - `docs/capability-map.md`
 - `docs/script-interface.md`
 - `docs/environment-failures.md`
+- `docs/review-output-format.md`
 
 ## Publishing workflow
 

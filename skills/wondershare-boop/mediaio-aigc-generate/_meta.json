@@ -1,0 +1,11 @@
+{
+  "owner": "wondershare-boop",
+  "slug": "mediaio-aigc-generate",
+  "displayName": "AI media generate API",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1773240433332,
+    "commit": null
+  },
+  "history": []
+}

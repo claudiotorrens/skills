@@ -1,0 +1,11 @@
+{
+  "owner": "aninebot",
+  "slug": "segway",
+  "displayName": "Segway",
+  "latest": {
+    "version": "0.0.1",
+    "publishedAt": 1773118168335,
+    "commit": null
+  },
+  "history": []
+}

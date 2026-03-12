@@ -3,11 +3,16 @@
   "slug": "ux-researcher-designer",
   "displayName": "Ux Researcher Designer",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1770402603176,
-    "commit": "https://github.com/openclaw/skills/commit/c8fdc996cf80986126ab1b6eebca3bfc9d29b31e"
+    "version": "2.1.1",
+    "publishedAt": 1773070366244,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1770402603176,
+      "commit": "https://github.com/openclaw/skills/commit/c8fdc996cf80986126ab1b6eebca3bfc9d29b31e"
+    },
     {
       "version": "0.1.0",
       "publishedAt": 1769759904138,

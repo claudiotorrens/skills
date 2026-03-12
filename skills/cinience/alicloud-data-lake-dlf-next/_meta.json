@@ -3,11 +3,16 @@
   "slug": "alicloud-data-lake-dlf-next",
   "displayName": "Alicloud Data Lake Dlf Next",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1770973218489,
-    "commit": "https://github.com/openclaw/skills/commit/42d5d131cd785734e94b0752b672e82a51b66078"
+    "version": "1.0.3",
+    "publishedAt": 1773221950953,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1770973218489,
+      "commit": "https://github.com/openclaw/skills/commit/42d5d131cd785734e94b0752b672e82a51b66078"
+    },
     {
       "version": "1.0.1",
       "publishedAt": 1770768530684,

@@ -1,0 +1,11 @@
+{
+  "owner": "alphafactor",
+  "slug": "tushare",
+  "displayName": "tushare",
+  "latest": {
+    "version": "1.0.5",
+    "publishedAt": 1773117233029,
+    "commit": null
+  },
+  "history": []
+}

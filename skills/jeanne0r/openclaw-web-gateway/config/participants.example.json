@@ -1,0 +1,12 @@
+[
+  {
+    "key": "family",
+    "display_name": "Family",
+    "aliases": ["famille"]
+  },
+  {
+    "key": "user1",
+    "display_name": "User 1",
+    "aliases": []
+  }
+]

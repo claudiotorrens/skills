@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ app_title }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/jarvis.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-card">
+        <div class="eyebrow">OpenClaw</div>
+        <h1>{{ app_title }}</h1>
+        <p>{{ app_subtitle }}</p>
+      </div>
+
+      <div class="panel">
+        <label for="userSelect">Speaker</label>
+        <select id="userSelect"></select>
+      </div>
+
+      <div class="panel small">
+        <div class="status-row">
+          <span>Status</span>
+          <span id="statusBadge" class="badge">Loading…</span>
+        </div>
+        <p class="muted">Minimal, GitHub-ready gateway for OpenClaw with shared participants and a simple web chat.</p>
+      </div>
+    </aside>
+
+    <main class="chat-panel">
+      <div id="messages" class="messages"></div>
+      <form id="chatForm" class="composer">
+        <textarea id="messageInput" placeholder="Type a message for Jarvis…" rows="3"></textarea>
+        <div class="composer-actions">
+          <button type="submit" id="sendBtn">Send</button>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>

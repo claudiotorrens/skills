@@ -3,11 +3,16 @@
   "slug": "aport-agent-guardrail",
   "displayName": "Aport Agent Guardrail",
   "latest": {
-    "version": "1.1.11",
-    "publishedAt": 1772426219787,
-    "commit": "https://github.com/openclaw/skills/commit/1a55fa56296c884d058bb7b1db44ab5e07d052fc"
+    "version": "1.1.14",
+    "publishedAt": 1773255005588,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.1.11",
+      "publishedAt": 1772426219787,
+      "commit": "https://github.com/openclaw/skills/commit/1a55fa56296c884d058bb7b1db44ab5e07d052fc"
+    },
     {
       "version": "1.1.10",
       "publishedAt": 1771551738425,

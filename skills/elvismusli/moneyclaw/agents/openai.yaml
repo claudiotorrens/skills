@@ -1,0 +1,7 @@
+interface:
+  display_name: "MoneyClaw"
+  short_description: "Virtual cards and invoices for agents"
+  default_prompt: "Use $moneyclaw to check the account, issue or top up a card, finish checkout, or create a hosted invoice."
+
+policy:
+  allow_implicit_invocation: true

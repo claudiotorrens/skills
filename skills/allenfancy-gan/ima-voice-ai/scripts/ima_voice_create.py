@@ -3,27 +3,14 @@
 IMA Voice/Music Creation Script — ima_voice_create.py
 Version: 1.1.0
 
-Specialized script for music/audio generation via IMA Open API.
-Handles: product list query → virtual param resolution → task create → poll status
+Music/audio generation via IMA Open API (text_to_music only).
+Flow: product list → virtual param resolution → task create → poll status.
 
-🆕 v1.1.0 Features:
-  - ✨ Reflection mechanism: Automatic error recovery with 3-layer retry strategy
-  - ✨ Smart parameter adjustment for Error 6009/6010
-  - ✨ User-friendly error messages with model suggestions
-  - ✨ Transparent logging of all retry attempts
-
-🆕 v1.0.8 Features:
-  - Enhanced error handling for 401 (Unauthorized) and 4008 (Insufficient points)
-  - Clickable links to API key generation and credit purchase pages
+Models: Suno (sonic), DouBao BGM (GenBGM), DouBao Song (GenSong).
 
 Usage:
-  python3 ima_voice_create.py \\
-    --api-key  ima_xxx \\
-    --model-id  sonic \\
-    --prompt   "upbeat lo-fi hip hop, 90 BPM"
-
-Supports text_to_music task type only.
-Models: Suno (sonic), DouBao BGM (GenBGM), DouBao Song (GenSong)
+  python3 ima_voice_create.py --api-key ima_xxx --model-id sonic \\
+    --prompt "upbeat lo-fi hip hop, 90 BPM"
 
 Logs: ~/.openclaw/logs/ima_skills/ima_create_YYYYMMDD.log
 """

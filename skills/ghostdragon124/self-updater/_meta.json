@@ -1,0 +1,11 @@
+{
+  "owner": "ghostdragon124",
+  "slug": "self-updater",
+  "displayName": "Self Updater",
+  "latest": {
+    "version": "1.4.2",
+    "publishedAt": 1773389117998,
+    "commit": null
+  },
+  "history": []
+}

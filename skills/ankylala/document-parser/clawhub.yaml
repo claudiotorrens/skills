@@ -3,7 +3,7 @@
 
 name: document-parser
 version: 1.0.0
-author: your-org
+author: TokenAI
 description:
   en: Extract structured data from PDF, images, and Word documents with high precision
   zh: 从 PDF、图片、Word 文档中高精度提取结构化数据
@@ -29,13 +29,6 @@ dependencies:
 
 # 配置项
 config:
-  - name: DOCUMENT_PARSER_API_KEY
-    type: string
-    required: false
-    description:
-      en: API Key for document parser service
-      zh: 文档解析服务 API Key
-
   - name: DOCUMENT_PARSER_BASE_URL
     type: string
     required: false

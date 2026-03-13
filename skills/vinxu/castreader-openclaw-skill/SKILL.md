@@ -5,7 +5,7 @@ description: >
   and convert it to audio (MP3). Use when the user wants to:
   listen to a webpage, read an article aloud, convert URL to audio,
   text-to-speech for a link, read this page to me, listen to this article.
-version: 1.7.0
+version: 1.7.2
 metadata:
   openclaw:
     emoji: "🔊"
@@ -17,27 +17,43 @@ metadata:
 
 # CastReader — Read Any Web Page Aloud
 
-## There is only ONE command
+## ⚠️ MANDATORY: Two-phase flow. Read this FIRST.
+
+When a user sends a URL, you MUST follow this exact two-phase flow. Do NOT skip Phase 1. Do NOT run index=1 directly.
+
+**Phase 1** → Extract only (index=0), show info with buttons, ask user to choose.
+**Phase 2** → User clicks button, THEN generate audio (index=1, 2, 3...).
+
+If you skip Phase 1 and jump to generating audio, you are doing it WRONG.
+
+## The command
 
 ```
-node scripts/read-url.js <url> [paragraph-index]
+node scripts/read-url.js <url> <paragraph-index>
 ```
 
-- `paragraph-index=0`: **Extract only** — returns article info + all paragraph texts, NO audio generated
-- `paragraph-index=1+`: Extract (cached) + generate audio for that one paragraph
-- Default is 1 if omitted
+- `0` = Extract only. NO audio. Returns article info + all paragraph texts.
+- `1`, `2`, `3`... = Generate audio for that paragraph (1-based).
 
-## Two-phase interaction flow
+## Setup: Install dependencies (once per session)
 
-### Phase 1: Extract + Show Info (index=0, NO audio)
+Before the first run, ensure dependencies are installed:
 
-When a user sends a URL, run extract-only first:
+```
+cd <skill-directory> && npm install --silent
+```
+
+Only needed once. Skip if you already ran it in this session.
+
+## Phase 1: Extract + Show Info (ALWAYS do this first)
+
+When user sends a URL, your FIRST action must be:
 
 ```
 node scripts/read-url.js <url> 0
 ```
 
-Output:
+This returns:
 ```json
 {
   "title": "Article Title",
@@ -50,68 +66,63 @@ Output:
 }
 ```
 
-Then send a summary message:
+Then you MUST use the `message` tool to send the info with inline buttons. Example:
+
 ```
-📖 {title}
-🌐 {language} · 📝 {totalParagraphs} paragraphs · 📊 {totalCharacters} chars
-⏱️ Estimated reading time: ~{Math.ceil(totalCharacters / 600)} min
-
-📋 Summary:
-{Use the paragraphs array to write a 2-3 sentence summary of the article}
-
-How would you like to listen?
+message tool call:
+  action: "send"
+  message: "📖 **{title}**\n🌐 {language} · 📝 {totalParagraphs} paragraphs · 📊 {totalCharacters} chars\n⏱️ ~{Math.ceil(totalCharacters / 600)} min\n\n📋 Summary:\n{2-3 sentence summary from paragraphs}\n\nHow would you like to listen?"
+  channel: "telegram"
+  buttons: "[[{\"text\": \"🔊 Read Full ({totalParagraphs} paragraphs)\", \"callback_data\": \"castreader_read_full\"}, {\"text\": \"📝 Summary Only\", \"callback_data\": \"castreader_summary\"}]]"
 ```
 
-Offer two buttons/options:
-- **🔊 Read Full ({totalParagraphs} paragraphs)**
-- **📝 Summary Only**
+**STOP HERE. Do NOT generate audio. Do NOT call read-url.js with index=1. Wait for user to click a button.**
 
-**DO NOT generate any audio in Phase 1.** Wait for user choice.
+## Phase 2a: User clicked "Read Full"
 
-### Phase 2a: Read Full (user chose "Read Full")
-
-Generate paragraphs one at a time. Estimate generation time: `~{Math.ceil(paragraph_char_count / 100 * 3)} seconds`.
+Generate paragraph 1:
 
 ```
 node scripts/read-url.js <url> 1
 ```
 
-Send the audio file with caption: `[1/{totalParagraphs}] {current.text}`
+Send the audio file with the `message` tool:
 
-Offer buttons:
-- **⏭ Next (2/{totalParagraphs})**
-- **⏹ Stop**
-
-On last paragraph (hasNext=false), do NOT show Next button. Instead show:
 ```
-✅ All done! {totalParagraphs} paragraphs read.
+message tool call:
+  action: "send"
+  filePath: "{current.audioFile}"
+  caption: "[1/{totalParagraphs}] {current.text (first 100 chars)}..."
+  channel: "telegram"
+  buttons: "[[{\"text\": \"⏭ Next (2/{totalParagraphs})\", \"callback_data\": \"castreader_next\"}, {\"text\": \"⏹ Stop\", \"callback_data\": \"castreader_stop\"}]]"
 ```
 
-### Phase 2b: Summary Only (user chose "Summary Only")
+Wait for user to click Next or Stop.
 
-1. Compose a summary text (3-5 sentences) from the paragraphs array
-2. Generate audio for the summary text using a temporary approach:
-   - Write the summary to a temp paragraph and use the TTS command pattern
-   - Or simply tell the user the summary in text (no audio needed for summary)
-3. Send: `✅ Summary read complete.`
+On "Next": **first delete the previous audio message**, then generate next paragraph.
+On last paragraph (hasNext=false), do NOT show Next button. Show: `✅ All done! {totalParagraphs} paragraphs read.`
+
+## Phase 2b: User clicked "Summary Only"
+
+Send the summary as a text message. No audio needed.
+```
+✅ Summary complete.
+```
 
 ## CRITICAL: Delete previous audio before sending next
 
-**Telegram auto-play problem**: Telegram automatically plays the next audio message in chat after one finishes. If multiple audio messages exist, playback order becomes chaotic.
+Telegram auto-plays the next audio message after one finishes. To prevent chaos:
 
-**Solution**: Always keep only ONE audio message in the chat.
+1. Remember the `message_id` from each audio message response.
+2. Before sending the NEXT audio, DELETE the previous audio message first.
+3. This way only ONE audio message exists in chat at any time.
 
-1. When sending paragraph 1 audio, remember its `message_id`
-2. When user clicks Next → **DELETE the previous audio message first** (using deleteMessage), then generate and send the next paragraph
-3. When user clicks Stop → delete the current audio message, send a text-only completion message
+## Rules
 
-**This is the most important rule. If you forget to delete, the user will hear paragraphs in wrong order.**
-
-## Important rules
-
-- Generate ONE paragraph at a time. Never loop through all paragraphs.
-- WAIT for user to request next before generating.
-- ALWAYS run index=0 first to show info. Do NOT skip to index=1.
+- ALWAYS run index=0 FIRST. Never skip to index=1.
+- ALWAYS use the `message` tool with `buttons` parameter for choices. Never just print text.
+- Generate ONE paragraph at a time.
+- WAIT for user to click a button before generating next.
+- DELETE previous audio message before sending each new audio.
 - Do NOT use built-in TTS tools. ONLY use `read-url.js`.
 - Do NOT use web_fetch to get article text. ONLY use `read-url.js`.
-- DELETE previous audio message before sending each new audio.

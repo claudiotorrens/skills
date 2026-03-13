@@ -1,48 +1,47 @@
 ---
 name: openclaw-master-skills
-description: "A curated collection of 127+ best OpenClaw skills — AI tools, productivity, marketing, frontend, mobile, backend, DevOps and more. Weekly updated by MyClaw.ai (https://myclaw.ai), the AI personal assistant platform. Install individual skills via ClaWHub or clone from GitHub."
-metadata: {"openclaw": {"homepage": "https://myclaw.ai", "requires": {"env": []}}}
+description: "A curated collection of 339+ best OpenClaw skills — AI tools, productivity, marketing, frontend, mobile, backend, DevOps and more. Weekly updated by MyClaw.ai — Powered by MyClaw.ai"
+license: MIT
+metadata:
+  openclaw: {}
 ---
 
 # OpenClaw Master Skills
 
-A weekly-updated, curated index of the best OpenClaw-compatible skills from across the open source ecosystem. Powered by [MyClaw.ai](https://myclaw.ai).
+A curated, weekly-updated collection of **339+ best skills** for OpenClaw agents.
 
-## What's Inside
-
-127+ skills across 11 categories, sourced from trusted publishers:
-
-- **AI Tools** (18) — PDF, DOCX, XLSX, PPTX, MCP builder, canvas design (Anthropic)
-- **Productivity** (15) — Brainstorming, TDD, parallel agents, code review (obra)
-- **Marketing** (23) — SEO, copywriting, CRO, paid ads, content strategy
-- **Frontend** (29) — Next.js, Vue, Vite, React, Tailwind, AI SDK (Vercel, antfu)
-- **Mobile** (13) — Expo / React Native skills
-- **Backend** (9) — API design, Node.js, FastAPI, architecture patterns
-- **Database** (2) — PostgreSQL, Supabase
-- **Auth** (2) — better-auth
-- **DevOps** (12) — Git workflows, CI/CD, GitHub Copilot
-- **Web Automation** (3) — Browser-use, Firecrawl, site auditing
-- **Other** (1) — React Doctor
-
-## How to Install
+## Quick Install
 
 ```bash
-clawhub install openclaw-master-skills
+# Install a specific skill
+bash scripts/install.sh github ~/.openclaw/workspace/skills/
+
+# Install all 339+ skills
+bash scripts/install.sh --all ~/.openclaw/workspace/skills/
+
+# List available skills
+bash scripts/install.sh --list
 ```
 
-Or clone manually:
-```bash
-git clone https://github.com/LeoYeAI/openclaw-master-skills.git
-cp -r openclaw-master-skills/skills/<skill-name> ~/.openclaw/workspace/skills/
-```
+## Categories
 
-## About MyClaw.ai
+- 🤖 AI & LLM Tools (33) — Gemini, OpenAI, Whisper, image generation, browser automation
+- 🔍 Search & Web (20) — Brave, Tavily, Baidu, DuckDuckGo, Firecrawl, scraping
+- 📋 Productivity & Office (33) — Notion, Obsidian, Trello, Calendar, PDF, Excel
+- 💻 Development & DevOps (85) — GitHub, Docker, React, Vue, Next.js, Python
+- 📈 Marketing & Growth (31) — SEO, copywriting, CRO, email sequences, analytics
+- 🎨 Media & Creative (10) — YouTube, video, audio, art generation
+- 💰 Finance & Trading (6) — Stock analysis, Yahoo Finance, crypto
+- 💬 Communication (13) — Slack, Discord, Telegram, Gmail, Feishu
+- 🏠 Smart Home & IoT (8) — Sonos, Hue, Home Assistant, desktop control
+- 🧠 Memory & Agent (31) — Self-improving, proactive agents, memory management
+- 🔒 Security (3) — Auditing, healthcheck, skill vetting
+- 📊 Data & Analytics (2) — Data analysis, web performance
+- 📱 Social & Content (10) — Twitter/X, Reddit, Xiaohongshu, LinkedIn
+- 📦 Other (54) — Automation workflows, weather, food ordering, and more
 
-[MyClaw.ai](https://myclaw.ai) gives every user a fully-featured AI agent on a dedicated server. This skill collection is part of our open source initiative to help the community build better AI agents.
+## Source
 
-> 🌐 https://myclaw.ai
-
-## Updates
-
-Updated every Monday. Full release history: https://github.com/LeoYeAI/openclaw-master-skills
-
+- GitHub: https://github.com/LeoYeAI/openclaw-master-skills
+- ClawHub: https://clawhub.com/skills/openclaw-master-skills
+- Powered by: https://myclaw.ai

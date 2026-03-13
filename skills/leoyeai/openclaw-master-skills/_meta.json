@@ -3,9 +3,15 @@
   "slug": "openclaw-master-skills",
   "displayName": "OpenClaw Master Skills",
   "latest": {
-    "version": "0.2.2",
-    "publishedAt": 1772458320689,
-    "commit": "https://github.com/openclaw/skills/commit/cf5a16531382dadb6ae2cf53c0f0130410b30119"
+    "version": "0.3.0",
+    "publishedAt": 1773238111799,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.2.2",
+      "publishedAt": 1772458320689,
+      "commit": "https://github.com/openclaw/skills/commit/cf5a16531382dadb6ae2cf53c0f0130410b30119"
+    }
+  ]
 }

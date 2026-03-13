@@ -1,13 +1,17 @@
 ---
 name: Get笔记
 description: |
-  Get笔记 - 个人笔记管理工具。
-  
-  **当用户想要「保存到Get笔记」「记录到Get笔记」「记下来」「存到笔记」「添加到笔记」时，使用此技能。**
-  
-  功能：新建笔记、查询笔记、删除笔记、管理标签和知识库。
-  支持类型：纯文本笔记、链接笔记（自动抓取网页内容）、图片笔记。
-metadata: {"openclaw": {"requires": {"env": ["GETNOTE_API_KEY", "GETNOTE_CLIENT_ID"]}, "optionalEnv": ["GETNOTE_OWNER_ID"], "primaryEnv": "GETNOTE_API_KEY", "homepage": "https://biji.com"}}
+  Get笔记 - 个人笔记和知识库管理工具。
+
+  当用户提到以下意图时使用此技能：
+  「记一下」「存到笔记」「保存到Get笔记」「记录到Get笔记」
+  「保存这个链接」「保存这张图」「查我的笔记」「找一下笔记」
+  「加标签」「删标签」「删笔记」
+  「查知识库」「建知识库」「把笔记加到知识库」「从知识库移除」
+  「知识库里订阅了哪些博主」「博主发了什么内容」「直播总结」「直播原文」
+
+  支持：纯文本笔记、链接笔记（自动抓取网页内容并生成摘要）、图片笔记（OCR识别）、知识库管理（含博主订阅列表、直播总结）。
+metadata: {"openclaw": {"requires": {"env": ["GETNOTE_API_KEY", "GETNOTE_CLIENT_ID"]}, "optionalEnv": ["GETNOTE_OWNER_ID"], "primaryEnv": "GETNOTE_API_KEY", "baseUrl": "https://openapi.biji.com", "homepage": "https://biji.com"}}
 ---
 
 # Get笔记 API
@@ -26,33 +30,23 @@ https://openapi.biji.com
 
 ### 🔑 首次安装配置
 
-安装此技能后，需要配置 API 凭证才能使用。
+在 `~/.openclaw/openclaw.json` 中添加：
 
-**配置方式**（二选一）：
-
-1. **通过 OpenClaw 配置**（推荐）：在 `~/.openclaw/openclaw.json` 中添加：
-   ```json
-   {
-     "skills": {
-       "entries": {
-         "getnote": {
-           "apiKey": "gk_live_你的key",
-           "env": {
-             "GETNOTE_CLIENT_ID": "cli_你的id",
-             "GETNOTE_OWNER_ID": "ou_你的飞书ID（可选，用于权限控制）"
-           }
-         }
-       }
-     }
-   }
-   ```
-
-2. **通过环境变量**：在 shell 配置文件（`~/.zshrc` 或 `~/.bashrc`）中添加：
-   ```bash
-   export GETNOTE_API_KEY="gk_live_你的key"
-   export GETNOTE_CLIENT_ID="cli_你的id"
-   export GETNOTE_OWNER_ID="ou_你的飞书ID（可选）"
-   ```
+```json
+{
+  "skills": {
+    "entries": {
+      "getnote": {
+        "apiKey": "gk_live_你的key",
+        "env": {
+          "GETNOTE_CLIENT_ID": "cli_你的id",
+          "GETNOTE_OWNER_ID": "ou_你的飞书ID（可选，用于权限控制）"
+        }
+      }
+    }
+  }
+}
+```
 
 **获取凭证**：前往 [Get笔记开放平台](https://www.biji.com/openapi) 创建应用获取。
 
@@ -60,23 +54,14 @@ https://openapi.biji.com
 
 ### 🔒 安全规则
 
-- 笔记数据属于 API Key 对应的 Get笔记账号，属于**用户隐私**
-- **可选配置**：设置 `GETNOTE_OWNER_ID` 环境变量来限制访问权限
-  - 收到笔记请求时，检查 sender_id 是否与 `GETNOTE_OWNER_ID` 匹配
-  - 若 sender_id 不匹配，回复「抱歉，笔记是私密的，我无法操作」
-  - 若未配置 `GETNOTE_OWNER_ID`，则不进行权限检查
-- 不要在群聊中主动展示笔记内容
-
-**非会员处理**：API 返回 `error.reason: "not_member"` 或错误码 `10201` 时，引导用户开通会员：
-- 开通链接：https://www.biji.com/checkout?product_alias=6AydVpYeKl
-
-**限流**：创建笔记建议间隔 1 分钟以上，避免触发限流。
+- 笔记数据属于用户隐私，不在群聊中主动展示笔记内容
+- 若配置了 `GETNOTE_OWNER_ID`，检查 sender_id 是否匹配；不匹配时回复「抱歉，笔记是私密的，我无法操作」；未配置则不检查
+- API 返回 `error.reason: "not_member"` 或错误码 `10201` 时，引导开通会员：https://www.biji.com/checkout?product_alias=6AydVpYeKl
+- 创建笔记建议间隔 1 分钟以上，避免触发限流
 
 ---
 
 ## 认证
-
-**所有请求的 Base URL**：`https://openapi.biji.com`（见上方重要提示）
 
 请求头：
 - `Authorization: $GETNOTE_API_KEY`（格式：`gk_live_xxx`）
@@ -95,6 +80,8 @@ https://openapi.biji.com
 | note.topic.read | 笔记所属知识库查询 |
 | note.topic.write | 笔记加入/移出知识库 |
 | note.image.upload | 获取上传图片签名 |
+| topic.blogger.read | 读取知识库订阅博主列表和博主内容 |
+| topic.live.read | 读取知识库已完成直播列表和直播详情 |
 
 ---
 
@@ -112,11 +99,16 @@ Base URL: `https://openapi.biji.com`
 | 「加标签」 | POST /open/api/v1/resource/note/tags/add | |
 | 「删标签」 | POST /open/api/v1/resource/note/tags/delete | system 类型不可删 |
 | 「删笔记」 | POST /open/api/v1/resource/note/delete | 移入回收站 |
-| 「查知识库」 | GET /open/api/v1/resource/knowledge/list | |
+| 「查知识库」 | GET /open/api/v1/resource/knowledge/list | 含统计数据（笔记数、文件数、博主数、直播数）|
 | 「建知识库」 | POST /open/api/v1/resource/knowledge/create | 每天限 50 个 |
 | 「笔记加入知识库」 | POST /open/api/v1/resource/knowledge/note/batch-add | 每批最多 20 条 |
 | 「从知识库移除」 | POST /open/api/v1/resource/knowledge/note/remove | |
 | 「查任务进度」 | POST /open/api/v1/resource/note/task/progress | 链接/图片笔记轮询用 |
+| 「订阅了哪些博主」 | GET /open/api/v1/resource/knowledge/bloggers | 按 topic_id 查 |
+| 「博主发了什么内容」 | GET /open/api/v1/resource/knowledge/blogger/contents | 需要 follow_id，列表只含摘要 |
+| 「博主内容原文/详情」 | GET /open/api/v1/resource/knowledge/blogger/content/detail | 需要 post_id，含原文 |
+| 「有哪些已完成直播」 | GET /open/api/v1/resource/knowledge/lives | 按 topic_id 查 |
+| 「直播总结/直播原文」 | GET /open/api/v1/resource/knowledge/live/detail | 需要 live_id |
 
 ---
 
@@ -132,6 +124,8 @@ GET /open/api/v1/resource/note/list?since_id=0
 - since_id (int64, 必填) - 游标，首次传 0，后续用 next_cursor
 
 返回：notes[], has_more, next_cursor, total（每次固定 20 条）
+
+> ⚠️ **响应 JSON 可能包含未转义的控制字符**（笔记 content 中的原始换行符），建议用支持容错解析的 JSON 库处理，或在解析前对 content 字段做预处理。
 
 **笔记类型 note_type**：
 - `plain_text` - 纯文本
@@ -155,14 +149,7 @@ GET /open/api/v1/resource/note/detail?id={note_id}
 
 参数：id (int64, 必填) - 笔记 ID
 
-**详情独有字段**（列表不返回）：
-- `audio.original` - 语音转写原文
-- `audio.play_url` - 音频播放地址
-- `audio.duration` - 音频时长（秒）
-- `web_page.content` - 链接网页原文
-- `web_page.url` - 原始链接
-- `web_page.excerpt` - 摘要
-- `attachments[]` - 附件列表，type: audio | image | link | pdf
+**详情独有字段**（列表不返回）：`audio.original`、`audio.play_url`、`audio.duration`、`web_page.content`、`web_page.url`、`web_page.excerpt`、`attachments[]`。详见 [references/api-details.md](references/api-details.md)。
 
 ---
 
@@ -188,18 +175,10 @@ Content-Type: application/json
 }
 ```
 
-字段说明：
-- title (string) - 标题
-- content (string) - Markdown 内容
-- note_type (string) - plain_text | link | img_text，默认 plain_text
-- tags (string[]) - 标签列表
-- parent_id (int64) - 父笔记 ID，创建子笔记时填
-- link_url (string) - 链接笔记必填
-- image_urls (string[]) - 图片笔记必填，用 access_url
+- `plain_text`：同步返回，立即完成
+- `link` / `img_text`：返回 task_id，**必须轮询** /task/progress
 
-**纯文本笔记**：同步返回，立即完成
-
-**链接笔记/图片笔记**：返回 task_id，必须轮询 /task/progress
+详细字段说明见 [references/api-details.md](references/api-details.md)。
 
 ---
 
@@ -219,6 +198,8 @@ Content-Type: application/json
 - status: pending | processing | success | failed
 - note_id: 成功时返回笔记 ID
 - error_msg: 失败时返回错误信息
+
+> ⚠️ **note_id 是 64 位整数**，在 JavaScript 中直接用 `JSON.parse` 会丢失精度。建议在服务端语言（Python、Go 等）中处理，或使用支持大整数的 JSON 库。
 
 **建议 10-30 秒间隔轮询，直到 success 或 failed**。
 
@@ -252,6 +233,8 @@ POST /open/api/v1/resource/note/save {note_type:"link", link_url:"https://..."}
 ```
 返回 task_id 后，**立即发消息给用户**：
 > ✅ 链接已保存，正在抓取原文和生成总结，稍后告诉你结果...
+
+> ⚠️ **重复链接处理**：若响应中包含 `duplicate_count > 0` 且没有 `task_id`，说明该链接已存在于你的笔记中，无需轮询，直接告知用户「该链接已存在于你的笔记中」。
 
 **步骤 2**：后台轮询（10-30 秒间隔）
 ```
@@ -305,14 +288,11 @@ GET /open/api/v1/resource/image/upload_token?mime_type=jpg&count=1
 
 ⚠️ **mime_type 必须与实际文件格式一致**，否则 OSS 签名失败。
 
-返回字段：
-- host - OSS 上传地址
-- object_key - 文件路径
-- accessid, policy, signature, callback - 签名参数
-- access_url - 上传后的访问地址（用于创建笔记）
-- oss_content_type - Content-Type
+返回字段说明见 [references/api-details.md](references/api-details.md)。
 
 ### OSS 上传示例
+
+> ⚠️ **字段顺序必须严格遵守**，否则 OSS 签名验证失败。正确顺序：`key → OSSAccessKeyId → policy → signature → callback → Content-Type → file`
 
 ```bash
 curl -X POST "$host" \
@@ -373,14 +353,23 @@ Content-Type: application/json
 ### 知识库列表
 
 ```
-GET /open/api/v1/resource/knowledge/list?page=1&size=20
+GET /open/api/v1/resource/knowledge/list?page=1
 ```
 
 参数：
-- page: 页码，从 1 开始，默认 1
-- size: 每页数量，默认 20，最大 100
+- page: 页码，从 1 开始，默认 1（固定每页 20 条）
 
 返回：topics[], has_more, total
+
+每个 topic 包含：
+- `topic_id` / `topic_id_alias`：知识库 ID
+- `name`、`description`、`cover`
+- `created_at` / `updated_at`：时间字符串（YYYY-MM-DD HH:MM:SS）
+- `stats`：统计数据
+  - `note_count`：笔记数
+  - `file_count`：文件数
+  - `blogger_count`：订阅博主数
+  - `live_count`：已完成直播数
 
 ---
 
@@ -415,6 +404,17 @@ GET /open/api/v1/resource/knowledge/notes?topic_id=abc123&page=1
 - page: 页码，从 1 开始
 
 每页固定 20 条，用 has_more 判断是否有下一页。
+
+---
+
+### 知识库选择逻辑
+
+当用户说「存到对应的知识库」或「存到相关知识库」时：
+1. 先调用 GET /knowledge/list 获取所有知识库列表
+2. 根据笔记标题、内容、标签，与知识库名称和描述做模糊匹配
+3. 匹配置信度高时直接执行，并告知用户存入了哪个知识库
+4. 置信度低或有歧义时，列出候选知识库让用户选择
+5. 用户未提及知识库时，**不要擅自存入**任何知识库
 
 ---
 
@@ -454,7 +454,154 @@ Content-Type: application/json
 
 ---
 
+## 知识库：博主订阅
+
+### 博主列表
+
+```
+GET /open/api/v1/resource/knowledge/bloggers?topic_id={alias_id}&page=1
+```
+
+参数：
+- topic_id (string, 必填) - 知识库 AliasID（来自 /knowledge/list 的 topic_id_alias）
+- page: 页码，从 1 开始
+
+每页固定 20 条，用 has_more 判断。
+
+返回 bloggers[]，每项字段：
+
+| 字段 | 说明 |
+|------|------|
+| follow_id | 订阅关系 ID，**查博主内容时必用** |
+| account_name | 博主名称 |
+| account_icon | 博主头像 |
+| platform | 平台（如 DEDAO）|
+| account_url | 博主主页链接 |
+| follow_time | 订阅时间（YYYY-MM-DD HH:MM:SS）|
+
+---
+
+### 博主内容列表
+
+```
+GET /open/api/v1/resource/knowledge/blogger/contents?topic_id={alias_id}&follow_id={follow_id}&page=1
+```
+
+参数：
+- topic_id (string, 必填) - 知识库 AliasID
+- follow_id (int64, 必填) - 博主订阅 ID（来自 /bloggers 的 follow_id）
+- page: 页码，从 1 开始
+
+每页固定 20 条，用 has_more 判断。
+
+返回 contents[]，每项字段：
+
+| 字段 | 说明 |
+|------|------|
+| post_id_alias | 内容 ID，**查详情/原文时必用** |
+| post_name | 内容名称（原标题）|
+| post_type | 类型：video / audio / article / live |
+| post_cover | 封面图 |
+| post_title | AI 生成标题 |
+| post_summary | AI 摘要（Markdown）|
+| post_url | 原文链接 |
+| post_icon | 博主头像 |
+| post_subtitle | 副标题 |
+| post_create_time | 创建时间（YYYY-MM-DD HH:MM:SS）|
+| post_publish_time | 发布时间（YYYY-MM-DD HH:MM:SS）|
+
+> 列表不含原文（`post_media_text`），需要原文请调 `/blogger/content/detail`。
+
+---
+
+### 博主内容详情（含原文）
+
+```
+GET /open/api/v1/resource/knowledge/blogger/content/detail?topic_id={alias_id}&post_id={post_id_alias}
+```
+
+参数：
+- topic_id (string, 必填) - 知识库 AliasID
+- post_id (string, 必填) - 内容 ID（来自 /blogger/contents 的 post_id_alias）
+
+返回字段：
+
+| 字段 | 说明 |
+|------|------|
+| post_id_alias | 内容 ID |
+| post_name | 内容名称（原标题）|
+| post_type | 类型：video / audio / article / live |
+| post_cover | 封面图 |
+| post_subtitle | 副标题 |
+| post_url | 原文链接 |
+| post_title | AI 生成标题 |
+| post_summary | AI 摘要（Markdown）|
+| post_media_text | 原文内容（全文转写/文章正文）|
+| post_create_time | 创建时间（YYYY-MM-DD HH:MM:SS）|
+| post_publish_time | 发布时间（YYYY-MM-DD HH:MM:SS）|
+
+---
+
+## 知识库：直播订阅
+
+### 已完成直播列表
+
+```
+GET /open/api/v1/resource/knowledge/lives?topic_id={alias_id}&page=1
+```
+
+参数：
+- topic_id (string, 必填) - 知识库 AliasID
+- page: 页码，从 1 开始
+
+每页固定 20 条，用 has_more 判断。**只返回已结束且 AI 已处理完的直播。**
+
+返回 lives[]，每项字段：
+
+| 字段 | 说明 |
+|------|------|
+| live_id | 直播 ID，**查直播详情时必用** |
+| follow_id | 订阅关系 ID |
+| name | 直播名称 |
+| cover | 封面图 |
+| sub_title | 副标题 |
+| link | 直播链接 |
+| platform | 平台（如 DEDAO）|
+| status | 直播状态（已结束为 FINISHED）|
+| follow_time | 订阅时间（YYYY-MM-DD HH:MM:SS）|
+
+---
+
+### 直播详情（总结 + 原文）
+
+```
+GET /open/api/v1/resource/knowledge/live/detail?topic_id={alias_id}&live_id={live_id}
+```
+
+参数：
+- topic_id (string, 必填) - 知识库 AliasID
+- live_id (int64, 必填) - 直播 ID（来自 /lives 的 live_id）
+
+返回字段：
+
+| 字段 | 说明 |
+|------|------|
+| post_id_alias | 内容 ID |
+| post_name | 直播名称（原标题）|
+| post_cover | 封面图 |
+| post_subtitle | 副标题（如开播时间）|
+| post_url | 直播原始链接 |
+| post_title | AI 生成标题 |
+| post_summary | AI 摘要（Markdown，含章节纪要、金句）|
+| post_media_text | 直播原文转写文本 |
+| post_create_time | 创建时间（YYYY-MM-DD HH:MM:SS）|
+| post_publish_time | 直播时间（YYYY-MM-DD HH:MM:SS）|
+
+---
+
 ## 错误处理
+
+> 详细错误码和限流结构见 [references/api-details.md](references/api-details.md)
 
 ### 响应结构
 
@@ -470,47 +617,12 @@ Content-Type: application/json
 }
 ```
 
-### 错误码
+### 常见错误码
 
-| 错误码 | 说明 |
-|--------|------|
-| 10000 | 参数错误 |
-| 10001 | 鉴权失败 |
-| 10201 | 非会员 |
-| 20001 | 笔记不存在 |
-| 30000 | 服务调用失败 |
-| 42900 | 限流 |
-| 50000 | 系统错误 |
-
-### error.reason 取值
-
-| reason | 说明 |
-|--------|------|
-| not_member | 非会员，引导开通 |
-| qps_global | 全局 QPS 超限 |
-| qps_bucket | 桶级 QPS 超限 |
-| quota_day | 当日配额用尽 |
-| quota_month | 当月配额用尽 |
-
-### 限流响应
-
-429 错误时，error 包含 rate_limit 字段：
-
-```json
-{
-  "rate_limit": {
-    "read": {
-      "daily": {"limit": 1000, "used": 1000, "remaining": 0, "reset_at": 1741190400},
-      "monthly": {"limit": 10000, "used": 3000, "remaining": 7000, "reset_at": 1743811200}
-    },
-    "write": {
-      "daily": {"limit": 200, "used": 200, "remaining": 0, "reset_at": 1741190400},
-      "monthly": {"limit": 2000, "used": 600, "remaining": 1400, "reset_at": 1743811200}
-    },
-    "write_note": {
-      "daily": {"limit": 50, "used": 50, "remaining": 0, "reset_at": 1741190400},
-      "monthly": {"limit": 500, "used": 150, "remaining": 350, "reset_at": 1743811200}
-    }
-  }
-}
-```
+| 错误码 | 说明 | 处理方式 |
+|--------|------|---------|
+| 10001 | 鉴权失败 | 检查 API Key 和 Client ID |
+| 10201 | 非会员 | 引导开通：https://www.biji.com/checkout?product_alias=6AydVpYeKl |
+| 20001 | 笔记不存在 | 确认笔记 ID 正确 |
+| 42900 | 限流 | 降低频率，查看 rate_limit 字段 |
+| 50000 | 系统错误 | 稍后重试 |

@@ -2,6 +2,7 @@
 name: translator-pro
 version: 1.0.0
 description: 专业翻译(中英日韩)、多译本对比、术语表、本地化、校对、批量翻译。Professional translation (CN/EN/JP/KR), multi-version comparison, glossary, localization, proofreading, batch translation.
+runtime: python3
 author: BytesAgain
 tags: [translate, translation, 翻译, 中英翻译, 日语, 韩语, localization, glossary, proofread, 本地化]
 ---

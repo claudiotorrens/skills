@@ -1,11 +1,17 @@
 {
   "owner": "xueyetianya",
   "slug": "translator-pro-test",
-  "displayName": "Test",
+  "displayName": "Translator Pro Test",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773187434943,
-    "commit": "https://github.com/openclaw/skills/commit/e367d067c78d4af3397a7e5aef3b27c40f6a901b"
+    "version": "1.0.1",
+    "publishedAt": 1773360899754,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773187434943,
+      "commit": "https://github.com/openclaw/skills/commit/e367d067c78d4af3397a7e5aef3b27c40f6a901b"
+    }
+  ]
 }

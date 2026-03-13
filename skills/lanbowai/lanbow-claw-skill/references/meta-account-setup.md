@@ -11,25 +11,83 @@ Two paths to get started — pick the one that fits:
 
 ## Agent Behavior
 
-**Important: You (the agent) are likely NOT running on the user's local machine.** The user has a browser; you have the CLI. This means `lanbow-ads auth login` (which opens a local browser + local HTTP server) will NOT work in most cases. Instead, guide the user to obtain their Access Token from Meta's web interface, then have them paste it to you.
+**You (the agent) are almost certainly NOT on the user's local machine.** You have the CLI; the user has the browser. This means:
 
-**Workflow:**
-1. Guide the user through browser-side steps (developer registration, app creation, token generation)
-2. Ask the user to provide: App ID, App Secret, Access Token, Ad Account ID
-3. Run the CLI commands on their behalf — do not ask the user to run these commands themselves
+- `lanbow-ads auth login` opens a browser + local HTTP callback on **your** machine, not the user's — **it will not work**.
+- Sending the OAuth authorization URL to the user is also useless — the callback redirects to `localhost` on your machine, so the user completing auth in their browser still cannot reach your local server.
+
+**Never attempt `lanbow-ads auth login` by default.** Only try it if the user explicitly confirms they are on the same machine and have a browser available.
+
+### How to authenticate — try in this order:
+
+**1. Environment variables or platform secret fields (best — zero interaction):**
+
+If `META_ACCESS_TOKEN`, `META_APP_ID`, and `META_AD_ACCOUNT_ID` are already set as environment variables (or via the platform's secret/credential fields), configure the CLI automatically without asking the user:
+```bash
+lanbow-ads config set --app-id "$META_APP_ID"
+lanbow-ads auth set-token "$META_ACCESS_TOKEN"
+lanbow-ads config set --account "$META_AD_ACCOUNT_ID"
+# Only if META_APP_SECRET is set (optional — needed only for token exchange):
+[ -n "$META_APP_SECRET" ] && lanbow-ads config set --app-secret "$META_APP_SECRET"
+```
+
+**2. Ask the user to provide credentials directly (most common):**
+
+If env vars are not set, ask the user for their Access Token, App ID, and Ad Account ID. **Only request the minimum credentials needed for the current task.** Tell the user exactly how to get each value — don't just ask, give them step-by-step instructions they can follow in their browser.
+
+**Recommend the user use environment variables or their platform's secret fields rather than pasting credentials into chat.** If direct input is the only option, proceed with the instructions below.
+
+**To get an Access Token, tell the user:**
+
+> You can get an Access Token yourself:
+> 1. Open https://developers.facebook.com/tools/explorer/
+> 2. In the top-right **App** dropdown, select your App (use the App ID from Step 2)
+> 3. Click **"Generate Access Token"** → select permissions: `ads_management`, `ads_read`, `business_management`
+> 4. Click **"Submit"**
+> 5. Copy the generated Access Token and send it to me
+
+**To get App ID, tell the user:**
+
+> 1. Go to https://developers.facebook.com/apps/ and select your App
+> 2. Go to **App Settings → Basic**
+> 3. Your **App ID** is at the top of the page
+
+**To get App Secret (only if needed for token exchange), tell the user:**
+
+> 1. On the same App Settings → Basic page
+> 2. Click **Show** next to **App Secret** (requires password), then copy it
+>
+> Note: App Secret is only needed if you want to exchange a short-lived token for a long-lived one (~60 days). You can skip this if you don't need it.
+
+**To get Ad Account ID, tell the user:**
+
+> 1. Go to https://adsmanager.facebook.com/
+> 2. Your Ad Account ID is in the URL or account dropdown (format: `act_XXXXXXXXX`)
+
+Once the user provides these values, run the CLI commands on their behalf:
 
 ```bash
-# User provides App ID and App Secret → you run:
-lanbow-ads config set --app-id <APP_ID> --app-secret <APP_SECRET>
+# User provides App ID → you run:
+lanbow-ads config set --app-id <APP_ID>
 
 # User provides Access Token → you run:
 lanbow-ads auth set-token <ACCESS_TOKEN>
 
 # User provides Ad Account ID → you run:
 lanbow-ads config set --account <AD_ACCOUNT_ID>
+
+# Only if user provides App Secret (optional) → you run:
+lanbow-ads config set --app-secret <APP_SECRET>
 ```
 
-**Do NOT run `lanbow-ads auth login` unless the user explicitly confirms they are on the same machine and have a browser available.**
+**3. `lanbow-ads auth login` (last resort — same machine only):**
+
+Only if the user explicitly says they are on the same machine and can open a browser. If `auth login` fails or the user says they can't open the link, **immediately fall back to method 2** — ask for their credentials directly instead of retrying or sending more URLs.
+
+### Credential handling rules:
+- Do NOT log, echo, or print credentials in plain text
+- Do NOT store credentials in any file other than via `lanbow-ads` CLI commands
+- Do NOT repeatedly attempt `auth login` or send OAuth URLs when the user cannot open them — ask for credentials directly instead
 
 ---
 
@@ -304,3 +362,29 @@ Meta's developer platform UI changes frequently. The exact button labels, menu p
 - **Goal of app creation**: Get a valid App ID + App Secret
 - **Goal of Marketing API**: Enable ads API access on the app
 - **Goal of System User**: Get a non-expiring token with asset assignments
+
+---
+
+# Credential Cleanup
+
+**Always clean up stored credentials after your session ends**, especially if you used long-lived tokens or App Secret.
+
+## Remove Stored Credentials
+
+```bash
+lanbow-ads auth logout                    # Remove stored access token
+lanbow-ads config unset --app-secret      # Remove stored app secret
+lanbow-ads config list                    # Verify no secrets remain
+```
+
+## Revoke Tokens (Meta Side)
+
+- **User Tokens**: expire automatically (1-2 hours for short-lived, ~60 days for long-lived). To revoke immediately, go to [Facebook Settings → Security → Active Sessions](https://www.facebook.com/settings?tab=security) and remove the app authorization
+- **System User Tokens**: go to [Business Settings → System Users](https://business.facebook.com/settings/system-users) → select the System User → click **Revoke Token**
+
+## Verify Cleanup
+
+```bash
+lanbow-ads auth status    # Should show "not authenticated"
+lanbow-ads config list    # Should not contain app-secret or sensitive values
+```

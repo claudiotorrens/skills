@@ -157,22 +157,9 @@ async function main() {
   }
   
   console.log(`   Pi Cycle: Uses 111DMA & 2x350DMA crossover to predict cycle top`);
-  
-  // 4. Policy/Macro News (use catid=3)
-  console.log('\n🌏 4. Policy & Macro News - Top 10\n' + '-'.repeat(40));
-  const policyNews = await getNews(3, 10);
-  if (policyNews.length > 0) {
-    policyNews.forEach((item, i) => {
-      const time = new Date(item.published_at).toLocaleString('en-US', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-      console.log(`   ${i + 1}. ${item.title?.substring(0, 40)}...`);
-      console.log(`      ${time}`);
-    });
-  } else {
-    console.log('   No news available');
-  }
-  
+
   // 5. Blockchain Industry News (catid=1)
-  console.log('\n⛓️ 5. Blockchain Industry News - Top 10\n' + '-'.repeat(40));
+  console.log('\n⛓️ 4. Blockchain Industry News - Top 10\n' + '-'.repeat(40));
   const cryptoNews = await getNews(1, 10);
   if (cryptoNews.length > 0) {
     cryptoNews.forEach((item, i) => {
@@ -185,7 +172,7 @@ async function main() {
   }
   
   // 6. Trending
-  console.log('\n🔥 6. Trending - Top 10 Coins\n' + '-'.repeat(40));
+  console.log('\n🔥 5. Trending - Top 10 Coins\n' + '-'.repeat(40));
   console.log(`   ${'Rank'.padEnd(4)} ${'Coin'.padEnd(10)} ${'Price'.padEnd(14)} ${'24h Change'}`);
   console.log(`   ${'-'.repeat(40)}`);
   const trending = await getTrending();

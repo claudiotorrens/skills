@@ -2,17 +2,15 @@
 
 /**
  * Get News
- * Usage: node news.mjs [crypto|policy]
+ * Usage: node news.mjs [crypto]
  *   crypto - Blockchain Industry News (catid=1)
- *   policy - Policy/Macro News (catid=3)
  */
 
 const args = process.argv.slice(2);
 const type = args[0] || 'crypto';
 
 const CATEGORIES = {
-  crypto: { id: 1, name: 'Blockchain Industry News' },
-  policy: { id: 3, name: 'Policy/Macro News' }
+  crypto: { id: 1, name: 'Blockchain Industry News' }
 };
 
 const BASE_URL = 'https://api1.desk3.io/v1/news/list';

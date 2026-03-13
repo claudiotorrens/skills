@@ -3,9 +3,15 @@
   "slug": "aakshare",
   "displayName": "AKShare",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773222087327,
-    "commit": "https://github.com/openclaw/skills/commit/9d3788e90aafb92c0d7fb8b9a73746652d972b82"
+    "version": "1.0.1",
+    "publishedAt": 1773364957648,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773222087327,
+      "commit": "https://github.com/openclaw/skills/commit/9d3788e90aafb92c0d7fb8b9a73746652d972b82"
+    }
+  ]
 }

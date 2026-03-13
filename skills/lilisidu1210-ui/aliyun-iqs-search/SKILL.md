@@ -2,7 +2,7 @@
 name: aliyun-iqs-search
 description: 阿里云信息查询服务（IQS）UnifiedSearch API联网搜索
 homepage: https://help.aliyun.com/product/42958.html
-metadata: {"clawdbot":{"emoji":"🔍","requires":{"bins":["node"],"env":["ALI_IQS_API_KEY"]},"primaryEnv":"ALI_IQS_API_KEY"}}
+metadata: {"openclaw":{"emoji":"🔍","requires":{"bins":["node"],"env":["ALI_IQS_API_KEY"]},"primaryEnv":"ALI_IQS_API_KEY"}}
 ---
 
 # 阿里云IQS搜索

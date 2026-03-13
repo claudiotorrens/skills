@@ -1,11 +1,17 @@
 {
   "owner": "limboinf",
   "slug": "funasr-transcribe-skill",
-  "displayName": "FunASR 语音转录",
+  "displayName": "Funasr Transcribe Skill",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772877767626,
-    "commit": "https://github.com/openclaw/skills/commit/c27e9af0f75bc8564f5a405fb91d0132b1ed1cb6"
+    "version": "1.0.1",
+    "publishedAt": 1773386152096,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772877767626,
+      "commit": "https://github.com/openclaw/skills/commit/c27e9af0f75bc8564f5a405fb91d0132b1ed1cb6"
+    }
+  ]
 }

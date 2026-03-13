@@ -1,8 +1,8 @@
 ---
-# Semantic Router v7.7 - Phase 3 Stability Enhancement
+# Semantic Router v7.9.5 - Security Hardened Edition
 
 name: semantic-router
-version: 7.9.4
+version: 7.9.5
 
 metadata:
   title: "Semantic Router — 让你的 AI 代理学会自己选模型"
@@ -19,6 +19,7 @@ metadata:
     📊 语义向量分析 — 本地 embedding 判断话题连续性
     ⚡ 全自动 Fallback — 主力挂了自动切备用，定时回切
     🎯 追问识别增强 — "完成了吗"、"怎么样"等追问正确识别为延续
+    🔒 安全加固 — 配置变更自动备份，一键回滚
     
     四层识别 → 三池架构 → 五分支路由 → 完全自动化
   
@@ -34,6 +35,7 @@ metadata:
     - fallback-recovery
     - auto-model-selection
     - production
+    - security-hardened
   
   categories:
     - AI Agent
@@ -47,6 +49,8 @@ metadata:
     - 系统消息过滤
     - heartbeat
     - 生产级
+    - 配置保护
+    - 自动回滚
 
 requirements:
   openclaw:

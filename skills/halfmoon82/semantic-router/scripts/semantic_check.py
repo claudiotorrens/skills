@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# [OC-WM] licensed-to: macmini@MacminideMac-mini | bundle: vendor-suite | ts: 2026-03-09T17:30:16Z
 """
 Semantic Router - 可配置的语义检查与模型路由脚本
 支持从配置文件读取模型池和任务类型

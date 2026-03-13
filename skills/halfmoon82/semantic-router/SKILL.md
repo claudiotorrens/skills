@@ -1,11 +1,37 @@
 ---
 name: semantic-router
 description: 让 AI 代理根据对话内容自动选择最合适的模型。四层识别（系统过滤→关键词→指示词→语义相似度），四池架构（高速/智能/人文/代理），五分支路由，全自动 Fallback 回路。支持 trigger_groups_all 非连续词组命中。
-version: 7.9.4
+version: 7.9.5
 author: halfmoon82
 tags: [semantic, routing, model-pools, task-classification, fallback, system-passthrough, production]
 requires_approval: true
 ---
+
+> 🔒 **安全声明**：本技能需要修改 OpenClaw 配置以实现模型路由功能。所有配置变更前会自动备份，支持一键回滚。建议在测试环境验证后再部署到生产环境。
+
+## ⚠️ Security & Permissions Declaration
+
+**This skill performs the following privileged operations — all are intentional and explicitly user-initiated:**
+
+| Operation | Purpose | Scope |
+|-----------|---------|-------|
+| Read/patch `~/.openclaw/openclaw.json` | Configure model routing pools | Local config only |
+| Read/write `~/.openclaw/workspace/.lib/pools.json` | Store model pool configuration | Workspace only |
+| Read/write `~/.openclaw/workspace/.lib/tasks.json` | Store task type definitions | Workspace only |
+| Run `semantic_check.py` locally | Classify user messages for routing | No network required |
+| Patch session model via `sessions.patch` | Switch active model pool | Current session only |
+| Restart OpenClaw Gateway (`openclaw gateway restart`) | Apply routing config changes | Local service only |
+| Inject `prependContext` into agent turns | Output routing declaration in first line | Read-only context injection |
+| Update Cron Job `sessionTarget` to `"isolated"` | Prevent background tasks from polluting user sessions | Affects only background Cron jobs |
+
+**What this skill does NOT do:**
+- Does NOT exfiltrate conversation content or model credentials to external servers
+- Does NOT access API keys or secrets directly
+- Does NOT modify files outside `~/.openclaw/` and the skill's own workspace
+- Does NOT run with elevated (sudo/root) privileges
+- Does NOT auto-install additional packages
+
+**Requires:** Python 3.8+, OpenClaw Gateway running, configured model providers
 
 # 🔷 Semantic Router v7.9.3 — 生产级会话路由系统 🔷
 
@@ -40,6 +66,37 @@ requires_approval: true
 - 零冲突的智能合并配置
 - 预检脚本防止覆盖现有设置
 - 自动回滚失败的配置修改
+
+---
+
+## 🔒 安全与权限说明
+
+### 为什么需要这些权限？
+
+| 权限 | 用途 | 安全措施 |
+|------|------|----------|
+| 读取 `openclaw.json` | 检测现有模型配置 | 只读，不修改 |
+| 修改 `openclaw.json` | 添加模型池配置 | **自动备份** + **一键回滚** |
+| 执行本地脚本 | 运行配置向导和验证 | 开源脚本，可审计 |
+| 重启 Gateway | 应用新配置 | 失败自动回滚 |
+
+### 配置保护机制
+
+1. **前置备份**：任何修改前自动创建带时间戳的备份
+2. **语法验证**：JSON 修改后自动验证语法
+3. **健康检查**：Gateway 重启后验证服务可用性
+4. **自动回滚**：任何步骤失败立即恢复原配置
+
+```bash
+# 手动回滚命令
+python3 ~/.openclaw/workspace/.lib/config-rollback-guard.py rollback
+```
+
+### 代码审计
+
+- 所有脚本开源，位于 `scripts/` 目录
+- 核心逻辑 `semantic_check.py` 62KB，完全可审计
+- 无网络请求，无数据上报，纯本地运行
 
 ---
 

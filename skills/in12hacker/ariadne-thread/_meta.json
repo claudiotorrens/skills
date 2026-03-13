@@ -3,9 +3,15 @@
   "slug": "ariadne-thread",
   "displayName": "Ariadne Thread",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773142082771,
-    "commit": "https://github.com/openclaw/skills/commit/88eb87d414234c2d5ae09d3ca4434fb557a2a3f9"
+    "version": "1.0.2",
+    "publishedAt": 1773379377234,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773142082771,
+      "commit": "https://github.com/openclaw/skills/commit/88eb87d414234c2d5ae09d3ca4434fb557a2a3f9"
+    }
+  ]
 }

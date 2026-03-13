@@ -1,6 +1,6 @@
 ---
 name: ariadne-thread
-description: Guide creation of AI-friendly project structures with progressive disclosure indexing, modular architecture, and intent-oriented code. Use when starting a new project, restructuring an existing codebase, adding project navigation indexes, creating AGENTS.md or llms.txt, designing module boundaries, or when the user mentions "AI-friendly project", "progressive disclosure", "project index", "codebase navigation", or "ariadne".
+description: Create AI-friendly project structures using progressive disclosure indexing (AGENTS.md, module INDEX.md files, file intent headers). ALWAYS use this skill when the user wants to: create or update AGENTS.md or llms.txt, add INDEX.md files to modules, set up project navigation for AI agents, retrofit an existing codebase with AI-friendly indexes, design module boundaries with explicit dependency and modification-risk documentation, or mentions "AI-friendly project", "progressive disclosure", "project index", "codebase navigation", or "ariadne". Also use when the user asks how to structure a new project so AI tools can navigate it efficiently, even if they don't use these exact terms.
 ---
 
 # Ariadne Thread
@@ -62,6 +62,8 @@ Create an `AGENTS.md` at the project root with:
 9. **Index exclusions** — Optional `.cursorignore` (same syntax as `.gitignore`) to exclude build artifacts, dependencies, generated code; common examples: `node_modules/`, `dist/`, `vendor/`, `__pycache__/`, `target/`, `*.generated.*` — adapt to your ecosystem
 
 The cross-cutting patterns section is critical: it prevents the AI from reading 3-4 existing files just to infer "how do we handle errors here?". One 30-line declaration replaces ~1500 tokens of pattern inference.
+
+**All 9 sections are required** — they are the difference between an AGENTS.md that actually guides AI behavior and one that merely documents the project for humans. The sections that get skipped most often (Architectural Constraints, Cross-Cutting Patterns, Agent Workflow checklist) are also the ones with the highest AI value.
 
 **Navigation priority**: Prefer navigating via `INDEX.md` Dependents and Dependencies over semantic/keyword search. Structural dependency paths surface architecturally critical files that retrieval often misses. When modifying a module's public API, always consult its Dependents list first to assess blast radius.
 
@@ -164,15 +166,19 @@ Status: stable | Fan-in: 5 | Fan-out: 2
 
 **Voice Coding**: L1 `Task Routing` supports "say task → get file path" — map natural-language tasks to specific files for hands-free navigation.
 
+**Common mistake — avoid narrative prose in INDEX.md**: The structured sections (Dependents, Modification Risk, Task Routing) are what make an INDEX.md useful for AI navigation. A long prose description of each file ("This file is responsible for X, it does Y, here are some notes...") might look thorough but it fails to answer the core AI questions: who depends on this? what breaks if I change it? which file do I edit? Prefer the structured template even if it feels terse — density and scanability beat completeness.
+
 **Why each section matters for AI:**
 
-| Section | AI Question It Answers | Token Savings |
-|---------|----------------------|---------------|
-| **Dependents** | "Who calls me? What breaks if I change?" | Avoids full-project grep (~800 tokens) |
-| **Interface Contract** | "What invariants must I preserve?" | Avoids re-reading callers to infer constraints (~400 tokens) |
-| **Modification Risk** | "Is this change safe? How many files to update?" | Avoids under-estimating blast radius |
-| **Task Routing** | "Which file should I edit for this task?" | Avoids reading wrong files (~600 tokens) |
-| **Tests** | "What should I run to verify?" | Avoids searching for test files (~200 tokens) |
+| Section | AI Question It Answers | What it replaces |
+|---------|----------------------|-----------------|
+| **Dependents** | "Who calls me? What breaks if I change?" | Full-project grep to discover callers |
+| **Interface Contract** | "What invariants must I preserve?" | Re-reading caller files to infer constraints |
+| **Modification Risk** | "Is this change safe? How many files to update?" | Underestimating blast radius and missing dependents |
+| **Task Routing** | "Which file should I edit for task X?" | Reading wrong files before finding the right one |
+| **Tests** | "What should I run to verify?" | Searching for test files across the project |
+
+The actual token savings depend heavily on project size and how the AI handles uncertainty — they scale with the number of modules and files. The value is real but varies; don't treat any specific number as a guarantee.
 
 For the full INDEX.md template, see [index-templates.md](references/index-templates.md).
 
@@ -406,7 +412,7 @@ The 4-level index and design principles are universal. Per-language conventions 
 
 1. **Create L0**: Write `AGENTS.md` with directory map, navigation table, cross-cutting patterns, and AI Agent Instructions. Mark any discovered architectural violations as `⚠ KNOWN VIOLATION` in Architectural Constraints
 2. **Add L1**: Create `INDEX.md` in each major module — start with Public API + Dependencies + Dependents. Use `grep -rn "from [module]" .` or IDE search to discover Dependents. For flat directories with many files, use section headers within INDEX.md to organize logical groups (see [L1 Retrofit Tips](references/index-templates.md#l1-retrofit-tips))
-3. **Enrich L1**: Add Interface Contract, Task Routing, Modification Risk, Tests. In Files table, flag oversized files (e.g., `⚠ 1066 lines, needs split` or `⚠ UPSTREAM` for code you do not own)
+3. **Enrich L1**: Add Interface Contract, Task Routing, Modification Risk, Tests. In Files table, flag oversized files (e.g., `⚠ 1066 lines, needs split` or `⚠ UPSTREAM` for code you do not own). Also flag files with forbidden names — `utils.*`, `helpers.*`, `types.*`, `common.*` — with `⚠ needs split/rename` and add a rename task to Task Routing. These names indicate unclear responsibility and should be resolved over time
 4. **Verify L2**: Ensure public API files have contract headers; internal files have intent headers (skip for upstream code)
 5. **Audit L3**: Remove obvious comments, add explanations for tricky logic (skip for upstream code)
 6. **Validate per module**: After each module's INDEX.md, test: ask an AI to locate a function and assess change impact. If it reads > 5 files or misses a dependent, improve that index before moving on

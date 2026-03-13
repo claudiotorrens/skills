@@ -1,7 +1,7 @@
 ---
 name: giggle-generation-music
 description: 当用户希望创建、生成或创作音乐时使用此技能——无论是文字描述、自定义歌词，还是纯乐器背景音乐。触发词：生成音乐、写歌、创作歌曲、制作音乐、做一首歌、AI 音乐、背景音乐、为我作曲、带歌词的音乐、纯音乐、做 beats。
-version: "0.0.5"
+version: "0.0.7"
 license: MIT
 author: storyclaw-official
 homepage: https://github.com/storyclaw-official/storyclaw-skills
@@ -10,22 +10,17 @@ requires:
   env: [GIGGLE_API_KEY]
   pip: [requests]
 metadata:
-  {
-    "openclaw": {
-      "emoji": "📂",
-      "requires": {
-        "bins": ["python3"],
-        "env": ["GIGGLE_API_KEY"],
-        "pip": ["requests"]
-      },
-      "primaryEnv": "GIGGLE_API_KEY",
-      "runtimeBehaviors": {
-        "writes": ["~/.openclaw/skills/giggle-generation-music/logs/"],
-        "cron": "用户发起音乐生成时注册轮询任务（2分钟间隔）"
-      },
-      "installNotice": "写入 logs/；注册 Cron；原样转发 stdout。安装前须由用户阅读确认。"
-    }
-  }
+  openclaw:
+    emoji: "📂"
+    requires:
+      bins: [python3]
+      env: [GIGGLE_API_KEY]
+      pip: [requests]
+    primaryEnv: GIGGLE_API_KEY
+    runtimeBehaviors:
+      writes: ["~/.openclaw/skills/giggle-generation-music/logs/"]
+      cron: "用户发起音乐生成时注册轮询任务（2分钟间隔）"
+    installNotice: "需用户确认。写入 logs/；注册 Cron；原样转发 stdout。安装前请阅读 SKILL.md。"
 ---
 
 简体中文 | [English](./SKILL.md)
@@ -36,15 +31,19 @@ metadata:
 
 通过 giggle.pro 平台生成 AI 音乐。支持简化模式和自定义模式。
 
-## ⚠️ 安装须知 — 安装前须阅读
+---
 
-**安装即表示您已知晓本技能将：**
+## ⚠️ 安装前 — 须确认并接受
 
-1. **写入** `~/.openclaw/skills/giggle-generation-music/logs/` – 任务状态，用于 Cron 去重
-2. **注册 Cron**（2 分钟间隔） – 异步轮询；任务完成后移除
-3. **原样转发 stdout** – 脚本输出直接呈现给用户
+本技能使用**异步轮询**。安装即表示您接受：
 
-**依赖要求**：`python3`、`GIGGLE_API_KEY`（系统环境变量）、pip：`requests`。**安装前须阅读并确认上述内容。**
+| 行为 | 说明 |
+|------|------|
+| **写入** | `~/.openclaw/skills/giggle-generation-music/logs/` — 任务状态，用于 Cron 去重 |
+| **Cron** | 注册 2 分钟间隔轮询；任务完成后移除 |
+| **stdout** | 脚本输出原样呈现给用户（不经过滤） |
+
+**依赖要求**：`python3`、`GIGGLE_API_KEY`（环境变量）、`requests`（pip）。**安装前须阅读并确认上述内容。**
 
 ---
 

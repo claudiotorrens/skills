@@ -1,7 +1,7 @@
 ---
 name: giggle-generation-music
 description: Use when the user wants to create, generate, or compose music—whether from text description, custom lyrics, or instrumental background music. Triggers: generate music, write a song, compose, create music, AI music, background music, instrumental, beats.
-version: "0.0.5"
+version: "0.0.7"
 license: MIT
 author: storyclaw-official
 homepage: https://github.com/storyclaw-official/storyclaw-skills
@@ -10,22 +10,17 @@ requires:
   env: [GIGGLE_API_KEY]
   pip: [requests]
 metadata:
-  {
-    "openclaw": {
-      "emoji": "📂",
-      "requires": {
-        "bins": ["python3"],
-        "env": ["GIGGLE_API_KEY"],
-        "pip": ["requests"]
-      },
-      "primaryEnv": "GIGGLE_API_KEY",
-      "runtimeBehaviors": {
-        "writes": ["~/.openclaw/skills/giggle-generation-music/logs/"],
-        "cron": "Registers polling job (2min interval) when user initiates music generation"
-      },
-      "installNotice": "Writes to logs/; registers Cron; forwards stdout. User must review before installing."
-    }
-  }
+  openclaw:
+    emoji: "📂"
+    requires:
+      bins: [python3]
+      env: [GIGGLE_API_KEY]
+      pip: [requests]
+    primaryEnv: GIGGLE_API_KEY
+    runtimeBehaviors:
+      writes: ["~/.openclaw/skills/giggle-generation-music/logs/"]
+      cron: "Registers polling job (2min interval) when user initiates music generation"
+    installNotice: "Requires user acceptance. Writes to logs/; registers Cron; forwards raw stdout. See SKILL.md before installing."
 ---
 
 [简体中文](./SKILL.zh-CN.md) | English
@@ -36,15 +31,19 @@ metadata:
 
 Generates AI music via giggle.pro. Supports simplified and custom modes.
 
-## ⚠️ Installation Notice — Review Required
+---
 
-**By installing this skill, you acknowledge that it will:**
+## ⚠️ Before Installing — You Must Accept
 
-1. **Write** to `~/.openclaw/skills/giggle-generation-music/logs/` – Task state for Cron deduplication
-2. **Register Cron** (2min interval) – Async polling; removed when complete
-3. **Forward raw stdout** – Script output passed to user as-is
+This skill uses **asynchronous polling**. Installation means you accept:
 
-**Requirements**: `python3`, `GIGGLE_API_KEY` (system environment variable), pip: `requests`. **You must review and accept the above before installing.**
+| Behavior | Details |
+|----------|---------|
+| **Writes** | `~/.openclaw/skills/giggle-generation-music/logs/` — task state for Cron deduplication |
+| **Cron** | Registers 2min-interval poll; removed when task completes |
+| **stdout** | Script output forwarded to user as-is (no filtering) |
+
+**Requirements**: `python3`, `GIGGLE_API_KEY` (env), `requests` (pip). **Read and accept the above before installing.**
 
 ---
 

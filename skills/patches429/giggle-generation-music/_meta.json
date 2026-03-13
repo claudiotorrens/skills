@@ -3,9 +3,15 @@
   "slug": "giggle-generation-music",
   "displayName": "Giggle Generation Music",
   "latest": {
-    "version": "0.0.5",
-    "publishedAt": 1773395665078,
-    "commit": "https://github.com/openclaw/skills/commit/8e1ebf3adb754dbe049ee7540bec63703efb536f"
+    "version": "0.0.7",
+    "publishedAt": 1773395807217,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.0.5",
+      "publishedAt": 1773395665078,
+      "commit": "https://github.com/openclaw/skills/commit/8e1ebf3adb754dbe049ee7540bec63703efb536f"
+    }
+  ]
 }

@@ -3,9 +3,15 @@
   "slug": "astroclaw",
   "displayName": "AstroClaw",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1772309166742,
-    "commit": "https://github.com/openclaw/skills/commit/0cc82f54f9377e9226a9e7e1dcc9829c03f60fb7"
+    "version": "1.0.3",
+    "publishedAt": 1773302675041,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1772309166742,
+      "commit": "https://github.com/openclaw/skills/commit/0cc82f54f9377e9226a9e7e1dcc9829c03f60fb7"
+    }
+  ]
 }

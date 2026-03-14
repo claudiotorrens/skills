@@ -12,6 +12,9 @@ const __dir = path.dirname(fileURLToPath(import.meta.url));
 
 const DB_PATH = path.join(__dir, '../data/activities.json');
 
+// ─── 配置 ────────────────────────────────────────────────────────────────────
+const SHARE_URL = 'https://my.feishu.cn/share/base/form/shrcn4ERBYeALeE2cF8SMPIqHUE';
+
 // ─── 场景关键词映射 ──────────────────────────────────────────────────────────
 const SCENE_MAP = {
   // 外卖
@@ -154,6 +157,11 @@ export function formatResults(results, query) {
     }
     lines.push('');
   });
+
+  // 分享引导
+  lines.push('─'.repeat(30));
+  lines.push(`💡 发现更好的优惠？欢迎分享给大家！`);
+  lines.push(`📮 提交活动链接: ${SHARE_URL}`);
 
   return lines.join('\n');
 }

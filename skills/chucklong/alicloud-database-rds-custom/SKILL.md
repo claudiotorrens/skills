@@ -8,21 +8,40 @@ license: MIT
 
 ## 概述
 
-本技能提供阿里云 RC 实例查询能力，通过 aliyun CLI 调用 `DescribeRCInstances` API 获取实例信息。适用于查询 RDS 相关的自定义实例资源。
+本技能提供阿里云 RC（RDS Custom）实例全生命周期查询能力，通过 aliyun CLI 调用 RDS API 获取实例及相关资源信息。适用于查询 RC 实例、监控指标、资源配置等场景。
 
 ## 核心能力
 
-### 1. CLI 查询（推荐）
+### 支持的查询命令
 
-使用 aliyun CLI 快速查询 RC 实例，支持多种过滤条件和格式化输出。
+| 命令 | 功能 | 状态 |
+|------|------|------|
+| `DescribeRCInstances` | 查询 RC 实例列表 | ✅ |
+| `DescribeRCInstanceAttribute` | 查询单个实例详细信息 | ✅ |
+| `DescribeRCImageList` | 查询可用镜像列表 | ✅ |
+| `DescribeRCDisks` | 查询磁盘列表 | ✅ |
+| `DescribeRCSnapshots` | 查询快照列表 | ✅ |
+| `DescribeRCMetricList` | 查询监控指标（CPU、内存等） | ✅ |
+| `DescribeRCClusterConfig` | 查询 ACK 集群 KubeConfig | ✅ |
+| `DescribeRCNodePool` | 查询边缘节点池配置 | ✅ |
+| `DescribeRCInstanceVncUrl` | 查询 VNC 登录地址 | ✅ |
 
-### 2. 多地域支持
+### 暂不支持的命令
 
-支持指定地域查询，默认 `cn-beijing`。
+以下命令在 Java SDK 中存在，但在 aliyun CLI v3.2.13 中暂不支持：
 
-### 3. 格式化输出
+| 命令 | 功能 | 替代方案 |
+|------|------|----------|
+| `DescribeRCCloudAssistantStatus` | 查询云助手状态 | SSH 登录实例检查 |
+| `DescribeRCNetworkInterfaces` | 查询网络接口信息 | 使用 DescribeRCInstanceAttribute |
+| `DescribeRCInstanceHistoryEvents` | 查询历史事件 | 使用控制台查看 |
 
-支持 JSON、表格等多种输出格式。
+### 特性
+
+- **多地域支持**：支持指定地域查询，默认 `cn-beijing`
+- **格式化输出**：支持 JSON、表格等多种输出格式
+- **jq 过滤**：提供丰富的 jq 数据提取示例
+- **监控查询**：支持 CPU、内存、磁盘等监控指标查询
 
 ## 使用方式
 
@@ -76,16 +95,16 @@ $ ./query_rc_instances.sh cn-beijing
 
 === RC 实例列表 (cn-beijing) ===
 
-实例 ID: rc-xz6k1781ef4f518q67fc
-实例名称：rc-xz6k1781ef4f518q67fc
-集群名称：RCC-1907409189351715
+实例 ID: rc-xxxxxxxxxxxxx
+实例名称：rc-xxxxxxxxxxxxx
+集群名称：RCC-xxxxxxxxxxxxxxx
 状态：Running
 CPU: 4 核
 内存：32 GB
 地域：cn-beijing
-可用区：cn-beijing-f
-私网 IP: 10.40.0.166
-VPC: vpc-2ze7ujll9a42fu1a6387g
+可用区：cn-beijing-x
+私网 IP: 10.x.x.xxx
+VPC: vpc-xxxxxxxxxxxxxxxxx
 创建时间：2026-01-20 18:45:50
 到期时间：2026-04-20T16:00:00Z
 
@@ -131,6 +150,9 @@ aliyun rds DescribeRCInstances --region cn-beijing
 | `aliyun rds DescribeRCNetworkInterfaces` | 查询 RC 实例网络接口信息 |
 | `aliyun rds DescribeRCDeploymentSets` | 查询 RC 实例部署集列表 |
 | `aliyun rds DescribeRCDisks` | 查询 RC 实例磁盘列表 |
+| `aliyun rds DescribeRCSnapshots` | 查询 RC 实例快照列表 |
+| `aliyun rds DescribeRCInstanceHistoryEvents` | 查询 RC 实例历史事件 |
+| `aliyun rds DescribeRCCloudAssistantStatus` | 查询 RC 实例云助手状态 |
 | `aliyun rds DescribeRCMetricList` | 查询 RC 实例监控指标（CPU、内存等） |
 
 ## 查询实例详细信息
@@ -140,7 +162,7 @@ aliyun rds DescribeRCInstances --region cn-beijing
 ```bash
 aliyun rds DescribeRCInstanceAttribute \
   --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498
+  --InstanceId rc-<INSTANCE_ID>
 ```
 
 ### 指定实例名称
@@ -148,8 +170,8 @@ aliyun rds DescribeRCInstanceAttribute \
 ```bash
 aliyun rds DescribeRCInstanceAttribute \
   --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498 \
-  --InstanceName rc-c5kyo15381wht249k498
+  --InstanceId rc-<INSTANCE_ID> \
+  --InstanceName rc-<INSTANCE_ID>
 ```
 
 ### 格式化输出
@@ -157,7 +179,7 @@ aliyun rds DescribeRCInstanceAttribute \
 ```bash
 aliyun rds DescribeRCInstanceAttribute \
   --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498 \
+  --InstanceId rc-<INSTANCE_ID> \
   --output cols=InstanceId,InstanceName,Status,Cpu,Memory,RegionId,ZoneId
 ```
 
@@ -167,13 +189,13 @@ aliyun rds DescribeRCInstanceAttribute \
 # 提取基本信息
 aliyun rds DescribeRCInstanceAttribute \
   --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498 \
+  --InstanceId rc-<INSTANCE_ID> \
   | jq '.RCInstances[0] | {InstanceId, InstanceName, Status, Cpu, Memory}'
 
 # 提取网络信息
 aliyun rds DescribeRCInstanceAttribute \
   --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498 \
+  --InstanceId rc-<INSTANCE_ID> \
   | jq '.RCInstances[0].VpcAttributes | {VpcId, VSwitchId, PrivateIpAddress}'
 ```
 
@@ -231,105 +253,6 @@ aliyun rds DescribeRCImageList \
 | OSName | 操作系统名称 |
 | ImageVersion | 镜像版本 |
 
-## 查询网络接口信息
-
-### 基本查询
-
-```bash
-aliyun rds DescribeRCNetworkInterfaces \
-  --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498
-```
-
-### 格式化输出
-
-```bash
-aliyun rds DescribeRCNetworkInterfaces \
-  --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498 \
-  --output cols=NetworkInterfaceId,PrivateIpAddress,MacAddress,Status
-```
-
-### 使用 jq 提取字段
-
-```bash
-# 提取网络接口基本信息
-aliyun rds DescribeRCNetworkInterfaces \
-  --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498 \
-  | jq '.NetworkInterfaces[] | {NetworkInterfaceId, PrivateIpAddress, MacAddress}'
-
-# 提取 VPC 信息
-aliyun rds DescribeRCNetworkInterfaces \
-  --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498 \
-  | jq '.NetworkInterfaces[] | {VpcId, VSwitchId, SecurityGroupId}'
-
-# 统计网络接口数量
-aliyun rds DescribeRCNetworkInterfaces \
-  --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498 \
-  | jq '.NetworkInterfaces | length'
-```
-
-### 输出字段说明
-
-| 字段 | 说明 |
-|------|------|
-| NetworkInterfaceId | 弹性网卡 ID |
-| PrivateIpAddress | 私网 IP 地址 |
-| MacAddress | MAC 地址 |
-| Status | 网卡状态（Available/InUse） |
-| VpcId | VPC ID |
-| VSwitchId | 交换机 ID |
-| SecurityGroupId | 安全组 ID |
-
-## 查询部署集列表
-
-### 基本查询
-
-```bash
-aliyun rds DescribeRCDeploymentSets \
-  --region cn-beijing
-```
-
-### 格式化输出
-
-```bash
-aliyun rds DescribeRCDeploymentSets \
-  --region cn-beijing \
-  --output cols=DeploymentSetId,DeploymentSetName,Strategy,InstanceAmount
-```
-
-### 使用 jq 提取字段
-
-```bash
-# 提取部署集基本信息
-aliyun rds DescribeRCDeploymentSets \
-  --region cn-beijing \
-  | jq '.DeploymentSets[] | {DeploymentSetId, DeploymentSetName, Strategy}'
-
-# 查询部署集中的实例数量
-aliyun rds DescribeRCDeploymentSets \
-  --region cn-beijing \
-  | jq '.DeploymentSets[] | {DeploymentSetName, InstanceAmount}'
-
-# 统计部署集总数
-aliyun rds DescribeRCDeploymentSets \
-  --region cn-beijing \
-  | jq '.DeploymentSets | length'
-```
-
-### 输出字段说明
-
-| 字段 | 说明 |
-|------|------|
-| DeploymentSetId | 部署集 ID |
-| DeploymentSetName | 部署集名称 |
-| Strategy | 部署策略（AvailabilityWithInHost/Dispersed） |
-| InstanceAmount | 部署集中的实例数量 |
-| Description | 部署集描述 |
-
 ## 查询磁盘列表
 
 ### 基本查询
@@ -337,7 +260,7 @@ aliyun rds DescribeRCDeploymentSets \
 ```bash
 aliyun rds DescribeRCDisks \
   --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498
+  --InstanceId rc-<INSTANCE_ID>
 ```
 
 ### 按地域查询
@@ -352,7 +275,7 @@ aliyun rds DescribeRCDisks \
 ```bash
 aliyun rds DescribeRCDisks \
   --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498 \
+  --InstanceId rc-<INSTANCE_ID> \
   --output cols=DiskId,DiskName,Size,Category,Status
 ```
 
@@ -362,25 +285,25 @@ aliyun rds DescribeRCDisks \
 # 提取磁盘基本信息
 aliyun rds DescribeRCDisks \
   --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498 \
+  --InstanceId rc-<INSTANCE_ID> \
   | jq '.Disks[] | {DiskId, DiskName, Size, Category}'
 
 # 查询系统盘和数据盘
 aliyun rds DescribeRCDisks \
   --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498 \
+  --InstanceId rc-<INSTANCE_ID> \
   | jq '.Disks[] | select(.Type == "system")'
 
 # 统计磁盘总容量
 aliyun rds DescribeRCDisks \
   --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498 \
+  --InstanceId rc-<INSTANCE_ID> \
   | jq '[.Disks[].Size | tonumber] | add'
 
 # 统计磁盘数量
 aliyun rds DescribeRCDisks \
   --region cn-beijing \
-  --InstanceId rc-c5kyo15381wht249k498 \
+  --InstanceId rc-<INSTANCE_ID> \
   | jq '.Disks | length'
 ```
 
@@ -396,6 +319,82 @@ aliyun rds DescribeRCDisks \
 | Type | 磁盘类型（system/data） |
 | Device | 设备名（/dev/vda 等） |
 | Encrypted | 是否加密 |
+
+## 查询快照列表
+
+### 基本查询
+
+```bash
+aliyun rds DescribeRCSnapshots \
+  --region cn-beijing \
+  --InstanceId rc-<INSTANCE_ID>
+```
+
+### 按地域查询
+
+```bash
+aliyun rds DescribeRCSnapshots \
+  --region cn-beijing
+```
+
+### 指定磁盘 ID 查询
+
+```bash
+aliyun rds DescribeRCSnapshots \
+  --region cn-beijing \
+  --DiskId d-c5kyo15381wht249k498
+```
+
+### 格式化输出
+
+```bash
+aliyun rds DescribeRCSnapshots \
+  --region cn-beijing \
+  --InstanceId rc-<INSTANCE_ID> \
+  --output cols=SnapshotId,SnapshotName,Size,Status,CreationTime
+```
+
+### 使用 jq 提取字段
+
+```bash
+# 提取快照基本信息
+aliyun rds DescribeRCSnapshots \
+  --region cn-beijing \
+  --InstanceId rc-<INSTANCE_ID> \
+  | jq '.Snapshots[] | {SnapshotId, SnapshotName, Size, Status}'
+
+# 查询成功状态的快照
+aliyun rds DescribeRCSnapshots \
+  --region cn-beijing \
+  --InstanceId rc-<INSTANCE_ID> \
+  | jq '.Snapshots[] | select(.Status == "success")'
+
+# 统计快照总数量
+aliyun rds DescribeRCSnapshots \
+  --region cn-beijing \
+  --InstanceId rc-<INSTANCE_ID> \
+  | jq '.Snapshots | length'
+
+# 统计快照总容量
+aliyun rds DescribeRCSnapshots \
+  --region cn-beijing \
+  --InstanceId rc-<INSTANCE_ID> \
+  | jq '[.Snapshots[].Size | tonumber] | add'
+```
+
+### 输出字段说明
+
+| 字段 | 说明 |
+|------|------|
+| SnapshotId | 快照 ID |
+| SnapshotName | 快照名称 |
+| Size | 快照容量（GB） |
+| Status | 快照状态（success/failed/progressing） |
+| CreationTime | 创建时间 |
+| SourceDiskId | 源磁盘 ID |
+| SourceInstanceId | 源实例 ID |
+| Progress | 快照进度（百分比） |
+| RetentionDays | 保留天数 |
 
 ## 监控指标查询
 
@@ -454,7 +453,7 @@ END=$(date "+%Y-%m-%d %H:%M:%S")
 
 aliyun rds DescribeRCMetricList \
   --region cn-beijing \
-  --InstanceId rc-mwht4z9d66o4u7d2f001 \
+  --InstanceId rc-<INSTANCE_ID> \
   --MetricName CPUUtilization \
   --StartTime "$START" \
   --EndTime "$END" \

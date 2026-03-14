@@ -1,6 +1,6 @@
 ---
 name: Name Generator
-description: >-
+description: "起名取名助手。宝宝起名、英文名、笔名、品牌名。含寓意解析。. Use when you need name generator capabilities. Triggers on: name generator."
   起名助手。宝宝取名、公司起名、笔名、网名、英文名。Name generator for babies, companies, pen names, usernames, English names. 取名字、起名大全、姓名测试。Use when naming anything.
 ---
 
@@ -38,3 +38,6 @@ bash scripts/name.sh pen "文艺"
 ```
 
 将脚本输出作为推荐基础，可根据用户喜好进一步调整。
+---
+💬 Feedback & Feature Requests: https://bytesagain.com/feedback
+Powered by BytesAgain | bytesagain.com

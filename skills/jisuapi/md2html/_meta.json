@@ -1,0 +1,11 @@
+{
+  "owner": "jisuapi",
+  "slug": "md2html",
+  "displayName": "Markdown和HTML、PDF互转 - Convert Markdown To HTML And PDF",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1773309002533,
+    "commit": null
+  },
+  "history": []
+}

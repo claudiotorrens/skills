@@ -1,0 +1,11 @@
+{
+  "owner": "calcium-ion",
+  "slug": "newapi",
+  "displayName": "NewAPI",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1773303986960,
+    "commit": null
+  },
+  "history": []
+}

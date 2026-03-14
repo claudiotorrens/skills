@@ -1,0 +1,11 @@
+{
+  "owner": "electather",
+  "slug": "seer-manager",
+  "displayName": "Seer server manager",
+  "latest": {
+    "version": "v0.2.5",
+    "publishedAt": 1773398321171,
+    "commit": null
+  },
+  "history": []
+}

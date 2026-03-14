@@ -1,0 +1,11 @@
+{
+  "owner": "msaad00",
+  "slug": "agent-bom-scan",
+  "displayName": "agent-bom scan",
+  "latest": {
+    "version": "0.70.7",
+    "publishedAt": 1773429280648,
+    "commit": null
+  },
+  "history": []
+}

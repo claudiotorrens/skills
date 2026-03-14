@@ -3,9 +3,15 @@
   "slug": "agent-memento",
   "displayName": "Agent Memento",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773496327586,
-    "commit": "https://github.com/openclaw/skills/commit/695ee051b1f8e35c4f0ae752b83c95a61abda0c9"
+    "version": "1.0.2",
+    "publishedAt": 1773497237851,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773496327586,
+      "commit": "https://github.com/openclaw/skills/commit/695ee051b1f8e35c4f0ae752b83c95a61abda0c9"
+    }
+  ]
 }

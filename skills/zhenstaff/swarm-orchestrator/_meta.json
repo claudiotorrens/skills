@@ -1,0 +1,11 @@
+{
+  "owner": "zhenstaff",
+  "slug": "swarm-orchestrator",
+  "displayName": "Swarm Orchestrator",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773296989544,
+    "commit": null
+  },
+  "history": []
+}

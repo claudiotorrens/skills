@@ -1,0 +1,11 @@
+{
+  "owner": "googleworkspace-bot",
+  "slug": "recipe-create-shared-drive",
+  "displayName": "Recipe Create Shared Drive",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773393370432,
+    "commit": null
+  },
+  "history": []
+}

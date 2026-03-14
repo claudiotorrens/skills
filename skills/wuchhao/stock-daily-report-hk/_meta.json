@@ -1,0 +1,11 @@
+{
+  "owner": "wuchhao",
+  "slug": "stock-daily-report-hk",
+  "displayName": "港股日报Agent",
+  "latest": {
+    "version": "1.0.7",
+    "publishedAt": 1773408307575,
+    "commit": null
+  },
+  "history": []
+}

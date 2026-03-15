@@ -3,11 +3,16 @@
   "slug": "pet-care",
   "displayName": "Pet Care",
   "latest": {
-    "version": "2.3.0",
-    "publishedAt": 1773447648792,
-    "commit": "https://github.com/openclaw/skills/commit/0e45ef29250a6870ae9e1d935902af4b65b0135c"
+    "version": "1.0.4",
+    "publishedAt": 1773614219837,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.3.0",
+      "publishedAt": 1773447648792,
+      "commit": "https://github.com/openclaw/skills/commit/0e45ef29250a6870ae9e1d935902af4b65b0135c"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773317892069,

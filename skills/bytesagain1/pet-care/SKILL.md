@@ -25,7 +25,6 @@ description: "━━━━━━━━━━━━━━━━━━━━━━
   checklist       checklist
 ```
 
-
 ## 专业建议
 
 - ❌ 巧克力、葡萄、洋葱、大蒜、木糖醇
@@ -39,3 +38,7 @@ description: "━━━━━━━━━━━━━━━━━━━━━━
 ---
 💬 Feedback & Feature Requests: https://bytesagain.com/feedback
 Powered by BytesAgain | bytesagain.com
+
+## Commands
+
+Run `pet-care help` to see all available commands.

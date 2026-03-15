@@ -3,9 +3,15 @@
   "slug": "agentcanary",
   "displayName": "AgentCanary",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1771619295644,
-    "commit": "https://github.com/openclaw/skills/commit/3501caab851b1668f7d875b70e43a685f22d5be2"
+    "version": "1.0.1",
+    "publishedAt": 1773413557943,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1771619295644,
+      "commit": "https://github.com/openclaw/skills/commit/3501caab851b1668f7d875b70e43a685f22d5be2"
+    }
+  ]
 }

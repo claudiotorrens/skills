@@ -1,11 +1,17 @@
 {
   "owner": "oxiaom",
   "slug": "audio-broadcast",
-  "displayName": "audio-broadcast",
+  "displayName": "Audio Broadcast",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1771395065132,
-    "commit": "https://github.com/openclaw/skills/commit/26cf8589b0cb598b77fdb5931d272af312c2d7cb"
+    "version": "1.0.2",
+    "publishedAt": 1773529175044,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1771395065132,
+      "commit": "https://github.com/openclaw/skills/commit/26cf8589b0cb598b77fdb5931d272af312c2d7cb"
+    }
+  ]
 }

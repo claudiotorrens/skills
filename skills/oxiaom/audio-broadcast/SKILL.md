@@ -1,5 +1,6 @@
 ---
 name: audio-broadcast
+version: 1.1.2
 description: 控制小播鼠广播系统进行音频播放和广播通知。使用当用户需要向广播设备播放音频、设置音量、管理定时广播任务、或查看设备状态时。支持播放音频文件、URL播放、音量调节、设备管理、定时任务管理、文字转语音(TTS)广播等功能。Control xiaoboshu broadcast system for audio playback and notifications. Use when playing audio to broadcast devices, adjusting volume, managing scheduled tasks, or checking device status.
 ---
 
@@ -125,6 +126,20 @@ python scripts/xiaoboshu.py files
 
 ## 定时任务
 
+### 任务状态说明
+
+任务有两个状态字段：
+
+| 字段 | 含义 | 值说明 |
+|------|------|--------|
+| `enable` | 任务启用状态 | 1=启用, 0=禁用 |
+| `statu` | 播放状态 | 1=正在播放, 0=未播放 |
+
+**重要规则：**
+- `enable` 控制定时任务是否生效（到时间是否触发播放）
+- `statu` 表示当前是否正在播放音频
+- **删除正在播放的任务前**：必须先停止（stop）→ 禁用（disable）→ 再删除（delete）
+
 ### 查看任务列表
 
 ```
@@ -148,6 +163,45 @@ python scripts/xiaoboshu.py task-stop <task_id>
 
 # 删除任务
 python scripts/xiaoboshu.py task-delete <task_id>
+
+# 编辑任务名称
+python scripts/xiaoboshu.py task-edit <task_id> --name=<新名称>
+
+# 编辑任务时间
+python scripts/xiaoboshu.py task-edit <task_id> --time=HH:MM:SS
+
+# 编辑任务设备
+python scripts/xiaoboshu.py task-devices <task_id> <device_ids>
+
+# 编辑任务文件
+python scripts/xiaoboshu.py task-files <task_id> <file_ids>
+```
+
+### 删除任务
+
+**重要**：删除任务前必须先禁用，直接删除不会生效！
+
+```bash
+# 1. 先禁用任务
+python scripts/xiaoboshu.py task-disable <task_id>
+
+# 2. 然后删除任务
+python scripts/xiaoboshu.py task-delete <task_id>
+```
+
+### 删除正在播放的任务
+
+如果任务状态显示 `▶ 播放中`，删除前必须按顺序执行：
+
+```bash
+# 1. 先停止播放
+python scripts/xiaoboshu.py task-stop <task_id>
+
+# 2. 然后禁用任务
+python scripts/xiaoboshu.py task-disable <task_id>
+
+# 3. 最后删除任务
+python scripts/xiaoboshu.py task-delete <task_id>
 ```
 
 ## 播放规则
@@ -160,6 +214,79 @@ python scripts/xiaoboshu.py task-delete <task_id>
 - 接口：`POST /user/delfile` 参数：`id`, `token`, `fileid`
 - 自己生成的 TTS 文件播放完成后，过一段时间要记得清理
 - 文件名通常以 `ttsO` 或 `TTS_` 开头，便于识别
+
+### 自动清理脚本
+
+技能包含 `cleanup_tts.py` 脚本，用于自动清理服务器上的 TTS 临时文件：
+
+```bash
+# 手动执行清理
+python scripts/cleanup_tts.py
+```
+
+**清理逻辑：**
+- 删除以 `ttsO` 或 `TTS_` 开头的文件
+- 保留被定时任务引用的文件（不会删除正在使用的文件）
+
+## 安装后配置
+
+### 创建定时清理任务
+
+安装技能后，建议创建定时任务每天自动清理 TTS 文件：
+
+```bash
+# 每天凌晨 3 点执行清理
+python /root/.picoclaw/workspace/skills/audio-broadcast/scripts/cleanup_tts.py
+```
+
+**定时任务配置示例：**
+- 时间：每天凌晨 3:00
+- 命令：`python3 /root/.picoclaw/workspace/skills/audio-broadcast/scripts/cleanup_tts.py`
+- 目的：自动清理服务器上的临时 TTS 文件，释放存储空间
+
+## 文件上传规则
+
+### 上传前检查图片信息
+
+**重要**：上传音频文件前，必须检查文件是否包含图片信息（封面图、嵌入图片等），如果有则先去除！
+
+#### 检查方法
+
+```bash
+# 使用 ffmpeg 查看元数据
+ffmpeg -i 文件名.mp3
+
+# 使用 eyeD3 查看（需要安装）
+eyeD3 文件名.mp3
+```
+
+#### 去除图片方法
+
+```bash
+# 方法1: ffmpeg（推荐，保留音频质量）
+ffmpeg -i input.mp3 -map 0:a -c:a copy -map_metadata -1 output.mp3
+
+# 方法2: eyeD3（直接修改原文件）
+eyeD3 --remove-images 文件名.mp3
+```
+
+#### 上传流程
+
+1. **检查**：先检查文件是否包含图片信息
+2. **去除**：如果有图片，先去除图片信息
+3. **去重**：调用 `xiaoboshu.py files` 检查是否已存在同名文件
+4. **上传**：确认无重复后再上传
+
+### 去重检查
+
+上传文件前必须先检查是否已存在同名文件：
+
+```bash
+# 查看已有文件列表
+python scripts/xiaoboshu.py files
+```
+
+如果发现重名文件，提示用户"已存在同名文件，是否需要替换？"
 
 ## 常用示例
 

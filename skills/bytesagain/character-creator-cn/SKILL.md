@@ -1,9 +1,8 @@
 ---
+version: "2.0.0"
 name: character-creator-cn
-version: 1.0.0
-description: "角色设计工具。创建角色档案、背景故事、性格特征、人物关系、角色弧光、角色卡。Character creator with profiles, backstories, personality traits, relationships, character arcs, and character sheets."
+description: "角色设计工具。创建角色档案、背景故事、性格特征、人物关系、角色弧光、角色卡。Character creator with profiles, backstories, personality traits, relationships, character arcs, and character sheets. Use when you need character creator cn capabilities. Triggers on: character creator cn."
 author: BytesAgain
-tags: [character, story, writing, rpg, personality, backstory, 角色设计, 人物, 故事, 创作]
 ---
 # character-creator-cn
 
@@ -29,7 +28,6 @@ tags: [character, story, writing, rpg, personality, backstory, 角色设计, 人
   mentor          mentor
 ```
 
-
 ## 专业建议
 
 - 内在矛盾** — 好角色有内在冲突（勇敢但害怕孤独）
@@ -40,3 +38,10 @@ tags: [character, story, writing, rpg, personality, backstory, 角色设计, 人
 
 ---
 *character-creator-cn by BytesAgain*
+---
+💬 Feedback & Feature Requests: https://bytesagain.com/feedback
+Powered by BytesAgain | bytesagain.com
+
+## Commands
+
+Run `character-creator-cn help` to see all available commands.

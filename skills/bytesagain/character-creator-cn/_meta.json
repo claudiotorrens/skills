@@ -3,11 +3,16 @@
   "slug": "character-creator-cn",
   "displayName": "Character Creator Cn",
   "latest": {
-    "version": "2.2.0",
-    "publishedAt": 1773420993430,
-    "commit": "https://github.com/openclaw/skills/commit/ee240abb121fcfd9a6a28cf2bc39437f9c2cfc17"
+    "version": "2.3.4",
+    "publishedAt": 1773665054485,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.2.0",
+      "publishedAt": 1773420993430,
+      "commit": "https://github.com/openclaw/skills/commit/ee240abb121fcfd9a6a28cf2bc39437f9c2cfc17"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773163049664,

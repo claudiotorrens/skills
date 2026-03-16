@@ -3,9 +3,15 @@
   "slug": "guitar-chord",
   "displayName": "Guitar Chord",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1772966634604,
-    "commit": "https://github.com/openclaw/skills/commit/d77dc7ff16dca197944935be457067143653f73d"
+    "version": "1.0.2",
+    "publishedAt": 1773675309200,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1772966634604,
+      "commit": "https://github.com/openclaw/skills/commit/d77dc7ff16dca197944935be457067143653f73d"
+    }
+  ]
 }

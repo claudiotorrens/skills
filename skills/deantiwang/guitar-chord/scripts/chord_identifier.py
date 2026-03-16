@@ -402,6 +402,102 @@ def get_chord_inversions(chord_name, show_diagram=False):
     return result
 
 
+def get_drop2_voicings(chord_name):
+    """计算 drop2 和弦 voicing
+    
+    Drop2: 把七和弦的第二高音(纯五度)降一个八度
+    例如 Cmaj7 (C-E-G-B) → drop2 → C-G-B-E
+    """
+    root, chord_type = parse_chord_name(chord_name)
+    
+    if root is None:
+        return f"无法解析和弦名: {chord_name}"
+    
+    # 获取和弦音
+    notes = get_chord_notes(root, chord_type)
+    if notes is None:
+        return f"不支持的和弦类型: {chord_type}"
+    
+    # 只支持七和弦的 drop2
+    if len(notes) != 4:
+        return f"Drop2 只支持七和弦(4音)，当前和弦有 {len(notes)} 个音"
+    
+    cn_name = CHORD_NAMES_CN.get(chord_type, chord_type)
+    result = f"**{root}{cn_name}** Drop2 Voicings:\n"
+    
+    # 七和弦音程: R, 3, 5, 7
+    # Drop2: R, 5, 7, 3 (把五度音降八度)
+    intervals = CHORD_INTERVALS.get(chord_type, [])
+    if len(intervals) != 4:
+        return f"无法计算 drop2: 缺少音程信息"
+    
+    root_semitone = NOTE_TO_SEMITONE[root]
+    
+    # 计算各个音的半音数
+    # 原位: R, 3, 5, 7
+    original = [(root_semitone + i) % 12 for i in intervals]
+    
+    # Drop2: R, 5, 7, 3
+    # 即：根音不变，5度降八度，7度不变，3度不变
+    drop2_voicing = [
+        original[0],  # R (root)
+        original[2],  # 5 (fifth) - dropped octave = now below 7
+        original[3],  # 7 (seventh)
+        original[1],  # 3 (third) - now the highest
+    ]
+    
+    # 转成音符名
+    drop2_notes = [SEMITONE_TO_NOTE[n] for n in drop2_voicing]
+    
+    result += f"\n原位: {', '.join(notes)}\n"
+    result += f"Drop2: {', '.join(drop2_notes)}\n"
+    
+    # 标记各音程
+    result += f"\n音程分析:\n"
+    result += f"  低音(R): {drop2_notes[0]}\n"
+    result += f"  纯五度(5): {drop2_notes[1]} (降八度)\n"
+    result += f"  大七度(7): {drop2_notes[2]}\n"
+    result += f"  大三度(3): {drop2_notes[3]} (最高音)\n"
+    
+    # 显示常见的 drop2 指型
+    result += f"\n--- 常见 Guitar Voicings ---\n"
+    
+    # 常见 drop2 指型 (从低到高弦)
+    # 这些是基于吉他指板的常见位置
+    common_voicings = {
+        'maj7': [
+            {'name': 'Root pos.', 'frets': 'X-3-2-1-1-0', 'strings': 'C,G,B,E'},
+            {'name': '1st inv.', 'frets': 'X-X-0-2-1-0', 'strings': 'E,C,G,B'},
+            {'name': '2nd inv.', 'frets': 'X-0-0-0-1-0', 'strings': 'G,B,E,C'},
+            {'name': '3rd inv.', 'frets': 'X-3-3-2-1-0', 'strings': 'B,E,G,C'},
+        ],
+        '7': [
+            {'name': 'Root pos.', 'frets': 'X-3-2-1-1-0', 'strings': 'C,G,Bb,E'},
+            {'name': '1st inv.', 'frets': 'X-X-0-2-1-3', 'strings': 'E,C,G,Bb'},
+            {'name': '2nd inv.', 'frets': 'X-0-0-0-1-0', 'strings': 'G,Bb,E,C'},
+            {'name': '3rd inv.', 'frets': 'X-3-3-2-1-3', 'strings': 'Bb,E,G,C'},
+        ],
+        'm7': [
+            {'name': 'Root pos.', 'frets': 'X-3-5-3-4-3', 'strings': 'C,Gb,Bb,Eb'},
+            {'name': '1st inv.', 'frets': 'X-X-0-3-1-3', 'strings': 'Eb,C,Gb,Bb'},
+            {'name': '2nd inv.', 'frets': 'X-0-0-0-3-0', 'strings': 'Gb,Bb,Eb,C'},
+            {'name': '3rd inv.', 'frets': 'X-3-3-1-1-3', 'strings': 'Bb,Eb,Gb,C'},
+        ],
+    }
+    
+    if chord_type in common_voicings:
+        for v in common_voicings[chord_type]:
+            result += f"\n**{v['name']}**: {v['frets']}\n"
+            result += f"  音: {v['strings']}\n"
+    
+    return result
+
+
+def drop2_lookup(chord_name):
+    """Drop2 和弦查询"""
+    return get_drop2_voicings(chord_name)
+
+
 def get_scale_notes(root, scale_type):
     """获取音阶的所有音"""
     if root not in NOTE_TO_SEMITONE:
@@ -585,6 +681,8 @@ def main():
         print("  带和弦图: python chord_identifier.py <和弦名> --diagram")
         print("  和弦转位: python chord_identifier.py --inversion <和弦名>")
         print("           例如: python chord_identifier.py --inversion C7")
+        print("  Drop2和弦: python chord_identifier.py --drop2 <和弦名>")
+        print("           例如: python chord_identifier.py --drop2 Cmaj7")
         print("  音阶查询: python chord_identifier.py --scale <调式>")
         print("           例如: python chord_identifier.py --scale 'C major'")
         print("           例如: python chord_identifier.py --scale 'A minor' --diagram")
@@ -595,6 +693,10 @@ def main():
         # 反向查询
         notes = sys.argv[2:]
         identify_and_print(notes)
+    elif sys.argv[1] == '--drop2':
+        # Drop2 和弦查询
+        chord_name = sys.argv[2]
+        print(drop2_lookup(chord_name))
     elif sys.argv[1] == '--inversion':
         # 和弦转位
         chord_name = sys.argv[2]

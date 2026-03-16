@@ -3,9 +3,15 @@
   "slug": "trip",
   "displayName": "Trip",
   "latest": {
-    "version": "1.1.0",
-    "publishedAt": 1773364554696,
-    "commit": "https://github.com/openclaw/skills/commit/2aa79c0d0d06373d650bd6d33523d70d83b9a186"
+    "version": "1.2.0",
+    "publishedAt": 1773579137017,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.1.0",
+      "publishedAt": 1773364554696,
+      "commit": "https://github.com/openclaw/skills/commit/2aa79c0d0d06373d650bd6d33523d70d83b9a186"
+    }
+  ]
 }

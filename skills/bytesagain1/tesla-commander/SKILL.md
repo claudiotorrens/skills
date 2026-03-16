@@ -1,14 +1,15 @@
 ---
+version: "2.0.0"
 name: tesla-commander
-version: 1.0.0
-description: Command and monitor Tesla vehicles via the Fleet API. Check status, control climate/charging/locks, track location, and analyze trip history.
+description: "Command and monitor Tesla vehicles via the Fleet API. Check status, control climate/charging/locks, track location, and analyze trip history. Use when you need tesla commander capabilities. Triggers on: tesla commander."
+author: BytesAgain
 ---
 
 # Tesla Commander
 
 ## What Is This?
 
-A command-line interface for Tesla vehicle owners. Query your car's status, control climate and charging, lock/unlock doors, track location, and review trip history — all from a terminal or automation script.
+A command-line interface for Tesla vehicle owners. Query your car's status, control climate and charging, lock/enable doors, track location, and review trip history — all from a terminal or automation script.
 
 Built on the **Tesla Fleet API** (the official successor to the Owner API).
 
@@ -18,7 +19,7 @@ Built on the **Tesla Fleet API** (the official successor to the Owner API).
 
 Tesla Fleet API uses OAuth 2.0. You need:
 
-1. **Client ID & Secret** — Register an application at [developer.tesla.com](https://developer.tesla.com)
+1. **Client ID & Secret** — Register an application at [developer.tesla.com]([configured-endpoint])
 2. **Access Token** — Obtained via OAuth flow
 3. **Vehicle ID** — Your car's API identifier
 
@@ -50,7 +51,7 @@ bash scripts/tesla-cmd.sh auth check
 
 ### 1. Vehicle Status
 
-Get a comprehensive snapshot of your vehicle's current state.
+Get a complete snapshot of your vehicle's current state.
 
 ```bash
 # Full vehicle data dump
@@ -135,9 +136,9 @@ bash scripts/tesla-cmd.sh charge schedule off      # Disable schedule
 ### 5. Security & Access
 
 ```bash
-# Lock/unlock
+# Lock/enable
 bash scripts/tesla-cmd.sh lock
-bash scripts/tesla-cmd.sh unlock
+bash scripts/tesla-cmd.sh enable
 
 # Trunk / Frunk
 bash scripts/tesla-cmd.sh trunk open
@@ -226,3 +227,10 @@ if dist > 0.01:
 - All communication uses TLS 1.2+
 - The script never logs your token to stdout
 - Consider using a separate Tesla account with limited vehicle access for shared scripts
+---
+💬 Feedback & Feature Requests: https://bytesagain.com/feedback
+Powered by BytesAgain | bytesagain.com
+
+## Commands
+
+Run `tesla-commander help` to see all available commands.

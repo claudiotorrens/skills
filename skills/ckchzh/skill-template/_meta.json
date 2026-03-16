@@ -3,11 +3,16 @@
   "slug": "skill-template",
   "displayName": "Skill Template",
   "latest": {
-    "version": "2.2.0",
-    "publishedAt": 1773421794833,
-    "commit": "https://github.com/openclaw/skills/commit/e75344abb483ae0de2b46d76dfdc07abc672f308"
+    "version": "2.3.4",
+    "publishedAt": 1773667014105,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.2.0",
+      "publishedAt": 1773421794833,
+      "commit": "https://github.com/openclaw/skills/commit/e75344abb483ae0de2b46d76dfdc07abc672f308"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773199049900,

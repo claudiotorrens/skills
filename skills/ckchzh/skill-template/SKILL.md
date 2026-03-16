@@ -1,6 +1,8 @@
 ---
+version: "2.0.0"
 name: skill-template
-description: "OpenClaw Skill template generator. Create skill scaffolds, validate structure, enhance SKILL.md, generate command frameworks, tips, publish checklists, and example skills. Commands: create, validate, enhance, commands, tips, publish, examples. Use for skill development, AgentSkill authoring, skill creation."
+description: "OpenClaw Skill template generator. Create skill scaffolds, validate structure, enhance SKILL.md, generate command frameworks, tips, publish checklists, and example skills. Commands: create, validate, enhance, commands, tips, publish, examples. Use for skill development, AgentSkill authoring, skill creation. Use when you need skill template capabilities. Triggers on: skill template."
+author: BytesAgain
 ---
 
 # 🧩 Skill Template
@@ -49,3 +51,6 @@ my-skill/
 └── scripts/
     └── main.sh       # Recommended: executable script
 ```
+---
+💬 Feedback & Feature Requests: https://bytesagain.com/feedback
+Powered by BytesAgain | bytesagain.com

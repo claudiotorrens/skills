@@ -3,11 +3,16 @@
   "slug": "ima-all-ai",
   "displayName": "IMA Studio All-in-One — Image, Video, Music, SeeDream, Veo, Suno. Banana",
   "latest": {
-    "version": "1.0.8",
-    "publishedAt": 1773332483710,
-    "commit": "https://github.com/openclaw/skills/commit/41dece92c126c85fac718244c32cfe5ff6a82510"
+    "version": "1.0.9",
+    "publishedAt": 1773397104886,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.8",
+      "publishedAt": 1773332483710,
+      "commit": "https://github.com/openclaw/skills/commit/41dece92c126c85fac718244c32cfe5ff6a82510"
+    },
     {
       "version": "1.0.7",
       "publishedAt": 1773332071967,

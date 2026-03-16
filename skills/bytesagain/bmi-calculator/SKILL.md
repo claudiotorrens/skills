@@ -1,7 +1,9 @@
 ---
+version: "2.0.0"
 name: BMI Calculator
 description: "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━. Use when you need bmi calculator capabilities. Triggers on: bmi calculator."
   BMI计算器。BMI计算、理想体重、健康计划、体重追踪、儿童BMI、结果解读。BMI calculator with ideal weight, health plan. BMI、体重、健康。
+author: BytesAgain
 ---
 # BMI Calculator
 
@@ -24,20 +26,17 @@ BMI计算器。BMI计算、理想体重、健康计划、体重追踪、儿童BM
 | `child` | child |
 | `interpret` | interpret |
 
-
 ---
 *BMI Calculator by BytesAgain*
 ---
 💬 Feedback & Feature Requests: https://bytesagain.com/feedback
 Powered by BytesAgain | bytesagain.com
 
-
 ## Commands
 
 - `calculate` — height <cm> --weight <kg>
 - `classify` — Classify
 - `ideal-weight` — height <cm>
-
 
 ## Examples
 
@@ -49,13 +48,6 @@ bmi-calculator help
 bmi-calculator run
 ```
 
-## How It Works
-
-Reads input, processes with built-in logic, outputs results.
-
-## Tips
-
 - Run `bmi-calculator help` for commands
 - No API keys needed
-- Works offline
 

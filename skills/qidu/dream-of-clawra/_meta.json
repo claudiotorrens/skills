@@ -3,11 +3,16 @@
   "slug": "dream-of-clawra",
   "displayName": "Dream Of Clawra",
   "latest": {
-    "version": "1.0.9",
-    "publishedAt": 1773133991013,
-    "commit": "https://github.com/openclaw/skills/commit/8e90d78e1b4c52b70c81a155636d16b0159e7b25"
+    "version": "1.0.8",
+    "publishedAt": 1773040077726,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.9",
+      "publishedAt": 1773133991013,
+      "commit": "https://github.com/openclaw/skills/commit/8e90d78e1b4c52b70c81a155636d16b0159e7b25"
+    },
     {
       "version": "1.0.7",
       "publishedAt": 1772803260805,

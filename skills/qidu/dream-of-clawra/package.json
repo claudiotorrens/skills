@@ -1,7 +1,8 @@
 {
   "name": "dream-of-clawra",
-  "version": "1.0.2",
-  "description": "Add selfie to your OpenClaw agent.",
+  "version": "1.0.8",
+  "acceptLicenseTerms": true,
+  "description": "Add dancing and selfie to your OpenClaw agent.",
   "bin": {
     "clawra": "./bin/cli.js"
   },
@@ -22,8 +23,8 @@
     "ai-agent",
     "messaging"
   ],
-  "author": "",
-  "license": "MIT",
+  "author": "qidu",
+  "license": "MIT-0",
   "repository": {
     "type": "git",
     "url": "https://github.com/qidu/dream-of-clawra"

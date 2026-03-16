@@ -1,11 +1,17 @@
 {
   "owner": "hubertsing",
   "slug": "conan-weekly-report",
-  "displayName": "Conan Weekly Report",
+  "displayName": "柯南周报",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772963632070,
-    "commit": "https://github.com/openclaw/skills/commit/1c99f0a65bbd3e15826627f2556703402f282e02"
+    "version": "1.0.2",
+    "publishedAt": 1773544425232,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772963632070,
+      "commit": "https://github.com/openclaw/skills/commit/1c99f0a65bbd3e15826627f2556703402f282e02"
+    }
+  ]
 }

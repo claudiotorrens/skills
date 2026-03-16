@@ -3,9 +3,15 @@
   "slug": "contract-template",
   "displayName": "Contract Template",
   "latest": {
-    "version": "2.2.0",
-    "publishedAt": 1773421096603,
-    "commit": "https://github.com/openclaw/skills/commit/1cbe557ccca92adf67f9db9ebbc3e83ef3133b57"
+    "version": "2.3.4",
+    "publishedAt": 1773665447395,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.2.0",
+      "publishedAt": 1773421096603,
+      "commit": "https://github.com/openclaw/skills/commit/1cbe557ccca92adf67f9db9ebbc3e83ef3133b57"
+    }
+  ]
 }

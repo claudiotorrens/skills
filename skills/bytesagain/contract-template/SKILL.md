@@ -1,6 +1,8 @@
 ---
+version: "2.0.0"
 name: contract-template
-description: "Contract and agreement template generator. 合同模板、合同范本、协议书、contract template、劳动合同、employment contract、劳动协议、保密协议NDA、non-disclosure agreement、租赁合同、租房合同、lease agreement、服务协议、service agreement、合作协议、合伙协议、法律文书、法律模板、免责声明、竞业禁止、知识产权协议、外包合同、freelance contract。Generate labor contracts, NDAs, service agreements, rental contracts. Use when: (1) drafting labor/employment contracts, (2) creating NDA/confidentiality agreements, (3) writing service agreements, (4) generating rental/lease contracts, (5) any contract or legal document template. 适用场景：写劳动合同、保密协议、服务协议、租赁合同、合作协议、法律文书模板。"
+description: "Contract and agreement template generator. 合同模板、合同范本、协议书、contract template、劳动合同、employment contract、劳动协议、保密协议NDA、non-disclosure agreement、租赁合同、租房合同、lease agreement、服务协议、service agreement、合作协议、合伙协议、法律文书、法律模板、免责声明、竞业禁止、知识产权协议、外包合同、freelance contract。Generate labor contracts, NDAs, service agreements, rental contracts. Use when: (1) drafting labor/employment contracts, (2) creating NDA/confidentiality agreements, (3) writing service agreements, (4) generating rental/lease contracts, (5) any contract or legal document template. 适用场景：写劳动合同、保密协议、服务协议、租赁合同、合作协议、法律文书模板。 Triggers on: contract template."
+author: BytesAgain
 ---
 
 # contract-template
@@ -41,3 +43,6 @@ bash scripts/contract.sh service "委托方" "服务方" "软件开发与维护"
 # 租赁合同
 bash scripts/contract.sh rental "李四" "王五" "北京市朝阳区XX路XX号"
 ```
+---
+💬 Feedback & Feature Requests: https://bytesagain.com/feedback
+Powered by BytesAgain | bytesagain.com

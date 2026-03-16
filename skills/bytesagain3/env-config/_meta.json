@@ -3,11 +3,16 @@
   "slug": "env-config",
   "displayName": "Env Config",
   "latest": {
-    "version": "1.0.5",
-    "publishedAt": 1773662422215,
-    "commit": "https://github.com/openclaw/skills/commit/13d0582187eca95e0d3102c1b5dd819490dfa038"
+    "version": "1.0.6",
+    "publishedAt": 1773665879279,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.5",
+      "publishedAt": 1773662422215,
+      "commit": "https://github.com/openclaw/skills/commit/13d0582187eca95e0d3102c1b5dd819490dfa038"
+    },
     {
       "version": "2.2.0",
       "publishedAt": 1773444825836,

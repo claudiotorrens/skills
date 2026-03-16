@@ -3,11 +3,16 @@
   "slug": "ad-manager",
   "displayName": "Ad Manager",
   "latest": {
-    "version": "1.0.18",
-    "publishedAt": 1773622842877,
-    "commit": "https://github.com/openclaw/skills/commit/6c1ef7bc802988b5459350dfccd174524f7f0bf1"
+    "version": "1.0.47",
+    "publishedAt": 1773632346986,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.18",
+      "publishedAt": 1773622842877,
+      "commit": "https://github.com/openclaw/skills/commit/6c1ef7bc802988b5459350dfccd174524f7f0bf1"
+    },
     {
       "version": "1.0.3",
       "publishedAt": 1773599961108,

@@ -1,7 +1,7 @@
 {
   "name": "auto-rollback",
-  "version": "1.1.1-alpha.2",
-  "description": "Safe config-change safety net for openclaw.json (backup + timed rollback + BOOT auto-cancel on success)",
+  "version": "1.2.0-alpha.1",
+  "description": "Safe config-change safety net for openclaw.json (backup + timed rollback + health-check auto-cancel)",
   "author": "Bagel",
   "license": "MIT",
   "tags": ["safety", "rollback", "backup", "gateway", "config"],
@@ -29,7 +29,7 @@
       "emoji": "🛡️",
       "os": ["darwin"],
       "requires": {
-        "bins": ["bash", "launchctl", "jq"]
+        "bins": ["bash", "launchctl", "jq", "curl"]
       }
     }
   },
@@ -39,7 +39,8 @@
     "gateway protection",
     "launchd",
     "safety mechanism",
-    "openclaw.json"
+    "openclaw.json",
+    "health check"
   ],
-  "releaseNotes": "v1.1.1-alpha.2 - Rewrite SKILL.md as true EN-then-ZH bilingual (no CN/EN tags); emphasize core value (no remote login needed); explicitly document BOOT.md auto-cancel on successful restart."
+  "releaseNotes": "v1.2.0 - CRITICAL FIX: (1) auto-rollback.sh now checks Gateway health before executing rollback, preventing false rollbacks; (2) BOOT.md improved to wait 30s for Gateway health check before cancelling rollback; (3) Added curl requirement for health endpoint checks; (4) Documented correct restart methods (openclaw gateway restart or gateway.config.apply, NOT gateway.restart SIGUSR1)"
 }

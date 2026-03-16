@@ -1,18 +1,14 @@
 #!/bin/bash
 
-# Auto Rollback 脚本（使用 launchd）
-# 用法:
-#   ./auto-rollback.sh start  [--reason "说明"]  # 设置回滚
-#   ./auto-rollback.sh cancel                     # 手动取消回滚
-#   ./auto-rollback.sh status                     # 查看状态
-
-STATE_FILE="$HOME/.openclaw/state/rollback-pending.json"
-BACKUP_DIR="$HOME/.openclaw"
-LOG_FILE="$HOME/.openclaw/logs/rollback.log"
+OPENCLAW_HOME_DIR="${OPENCLAW_HOME_DIR:-$HOME/.openclaw}"
+STATE_FILE="${STATE_FILE:-$OPENCLAW_HOME_DIR/state/rollback-pending.json}"
+CONFIG_FILE="${CONFIG_FILE:-$OPENCLAW_HOME_DIR/openclaw.json}"
+BACKUP_DIR="${BACKUP_DIR:-$OPENCLAW_HOME_DIR}"
+LOG_FILE="${LOG_FILE:-$OPENCLAW_HOME_DIR/logs/rollback.log}"
 LAUNCHD_LABEL="ai.openclaw.rollback"
-OPENCLAW_CMD="/opt/homebrew/bin/openclaw"
+GATEWAY_PORT="18789"
+ROLLBACK_DELAY_MINUTES=10
 
-# 确保目录存在
 mkdir -p "$BACKUP_DIR" "$(dirname "$STATE_FILE")" "$(dirname "$LOG_FILE")"
 
 log() {
@@ -21,71 +17,222 @@ log() {
     echo "$1"
 }
 
-cmd_start() {
-    local REASON="手动修改配置"
+usage() {
+    cat <<'EOF'
+Usage:
+  auto-rollback.sh start [--reason "description"]
+  auto-rollback.sh start "description"
+  auto-rollback.sh cancel
+  auto-rollback.sh status
+EOF
+}
 
-    # Parse args: start [--reason "..."]
-    while [ $# -gt 0 ]; do
-        case "$1" in
-            --reason)
-                shift
-                if [ -n "$1" ]; then
-                    REASON="$1"
-                    shift
-                fi
-                ;;
-            *)
-                # Backward-compat: allow passing reason as first positional arg
-                if [ "$REASON" = "手动修改配置" ] && [ -n "$1" ]; then
-                    REASON="$1"
-                fi
-                shift
-                ;;
-        esac
+require_bin() {
+    command -v "$1" >/dev/null 2>&1 || {
+        log "❌ Missing required command: $1"
+        exit 1
+    }
+}
+
+write_state_file() {
+    local backup_file="$1"
+    local rollback_time="$2"
+    local reason="$3"
+
+    jq -n \
+        --arg backup_file "$backup_file" \
+        --arg launchd_label "$LAUNCHD_LABEL" \
+        --arg created_at "$(date -Iseconds)" \
+        --arg rollback_at "$rollback_time" \
+        --arg reason "$reason" \
+        '{
+          backup_file: $backup_file,
+          launchd_label: $launchd_label,
+          created_at: $created_at,
+          rollback_at: $rollback_at,
+          reason: $reason
+        }' > "$STATE_FILE"
+}
+
+resolve_openclaw_cmd() {
+    if command -v openclaw >/dev/null 2>&1; then
+        command -v openclaw
+        return 0
+    fi
+
+    if [ -x /opt/homebrew/bin/openclaw ]; then
+        echo /opt/homebrew/bin/openclaw
+        return 0
+    fi
+
+    if [ -x /usr/local/bin/openclaw ]; then
+        echo /usr/local/bin/openclaw
+        return 0
+    fi
+
+    return 1
+}
+
+OPENCLAW_CMD="$(resolve_openclaw_cmd)" || {
+    log "❌ Unable to find 'openclaw' in PATH, /opt/homebrew/bin, or /usr/local/bin"
+    exit 1
+}
+
+check_gateway_health() {
+    if ! pgrep -f "openclaw.*gateway" >/dev/null 2>&1; then
+        return 1
+    fi
+
+    local max_attempts="${1:-30}"
+    local attempt=0
+    while [ "$attempt" -lt "$max_attempts" ]; do
+        if curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$GATEWAY_PORT/health" 2>/dev/null | grep -q "200"; then
+            return 0
+        fi
+        sleep 1
+        attempt=$((attempt + 1))
     done
-    local BACKUP_FILE="$BACKUP_DIR/openclaw.json.$(date +%Y%m%d-%H%M%S)"
-    
-    # 1. 备份配置
-    cp "$HOME/.openclaw/openclaw.json" "$BACKUP_FILE"
-    if [ $? -ne 0 ]; then
-        log "❌ 备份失败"
+
+    return 1
+}
+
+ensure_no_pending_rollback() {
+    if [ -f "$STATE_FILE" ]; then
+        log "❌ A rollback is already pending"
+        log "ℹ️  Run '$0 status' or '$0 cancel' before starting a new one"
         exit 1
     fi
-    log "✅ 配置已备份：$BACKUP_FILE"
-    
-    # 2. 创建 launchd plist（10 分钟后执行一次）
-    local PLIST_FILE="$HOME/.openclaw/$LAUNCHD_LABEL.plist"
-    local ROLLBACK_TIME=$(date -v+10M '+%Y-%m-%d %H:%M:%S +0800')
-    local ROLLBACK_MIN=$(date -v+10M '+%M')
-    local ROLLBACK_HOUR=$(date -v+10M '+%H')
-    local ROLLBACK_DAY=$(date -v+10M '+%d')
-    local ROLLBACK_MONTH=$(date -v+10M '+%m')
-    local ROLLBACK_YEAR=$(date -v+10M '+%Y')
-    
-    # 创建回滚脚本
-    local ROLLBACK_SCRIPT="$HOME/.openclaw/.rollback_execute.sh"
-    cat > "$ROLLBACK_SCRIPT" << ROLLBACK_EOF
-#!/bin/bash
-echo "[$(date -Iseconds)] 🚨 回滚任务开始执行" >> "$LOG_FILE"
-echo "[$(date -Iseconds)] 📥 恢复配置：$BACKUP_FILE" >> "$LOG_FILE"
-cp "$BACKUP_FILE" "$HOME/.openclaw/openclaw.json"
-if [ \$? -eq 0 ]; then
-    echo "[$(date -Iseconds)] ✅ 配置已恢复" >> "$LOG_FILE"
-    echo "[$(date -Iseconds)] 🔄 重启 Gateway..." >> "$LOG_FILE"
-    $OPENCLAW_CMD gateway restart
-    if [ \$? -eq 0 ]; then
-        echo "[$(date -Iseconds)] ✅ Gateway 已重启" >> "$LOG_FILE"
-        echo "[$(date -Iseconds)] 🎉 回滚成功" >> "$LOG_FILE"
-    else
-        echo "[$(date -Iseconds)] ❌ Gateway 重启失败" >> "$LOG_FILE"
+}
+
+parse_start_reason() {
+    if [ $# -eq 0 ]; then
+        echo "manual config change"
+        return 0
     fi
-else
-    echo "[$(date -Iseconds)] ❌ 配置恢复失败" >> "$LOG_FILE"
+
+    case "$1" in
+        --reason)
+            if [ $# -lt 2 ] || [ -z "$2" ]; then
+                log "❌ Missing value for --reason"
+                exit 1
+            fi
+            echo "$2"
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            printf '%s\n' "$*"
+            ;;
+    esac
+}
+
+write_rollback_script() {
+    local rollback_script="$1"
+    local backup_file="$2"
+
+    cat > "$rollback_script" <<EOF
+#!/bin/bash
+
+OPENCLAW_HOME_DIR="$OPENCLAW_HOME_DIR"
+STATE_FILE="$STATE_FILE"
+LOG_FILE="$LOG_FILE"
+GATEWAY_PORT="$GATEWAY_PORT"
+LAUNCHD_LABEL="$LAUNCHD_LABEL"
+OPENCLAW_CMD="$OPENCLAW_CMD"
+BACKUP_FILE="$backup_file"
+
+log() {
+    local msg="[\$(date -Iseconds)] \$1"
+    echo "\$msg" >> "\$LOG_FILE"
+    echo "\$1"
+}
+
+check_gateway_health() {
+    if ! pgrep -f "openclaw.*gateway" >/dev/null 2>&1; then
+        return 1
+    fi
+
+    if curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:\$GATEWAY_PORT/health" 2>/dev/null | grep -q "200"; then
+        return 0
+    fi
+
+    return 1
+}
+
+log "🚨 rollback task started"
+
+if check_gateway_health; then
+    log "✅ Gateway is already healthy, cancelling rollback"
+    rm -f "\$STATE_FILE" "\$OPENCLAW_HOME_DIR/\$LAUNCHD_LABEL.plist" "\$OPENCLAW_HOME_DIR/.rollback_execute.sh"
+    exit 0
 fi
-ROLLBACK_EOF
-    chmod +x "$ROLLBACK_SCRIPT"
-    
-    cat > "$PLIST_FILE" << PLIST_EOF
+
+log "❌ Gateway still unhealthy, restoring backup: \$BACKUP_FILE"
+cp "\$BACKUP_FILE" "$CONFIG_FILE" || {
+    log "❌ Failed to restore backup"
+    exit 1
+}
+
+log "🔄 Restarting Gateway"
+"\$OPENCLAW_CMD" gateway restart || log "❌ Gateway restart command failed"
+
+sleep 5
+if check_gateway_health; then
+    log "🎉 Rollback completed and Gateway is healthy"
+else
+    log "⚠️ Rollback completed but Gateway is still unhealthy"
+fi
+
+rm -f "\$STATE_FILE" "\$OPENCLAW_HOME_DIR/\$LAUNCHD_LABEL.plist" "\$0"
+EOF
+
+    chmod +x "$rollback_script"
+}
+
+cmd_start() {
+    require_bin jq
+    require_bin launchctl
+    require_bin curl
+    require_bin plutil
+
+    ensure_no_pending_rollback
+
+    local reason
+    reason="$(parse_start_reason "$@")"
+
+    local backup_file="$BACKUP_DIR/openclaw.json.$(date +%Y%m%d-%H%M%S)"
+    local plist_file="$OPENCLAW_HOME_DIR/$LAUNCHD_LABEL.plist"
+    local rollback_script="$OPENCLAW_HOME_DIR/.rollback_execute.sh"
+    local rollback_time
+    local rollback_min
+    local rollback_hour
+    local rollback_day
+    local rollback_month
+    local rollback_year
+
+    [ -f "$CONFIG_FILE" ] || {
+        log "❌ Config file not found: $CONFIG_FILE"
+        exit 1
+    }
+
+    cp "$CONFIG_FILE" "$backup_file" || {
+        log "❌ Failed to back up openclaw.json"
+        exit 1
+    }
+    log "✅ Config backed up: $backup_file"
+
+    rollback_time="$(date -v+"${ROLLBACK_DELAY_MINUTES}"M '+%Y-%m-%d %H:%M:%S %z')"
+    rollback_min="$(date -v+"${ROLLBACK_DELAY_MINUTES}"M '+%M')"
+    rollback_hour="$(date -v+"${ROLLBACK_DELAY_MINUTES}"M '+%H')"
+    rollback_day="$(date -v+"${ROLLBACK_DELAY_MINUTES}"M '+%d')"
+    rollback_month="$(date -v+"${ROLLBACK_DELAY_MINUTES}"M '+%m')"
+    rollback_year="$(date -v+"${ROLLBACK_DELAY_MINUTES}"M '+%Y')"
+
+    write_rollback_script "$rollback_script" "$backup_file"
+
+    cat > "$plist_file" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -95,20 +242,20 @@ ROLLBACK_EOF
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>$ROLLBACK_SCRIPT</string>
+        <string>$rollback_script</string>
     </array>
     <key>StartCalendarInterval</key>
     <dict>
         <key>Minute</key>
-        <integer>$ROLLBACK_MIN</integer>
+        <integer>$rollback_min</integer>
         <key>Hour</key>
-        <integer>$ROLLBACK_HOUR</integer>
+        <integer>$rollback_hour</integer>
         <key>Day</key>
-        <integer>$ROLLBACK_DAY</integer>
+        <integer>$rollback_day</integer>
         <key>Month</key>
-        <integer>$ROLLBACK_MONTH</integer>
+        <integer>$rollback_month</integer>
         <key>Year</key>
-        <integer>$ROLLBACK_YEAR</integer>
+        <integer>$rollback_year</integer>
     </dict>
     <key>RunAtLoad</key>
     <false/>
@@ -121,87 +268,77 @@ ROLLBACK_EOF
     </dict>
 </dict>
 </plist>
-PLIST_EOF
-    
-    log "✅ launchd 任务已创建：$PLIST_FILE"
-    log "⏰ 回滚时间：$ROLLBACK_TIME"
-    
-    # 3. 加载 launchd 任务
-    launchctl load "$PLIST_FILE" 2>/dev/null
-    if [ $? -eq 0 ]; then
-        log "✅ launchd 任务已加载"
-    else
-        log "⚠️ launchd 任务加载失败（可能已存在）"
-    fi
-    
-    # 4. 写状态文件
-    cat > "$STATE_FILE" <<STATE_EOF
-{
-  "backup_file": "$BACKUP_FILE",
-  "launchd_label": "$LAUNCHD_LABEL",
-  "created_at": "$(date -Iseconds)",
-  "rollback_at": "$ROLLBACK_TIME",
-  "reason": "$REASON"
-}
-STATE_EOF
-    log "✅ 状态文件已写入：$STATE_FILE"
-    
-    log "📋 下一步：重启 Gateway ($OPENCLAW_CMD gateway restart)"
-    log "⚠️ 如果 Gateway 启动失败，10 分钟后自动回滚"
-    log "✅ 如果 Gateway 启动成功，回滚会在下次 Gateway 成功启动时通过 BOOT.md 自动取消（也可手动 cancel）"
+EOF
+
+    plutil -lint "$plist_file" >/dev/null || {
+        log "❌ Generated launchd plist is invalid: $plist_file"
+        rm -f "$plist_file" "$rollback_script"
+        exit 1
+    }
+
+    log "✅ launchd job created: $plist_file"
+    log "⏰ Rollback scheduled for: $rollback_time"
+
+    launchctl load "$plist_file" 2>/dev/null && log "✅ launchd job loaded" || log "⚠️ launchd load failed or job already exists"
+
+    write_state_file "$backup_file" "$rollback_time" "$reason" || {
+        log "❌ Failed to write state file"
+        rm -f "$plist_file" "$rollback_script"
+        exit 1
+    }
+
+    log "✅ State file written: $STATE_FILE"
+    log "📋 Next step: $OPENCLAW_CMD gateway restart"
+    log "⚠️ If Gateway stays unhealthy, rollback will run in ${ROLLBACK_DELAY_MINUTES} minutes"
+    log "✅ If Gateway becomes healthy and BOOT.md integration is absent, cancel manually: $0 cancel"
 }
 
 cmd_cancel() {
+    require_bin jq
+    require_bin launchctl
+
     if [ ! -f "$STATE_FILE" ]; then
-        log "ℹ️  没有待处理的回滚任务"
+        log "ℹ️  No pending rollback"
         exit 0
     fi
-    
-    local LAUNCHD_LABEL=$(jq -r '.launchd_label' "$STATE_FILE")
-    local PLIST_FILE="$HOME/.openclaw/$LAUNCHD_LABEL.plist"
-    
-    # 卸载 launchd 任务
-    launchctl unload "$PLIST_FILE" 2>/dev/null
-    if [ $? -eq 0 ]; then
-        log "✅ launchd 任务已卸载"
-    else
-        log "⚠️ launchd 任务卸载失败（可能已执行或不存在）"
-    fi
-    
-    # 删除 plist 文件
-    rm -f "$PLIST_FILE"
-    
-    # 删除回滚脚本
-    rm -f "$HOME/.openclaw/.rollback_execute.sh"
-    
-    # 删除状态文件
-    rm -f "$STATE_FILE"
-    
-    log "✅ 回滚任务已手动取消"
+
+    local launchd_label
+    local plist_file
+
+    launchd_label="$(jq -r '.launchd_label' "$STATE_FILE")"
+    plist_file="$OPENCLAW_HOME_DIR/$launchd_label.plist"
+
+    launchctl unload "$plist_file" 2>/dev/null && log "✅ launchd job unloaded" || log "⚠️ launchd unload failed or job already ran"
+    rm -f "$plist_file" "$OPENCLAW_HOME_DIR/.rollback_execute.sh" "$STATE_FILE"
+    log "✅ Pending rollback cancelled"
 }
 
 cmd_status() {
+    require_bin jq
+    require_bin launchctl
+
     if [ ! -f "$STATE_FILE" ]; then
-        echo "ℹ️  没有待处理的回滚任务"
+        echo "ℹ️  No pending rollback"
         exit 0
     fi
-    
-    echo "📋 待处理回滚任务:"
+
+    echo "📋 Pending rollback:"
     jq '.' "$STATE_FILE"
-    
     echo ""
-    echo "⏰ 回滚时间：$(jq -r '.rollback_at' "$STATE_FILE")"
-    echo "📝 原因：$(jq -r '.reason' "$STATE_FILE")"
-    
-    # 检查 launchd 任务是否存在
+
     if launchctl list | grep -q "$(jq -r '.launchd_label' "$STATE_FILE")"; then
-        echo "✅ launchd 任务：已加载"
+        echo "✅ launchd job: loaded"
     else
-        echo "⚠️ launchd 任务：未加载（可能已执行）"
+        echo "⚠️ launchd job: not loaded"
+    fi
+
+    if check_gateway_health 1; then
+        echo "✅ Gateway: healthy"
+    else
+        echo "❌ Gateway: unhealthy"
     fi
 }
 
-# 主入口
 case "$1" in
     start)
         shift
@@ -213,13 +350,11 @@ case "$1" in
     status)
         cmd_status
         ;;
+    -h|--help|"")
+        usage
+        ;;
     *)
-        echo "用法：$0 {start|cancel|status} [reason]"
-        echo ""
-        echo "命令:"
-        echo "  start   设置回滚任务（修改配置前调用）"
-        echo "  cancel  手动取消回滚任务"
-        echo "  status  查看回滚状态"
+        usage
         exit 1
         ;;
 esac

@@ -1,35 +1,43 @@
 # BOOT.md
 
-Gateway startup checklist (auto-run by OpenClaw bundled hook `boot-md`).
-
-## Auto-cancel pending rollback
-
-CN: 如果检测到存在待执行的回滚计划（由 auto-rollback start 创建），且现在 Gateway 已成功启动，则自动取消该回滚计划。
-
-EN: If a rollback plan is pending (created by `auto-rollback start`), and the Gateway is up (we are running now), automatically cancel the rollback task.
-
-Commands:
+Gateway startup checklist fragment for cancelling a pending rollback only after Gateway becomes healthy.
 
 ```bash
 STATE="$HOME/.openclaw/state/rollback-pending.json"
 LOG="$HOME/.openclaw/logs/rollback.log"
+GATEWAY_PORT="18789"
 
 if [ -f "$STATE" ]; then
   LABEL=$(jq -r '.launchd_label // empty' "$STATE")
   PLIST="$HOME/.openclaw/${LABEL}.plist"
 
-  echo "[$(date -Iseconds)] 🛡️ BOOT: detected rollback state file: $STATE" >> "$LOG"
+  echo "[$(date -Iseconds)] BOOT: detected rollback state file: $STATE" >> "$LOG"
+  echo "[$(date -Iseconds)] BOOT: waiting for Gateway health check" >> "$LOG"
 
-  if [ -n "$LABEL" ] && [ -f "$PLIST" ]; then
-    launchctl unload "$PLIST" 2>/dev/null || true
-    rm -f "$PLIST"
-    rm -f "$HOME/.openclaw/.rollback_execute.sh"
-    echo "[$(date -Iseconds)] 🛡️ BOOT: rollback cancelled (label=$LABEL)" >> "$LOG"
+  HEALTHY=false
+  for i in {1..30}; do
+    if curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$GATEWAY_PORT/health" 2>/dev/null | grep -q "200"; then
+      HEALTHY=true
+      echo "[$(date -Iseconds)] BOOT: Gateway health check passed on attempt $i" >> "$LOG"
+      break
+    fi
+    sleep 1
+  done
+
+  if [ "$HEALTHY" = true ]; then
+    if [ -n "$LABEL" ] && [ -f "$PLIST" ]; then
+      launchctl unload "$PLIST" 2>/dev/null || true
+      rm -f "$PLIST"
+      rm -f "$HOME/.openclaw/.rollback_execute.sh"
+      echo "[$(date -Iseconds)] BOOT: rollback cancelled (label=$LABEL)" >> "$LOG"
+    else
+      echo "[$(date -Iseconds)] BOOT: rollback state present but plist missing (label=$LABEL)" >> "$LOG"
+    fi
+
+    rm -f "$STATE"
+    echo "[$(date -Iseconds)] BOOT: rollback state removed" >> "$LOG"
   else
-    echo "[$(date -Iseconds)] 🛡️ BOOT: rollback state present but plist missing (label=$LABEL)" >> "$LOG"
+    echo "[$(date -Iseconds)] BOOT: Gateway still unhealthy after 30s, keeping rollback pending" >> "$LOG"
   fi
-
-  rm -f "$STATE"
-  echo "[$(date -Iseconds)] 🛡️ BOOT: rollback state file removed" >> "$LOG"
 fi
 ```

@@ -1,4 +1,4 @@
-﻿# AI 作图 - 全部接口完整说明
+# AI 作图 - 全部接口完整说明
 
 本文档为 LinkFoxAI Skill 内置参考，涵盖开放平台 AI 作图全部能力、完整参数与注意事项。
 
@@ -550,65 +550,72 @@
 
 ## 三十二、智能修图
 
-**路径**：`/linkfox-ai/image/v2/make/imageEdit`
+**路径（新版本优先）**：`/linkfox-ai/image/v2/make/imageEditV2`
 
-**注意**：pro=true 时 flashV2 参数忽略。标准模式下 resolution 参数无效。
+**版本说明**：
+- 自 **2026/03/13** 起，统一使用 `imageEditV2`。
+- 旧版 `imageEdit` 视为**废弃接口**，仅用于历史兼容，不建议继续接入。
 
 | 参数 | 说明 | 必填 | 类型 |
 |------|------|------|------|
-| imageUrl | 原图。格式：jpg/jpeg/png/webp，20M 以内，最小 385x385，最大 4096x4096 | 是 | string |
-| prompt | 提示词，最多 2000 字符 | 是 | string |
-| outputNum | 输出数量 [1,4]，默认 1 | 是 | int |
-| pro | 是否高品质模式，默认 false | 否 | boolean |
-| flashV2 | 是否增强模式，默认 false；pro=true 时忽略 | 否 | boolean |
-| resolution | 输出分辨率：1K/2K/4K。高品质模式默认 2K，增强模式默认 1K，标准模式无效 | 否 | string |
-| aspectRatio | 输出比例，如 16:9/9:16/1:1 | 否 | string |
-| needOptimize | 是否需要提示词优化。传 template 时由模板决定 | 否 | boolean |
-| supplyType | 供应模式：eco=经济，stable=稳定（默认） | 否 | string |
-| template | 提示词模板：人台换模特/卡通插画/3D服装/服装平铺/生成场景/去除水印/白底图/改身材/文字消除/移除元素/海报制作/加人或物/添加水印/换动物/更换风格/搭配上身/精修白底图 | 否 | string |
+| imageUrl | 原图。支持 jpg/jpeg/png/webp；尺寸 300x300 ~ 4096x4096；宽高比 0.4 ~ 2.5 | 是 | string |
+| prompt | 提示词 | 是 | string |
+| provider | 模型：BANANA / BANANA_2 / BANANA_PRO | 是 | string |
+| outputNum | 输出张数 [1,4]，默认 1 | 否 | integer |
+| resolution | 分辨率：1K / 2K / 4K。BANANA_PRO 默认 2K，其余默认 1K | 否 | string |
+| aspectRatio | 比例，如 1:1、16:9、9:16 | 否 | string |
+| supplyType | 供应模式：eco（经济）/ stable（稳定，默认） | 否 | string |
+| needOptimize | 是否提示词优化：true/false | 否 | boolean |
+| template | 提示词模板名称（模板中的 provider、needOptimize 优先级更高） | 否 | string |
 
 ---
 
 ## 三十三、智能修图-多图
 
-**路径**：`/linkfox-ai/image/v2/make/multiImageFusion`
+**路径（新版本优先）**：`/linkfox-ai/image/v2/make/multiImageFusionV2`
 
-**注意**：最多支持 4 张图片。pro=true 时 flashV2 参数忽略。
+**版本说明**：
+- 自 **2026/03/13** 起，统一使用 `multiImageFusionV2`。
+- 旧版 `multiImageFusion` 视为**废弃接口**，仅用于历史兼容，不建议继续接入。
 
 | 参数 | 说明 | 必填 | 类型 |
 |------|------|------|------|
-| imageList | 原图列表（最多 4 张）。格式：jpg/jpeg/png/webp，20M 以内，最小 385x385，最大 4096x4096 | 是 | array |
-| prompt | 强化内容描述，最多 2000 字符 | 是 | string |
-| outputNum | 输出数量 [1,4]，默认 1 | 是 | int |
-| pro | 是否高品质模式，默认 false | 否 | boolean |
-| flashV2 | 是否增强模式，默认 false；pro=true 时忽略 | 否 | boolean |
-| aspectRatio | 输出比例 | 否 | string |
-| resolution | 输出分辨率：1K/2K/4K（仅 pro=true 时生效，默认 2K） | 否 | string |
-| needOptimize | 是否提示词优化（有模版时不传） | 否 | boolean |
-| supplyType | 供应模式：eco/stable（默认） | 否 | string |
-| template | 提示词模板：搭配融图/搭配上身 | 否 | string |
+| imageList | 图片列表。支持 jpg/jpeg/png/webp（10M 以内），最小 800x800，最大 4096x4096 | 是 | array[string] |
+| provider | 模型：BANANA / BANANA_2 / BANANA_PRO | 是 | string |
+| prompt | 强化内容描述（100 字以内） | 否 | string |
+| outputNum | 输出张数，默认 1 | 否 | integer |
+| resolution | 分辨率：1K / 2K / 4K | 否 | string |
+| aspectRatio | 比例，如 1:1、16:9、9:16 | 否 | string |
+| supplyType | 供应模式：eco（经济）/ stable（稳定，默认） | 否 | string |
+| needOptimize | 是否提示词优化：true/false | 否 | boolean |
+| template | 提示词模板名称（模板中的 provider、needOptimize 优先级更高） | 否 | string |
 
 ---
 
 ## 三十四、商品套图
 
-**路径**：`/linkfox-ai/image/v2/make/productMarketMaterialV2`
+**路径（新版本优先）**：`/linkfox-ai/image/v2/make/productMarketMaterialV3`
+
+**版本说明**：
+- 自 **2026/03/13** 起，统一使用 `productMarketMaterialV3`。
+- 旧版 `productMarketMaterialV2` 视为**废弃接口**，仅用于历史兼容，不建议继续接入。
 
 **注意**：
 - imageList 最多 5 张，最小 800x800，最大 4096x4096，10M 以内。
 - 各类型数量（aPlusNum/sellerTypeNum/sceneTypeNum 等）单项最大 8。
-- aPlusStyles/pointStyles 传入时数量需等于对应图数量。
+- aPlusStyles/pointStyles 传入时，数量需与目标生成数量一致。
 - brandKey 为 JSON 对象，总长度不超过 1000 字符。
-- 结果通过获取作图结果接口轮询，resultList[].extendField.type 标识图片类型（APlusPro/APlusHasPhone/sellPoint/scene/closeUp/closeUpWhite/whiteBg）。
+- 结果通过获取作图结果接口轮询，`resultList[].extendField.type` 标识图片类型（APlusNormal/APlusPro/APlusHasPhone/sellPoint/scene/closeUp/closeUpWhite/whiteBg）。
 
 | 参数 | 说明 | 必填 | 类型 |
 |------|------|------|------|
 | imageList | 商品图片列表（最多 5 张） | 是 | array[string] |
 | sellerPoint | 商品卖点描述，最多 2500 字符 | 是 | string |
+| provider | 模型：BANANA_PRO（Pro）/ BANANA_2（基础版 2 代） | 是 | string |
 | aPlusNum | 普通 A+ 数量，默认 0，最大 8 | 否 | integer |
 | aPlusProNum | 高级 A+ 数量（Pro），默认 0，最大 8 | 否 | integer |
 | aPlusHasPhone | 是否生成手机版 A+（基于高级 A+ 结果），默认 false | 否 | boolean |
-| aPlusAspectRatio | A+ 宽高比（建议仅高级 A+ 使用），如 16:9/1:1 | 否 | string |
+| aPlusAspectRatio | 自定义 A+ 宽高比（仅高级 A+ 场景使用），如 16:9/9:16/1:1 | 否 | string |
 | aPlusStyles | A+ 排版列表，id（风格 id，通过作图素材接口获取）或 prompt（排版词，通过排版描述接口获取） | 否 | List |
 | sellerTypeNum | 卖点图数量，默认 0，最大 8 | 否 | integer |
 | isExtractPrePoint | 是否自动分析卖点，默认 false | 否 | boolean |
@@ -617,28 +624,30 @@
 | closeUpWhiteTypeNum | 白底特写图数量，默认 0，最大 8 | 否 | integer |
 | whiteBgTypeNum | 白底图数量，默认 0，最大 8 | 否 | integer |
 | pointStyles | 卖点图排版列表（同 aPlusStyles 格式） | 否 | List |
-| isPro | 是否专业模式（适用于卖点图/场景图/特写图），默认 false | 否 | boolean |
 | aspectRatio | 素材宽高比：1:1/3:2/2:3/4:3/3:4/4:5/5:4/16:9/9:16/21:9 | 否 | string |
 | brandKey | 品牌基因 JSON：brandColor(#RRGGBB)/fontStyle/salesRegion/language/platform/customSettings | 否 | string |
-| provider | 模型：GEMINI_FLASH_PRO=香蕉PRO（默认），GEMINI_31_FLASH_IMAGE=香蕉2 | 否 | string |
 | resolution | 输出分辨率：2K（默认）/4K | 否 | string |
 
 ---
 
 ## 三十五、服装套图
 
-**路径**：`/linkfox-ai/image/v2/make/wearCollection`
+**路径（新版本优先）**：`/linkfox-ai/image/v2/make/wearCollectionV2`
+
+**版本说明**：
+- 自 **2026/03/13** 起，统一使用 `wearCollectionV2`。
+- 旧版 `wearCollection` 视为**废弃接口**，仅用于历史兼容，不建议继续接入。
 
 **注意**：
-- imageList 最多 6 张，最小 384x384，最大 4096x4096，10M 以内。
-- 上传标准：服装白底图（正面/背面/细节），尽量平整，可大大提升可用率。
-- 支持服装搭配、鞋靴配饰、元素组合，模型智能组合。
-- sellerPoint 中包含面料、卖点、目标人群、使用场景、尺码（markdown 格式）有助于更准确生成。
+- imageList 最多 5 张，最小 384x384，最大 4096x4096，10M 以内。
+- sellerPoint 建议包含面料、卖点、目标人群、使用场景、尺码等信息，有助于提升结果质量。
+- 结果通过获取作图结果接口轮询，`resultList[].extendField.type` 标识类型（APlusNormal/APlusPro/APlusHasPhone/scene/point/ins/size/white）。
 
 | 参数 | 说明 | 必填 | 类型 |
 |------|------|------|------|
-| imageList | 商品图片列表（最多 6 张） | 是 | array[string] |
+| imageList | 商品图片列表（最多 5 张） | 是 | array[string] |
 | sellerPoint | 商品卖点描述，最多 2500 字符 | 是 | string |
+| provider | 模型：BANANA_PRO（Pro）/ BANANA_2（基础版 2 代） | 是 | string |
 | aPlusNum | 普通 A+ 数量，默认 0，最大 8 | 否 | integer |
 | aPlusProNum | 高级 A+ 数量，默认 0，最大 8 | 否 | integer |
 | aPlusHasPhone | 是否生成手机版 A+，默认 false | 否 | boolean |
@@ -657,7 +666,6 @@
 | whiteTypeNum | 白底图数量，默认 0，最大 8 | 否 | integer |
 | aspectRatio | 素材宽高比：1:1/3:2/2:3/4:3/3:4/4:5/5:4/16:9/9:16/21:9 | 否 | string |
 | brandKey | 品牌基因 JSON（同商品套图） | 否 | string |
-| provider | 模型：GEMINI_FLASH_PRO=香蕉PRO（默认），GEMINI_31_FLASH_IMAGE=香蕉2 | 否 | string |
 | resolution | 输出分辨率：2K（默认）/4K | 否 | string |
 
 ---

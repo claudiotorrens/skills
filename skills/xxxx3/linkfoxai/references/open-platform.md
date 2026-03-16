@@ -62,4 +62,4 @@
 | ERR_IMAGE_MAKE_COUNT_MAX | 生成中创建上限 |
 | TEAM_PERMISSION_EXPIRE | 套餐已过期或者未购买套餐 |
 
-更多说明见开放平台 https://open.ziniao.com 或本 skill 内 `references/image-make.md`、`references/ai-chat.md`。
+更多说明见开放平台 https://open.ziniao.com 或本 skill 内 `references/image-make.md`。

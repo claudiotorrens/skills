@@ -1,12 +1,12 @@
 ---
 name: linkfoxai
-description: "调用 LinkFox AI 开放平台全部 API：AI 作图（36 种能力：换模特、抠图、扩图、场景裂变、智能修图、套图、姿势裂变等）和 AI 会话（流式/非流式）。适用场景：(1) AI 作图任务创建与结果轮询，(2) AI 对话/内容生成，(3) 通过 api-call 调用任意开放平台接口，(4) 作图素材连通性测试。"
+description: "调用 LinkFox AI 开放平台 AI 作图 API（换模特、抠图、扩图、场景裂变、智能修图、套图、姿势裂变等）。适用场景：(1) AI 作图任务创建与结果轮询，(2) 通过 api-call 调用任意开放平台接口，(3) 作图素材连通性测试。"
 metadata: {"clawdbot":{"emoji":"🦊","requires":{"env":["LINKFOXAI_API_KEY"]}}}
 ---
 
 # LinkFoxAI - LinkFox AI 开放平台 Skill
 
-LinkFoxAI 让 OpenClaw 调用 LinkFox AI 开放平台的全部能力：36 种 AI 作图接口（换模特、自动抠图、场景裂变、智能扩图、高清放大、消除笔、智能修图、商品套图、服装套图、姿势裂变等）和 AI 会话接口（流式/非流式对话）。
+LinkFoxAI 让 OpenClaw 调用 LinkFox AI 开放平台 AI 作图能力：换模特、自动抠图、场景裂变、智能扩图、高清放大、消除笔、智能修图、商品套图、服装套图、姿势裂变等。
 
 ## 配置
 
@@ -92,7 +92,6 @@ sessions_spawn:
 | `make-info --id <任务ID>` | 查询作图结果（单次） |
 | `poll --id <任务ID> [--interval 3] [--timeout 300]` | 轮询作图结果直到成功/失败 |
 | `refresh --id <图片ID> [--format jpg]` | 刷新结果图片地址（注意是图片 ID，非任务 ID） |
-| `chat --content "内容" [--model 1]` | AI 对话。model: 1=gpt-3.5-turbo, 9=gpt-4o |
 | `api-call --path <路径> --body '<JSON>'` | 通用 API 调用，可调任意开放平台接口 |
 
 ### 作图快捷命令（均支持 `--wait`）
@@ -104,7 +103,7 @@ sessions_spawn:
 | `scene-fission --image-url <url> [--strength 0.5] [--prompt "描述"] [--provider SCENE_FISSION_REALISTIC]` | 场景裂变 |
 | `expand-image --image-url <url> --width 1024 --height 1024 [--prompt "描述"]` | 智能扩图 |
 | `super-resolution --image-url <url> --magnification 2 [--enhance]` | 图片高清放大 |
-| `image-edit --image-url <url> --prompt "描述" [--pro] [--template 白底图]` | 智能修图 |
+| `image-edit --image-url <url> --prompt "描述" [--provider BANANA_PRO] [--template 白底图]` | 智能修图 |
 | `erase --image-url <url> --mask-url <url>` | 消除笔 |
 
 所有作图快捷命令均支持 `--wait [--timeout 300] [--interval 3]`，提交任务后自动轮询直到完成。
@@ -134,9 +133,10 @@ sessions_spawn:
 | 商品精修 | `/linkfox-ai/image/v2/make/productRepair` |
 | 图片获取描述词-创建 | `/linkfox-ai/v2/process/result/imageToPrompt/create` |
 | 图片获取描述词-结果 | `/linkfox-ai/v2/process/result/imageToPrompt/info` |
-| 智能修图-多图 | `/linkfox-ai/image/v2/make/multiImageFusion` |
-| 商品套图 | `/linkfox-ai/image/v2/make/productMarketMaterialV2` |
-| 服装套图 | `/linkfox-ai/image/v2/make/wearCollection` |
+| 智能修图 | `/linkfox-ai/image/v2/make/imageEditV2` |
+| 智能修图-多图 | `/linkfox-ai/image/v2/make/multiImageFusionV2` |
+| 商品套图 | `/linkfox-ai/image/v2/make/productMarketMaterialV3` |
+| 服装套图 | `/linkfox-ai/image/v2/make/wearCollectionV2` |
 | 姿势裂变 | `/linkfox-ai/image/v2/make/modelPoseFission` |
 
 ## 连通性测试
@@ -155,18 +155,17 @@ sessions_spawn:
 - 需先将应用绑定团队且团队已开通套餐。
 - 作图任务失败时 `status=4`，检查 `errorCode` 和 `errorMsg`。
 - 常见问题：参数校验失败（ERR_FILED_VALIDATE）、图片审核不通过（ERR_IMAGE_MAKE_AUDIT）、点数不足（ERR_IMAGE_MAKE_WILL_OUT）。
+- 若调用新增能力，需使用对应 V2/V3 路径，否则可能出现参数不兼容或能力不可用。
 
 ## 参考文档
 
 - `references/open-platform.md` — 接入流程、API 基础地址、错误码
 - `references/image-make.md` — 全部 36 个作图接口完整参数与注意事项
-- `references/ai-chat.md` — AI 会话接口完整参数、流式/非流式响应、模板用法
 
 ## 示例
 
 1. **连通性**：「用 LinkFoxAI 拉取作图素材列表」→ 脚本执行 `material-list --type 1`
 2. **AI 换模特**：「用 LinkFoxAI 做一次 AI 换模特，原图 xxx，头部图 xxx，出 4 张」→ `change-model --wait --output-num 4`
 3. **自动抠图**：「用 LinkFoxAI 把这张图抠图」→ `cutout --wait --sub-type 1`
-4. **智能修图**：「用 LinkFoxAI 把这张图改成白底图」→ `image-edit --wait --prompt "白底图" --template 白底图`
+4. **智能修图**：「用 LinkFoxAI 把这张图改成白底图」→ `image-edit --wait --prompt "白底图" --template 白底图`（高质量：加 `--provider BANANA_PRO`）
 5. **通用调用**：「用 LinkFoxAI 做 AI 穿衣」→ `api-call --path /linkfox-ai/image/v2/make/fittingRoom --body '{...}'` + `poll --id <id>`
-6. **AI 对话**：「用 LinkFoxAI 发起一次 AI 对话：你好」→ `chat --content "你好"`

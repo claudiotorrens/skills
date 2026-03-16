@@ -11,7 +11,6 @@ Commands:
     change-model    --image-url <url> --head-url <url> ...       # AI 换模特
     make-info       --id <task_id>                               # 查询作图结果（单次）
     poll            --id <task_id> [--interval 3] [--timeout 300]# 轮询作图结果直到完成
-    chat            --content "你好" [--model 1]                  # AI 对话
     cutout          --image-url <url> --sub-type 1               # 自动抠图
     scene-fission   --image-url <url> ...                        # 场景裂变
     expand-image    --image-url <url> --width 1024 --height 1024 # 智能扩图
@@ -30,11 +29,13 @@ import os
 import sys
 import time
 import uuid
+from datetime import date
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
 DEFAULT_BASE_URL = "https://sbappstoreapi.ziniao.com/openapi-router"
 PATH_PREFIX = "/linkfox-ai"
+IMAGE_EDIT_V2_EFFECTIVE_DATE = date(2026, 3, 13)
 
 
 def get_base_url() -> str:
@@ -122,6 +123,27 @@ def is_success(resp: dict) -> bool:
     return code in ("200", "0")
 
 
+def get_image_edit_path() -> str:
+    """
+    Resolve image-edit endpoint path.
+    Priority:
+    1) LINKFOXAI_IMAGE_EDIT_PATH override
+       - full path: /linkfox-ai/image/v2/make/imageEdit
+       - endpoint suffix: imageEdit / imageEditV2
+    2) Date switch:
+       - before 2026-03-13 -> imageEdit
+       - on/after 2026-03-13 -> imageEditV2
+    """
+    override = os.environ.get("LINKFOXAI_IMAGE_EDIT_PATH", "").strip()
+    if override:
+        if override.startswith("/"):
+            return override
+        return f"{PATH_PREFIX}/image/v2/make/{override}"
+
+    endpoint = "imageEditV2" if date.today() >= IMAGE_EDIT_V2_EFFECTIVE_DATE else "imageEdit"
+    return f"{PATH_PREFIX}/image/v2/make/{endpoint}"
+
+
 # ─── Polling ────────────────────────────────────────────────────────────
 
 def poll_make_info(task_id, interval: int = 3, timeout: int = 300) -> dict:
@@ -176,16 +198,6 @@ def cmd_make_info(task_id) -> dict:
     return api_post(f"{PATH_PREFIX}/image/v2/make/info", {"id": tid})
 
 
-def cmd_chat(content: str, model_param: int = 1) -> dict:
-    return api_post(f"{PATH_PREFIX}/chat/v1/stream/completion/create", {
-        "content": content,
-        "modelParam": model_param,
-        "checkSensitiveWord": False,
-        "maxTokens": 2000,
-        "temperature": 0.7,
-    })
-
-
 def cmd_cutout(image_url: str, sub_type: int, cloth_class: str = None) -> dict:
     body = {"imageUrl": image_url, "subType": sub_type}
     if cloth_class:
@@ -218,14 +230,34 @@ def cmd_super_resolution(image_url: str, magnification: float, enhance: bool = F
     return api_post(f"{PATH_PREFIX}/image/v2/make/superResolution", body)
 
 
-def cmd_image_edit(image_url: str, prompt: str, output_num: int = 1,
-                   pro: bool = False, template: str = None) -> dict:
-    body = {"imageUrl": image_url, "prompt": prompt, "outputNum": output_num}
-    if pro:
-        body["pro"] = True
+def cmd_image_edit(
+    image_url: str,
+    prompt: str,
+    provider: str = "BANANA_2",
+    output_num: int = 1,
+    template: str = None,
+    resolution: str = None,
+    aspect_ratio: str = None,
+    supply_type: str = None,
+    need_optimize: bool = False,
+) -> dict:
+    body = {
+        "imageUrl": image_url,
+        "prompt": prompt,
+        "provider": provider,
+        "outputNum": output_num,
+    }
     if template:
         body["template"] = template
-    return api_post(f"{PATH_PREFIX}/image/v2/make/imageEdit", body)
+    if resolution:
+        body["resolution"] = resolution
+    if aspect_ratio:
+        body["aspectRatio"] = aspect_ratio
+    if supply_type:
+        body["supplyType"] = supply_type
+    if need_optimize:
+        body["needOptimize"] = True
+    return api_post(get_image_edit_path(), body)
 
 
 def cmd_erase(image_url: str, mask_url: str) -> dict:
@@ -287,11 +319,6 @@ def build_parser():
     p.add_argument("--interval", type=int, default=3)
     p.add_argument("--timeout", type=int, default=300)
 
-    # chat
-    p = sub.add_parser("chat", help="AI 对话（非流式）")
-    p.add_argument("--content", required=True)
-    p.add_argument("--model", type=int, default=1)
-
     # cutout
     p = sub.add_parser("cutout", help="自动抠图")
     p.add_argument("--image-url", required=True)
@@ -336,9 +363,13 @@ def build_parser():
     p = sub.add_parser("image-edit", help="智能修图")
     p.add_argument("--image-url", required=True)
     p.add_argument("--prompt", required=True)
+    p.add_argument("--provider", default="BANANA_2", help="BANANA/BANANA_2/BANANA_PRO")
     p.add_argument("--output-num", type=int, default=1)
-    p.add_argument("--pro", action="store_true", help="高品质模式")
     p.add_argument("--template", default=None)
+    p.add_argument("--resolution", default=None, help="1K/2K/4K")
+    p.add_argument("--aspect-ratio", default=None, help="如 1:1、16:9")
+    p.add_argument("--supply-type", default=None, help="eco/stable")
+    p.add_argument("--need-optimize", action="store_true", help="启用提示词优化")
     p.add_argument("--wait", action="store_true")
     p.add_argument("--timeout", type=int, default=300)
     p.add_argument("--interval", type=int, default=3)
@@ -395,8 +426,6 @@ def main():
         out = cmd_make_info(args.id)
     elif args.command == "poll":
         out = poll_make_info(args.id, args.interval, args.timeout)
-    elif args.command == "chat":
-        out = cmd_chat(args.content, args.model)
     elif args.command == "cutout":
         out = maybe_poll(cmd_cutout(args.image_url, args.sub_type, args.cloth_class), args)
     elif args.command == "scene-fission":
@@ -406,7 +435,20 @@ def main():
     elif args.command == "super-resolution":
         out = maybe_poll(cmd_super_resolution(args.image_url, args.magnification, args.enhance), args)
     elif args.command == "image-edit":
-        out = maybe_poll(cmd_image_edit(args.image_url, args.prompt, args.output_num, args.pro, args.template), args)
+        out = maybe_poll(
+            cmd_image_edit(
+                args.image_url,
+                args.prompt,
+                args.provider,
+                args.output_num,
+                args.template,
+                args.resolution,
+                args.aspect_ratio,
+                args.supply_type,
+                args.need_optimize,
+            ),
+            args,
+        )
     elif args.command == "erase":
         out = maybe_poll(cmd_erase(args.image_url, args.mask_url), args)
     elif args.command == "refresh":

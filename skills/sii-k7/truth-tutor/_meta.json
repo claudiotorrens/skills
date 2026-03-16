@@ -3,11 +3,16 @@
   "slug": "truth-tutor",
   "displayName": "Truth Tutor",
   "latest": {
-    "version": "1.0.6",
-    "publishedAt": 1773411046961,
-    "commit": "https://github.com/openclaw/skills/commit/3c790c223d36a9251746b1aa9da42eb4e2323fcd"
+    "version": "1.0.9",
+    "publishedAt": 1773650968324,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.6",
+      "publishedAt": 1773411046961,
+      "commit": "https://github.com/openclaw/skills/commit/3c790c223d36a9251746b1aa9da42eb4e2323fcd"
+    },
     {
       "version": "0.2.0",
       "publishedAt": 1773210326830,

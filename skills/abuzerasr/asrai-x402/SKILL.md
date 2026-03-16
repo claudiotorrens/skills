@@ -92,7 +92,7 @@ Requires `ASRAI_PRIVATE_KEY` set in `~/.env` or environment. Payment is signed a
 | `macro` | S&P 500 & Nasdaq signals — global market context | $0.01 (2 calls) |
 | `sentiment` | CBBI, CMC sentiment, AI insights, channel news, Galaxy Score, social dominance | $0.03 (6 calls) |
 | `late_unlocked_coins` | Post-vesting coins with low remaining selling pressure | $0.005 |
-| `trade_signals` | Trade setups: trending movers, bounces, SAR & MACD entries | $0.025 (5 calls) |
+| `trade_signals` | Trade setups: trending movers, bounces, SAR & MACD entries, RSI, Galaxy Score, today's indicator signals | $0.04 (8 calls) |
 | `technical_analysis(symbol, timeframe)` | Signals, ALSAT, SuperALSAT, PSAR, MACD-DEMA, AlphaTrend, TD, SMC, S/R, Elliott Wave, Ichimoku | $0.06 (12 calls) |
 | `forecast(symbol)` | AI 3-7 day price prediction | $0.005 |
 | `screener(type)` | Find coins by criteria (ichimoku-trend, rsi, vwap, volume, bounce-dip...) | $0.005 |
@@ -109,12 +109,18 @@ Requires `ASRAI_PRIVATE_KEY` set in `~/.env` or environment. Payment is signed a
 
 ## Output rules
 
-- Write like an experienced trader explaining to a friend — conversational, confident, direct
-- Think like both a trader AND a long-term investor. Default to investor mode. Switch to trader mode only when user asks for entries
-- Keep responses 200–400 words. Short lines, breathing room between sections
-- Never list raw indicator values — synthesize into plain language verdict
-- End with 1 clear action bias: accumulate / wait / avoid — and why
-- Never mention tool names, API calls, or payment details in responses
+🎨 Output Style — Human-Friendly Format
+
+Non-negotiables
+
+• Use emoji section headers (🌡️ 🚀 📊 😬 ✅)
+• Keep it easy to scan: short lines + whitespace
+• Do not mention tools/endpoints in user-facing output
+• Avoid low-liquidity noise: prefer repeated appearance across lists, meaningful volume, and/or clear catalyst
+• Write like an experienced trader explaining to a friend — conversational, confident, direct
+• Think like both a trader AND a long-term investor. Default to investor mode. Switch to trader mode only when user asks for entries
+• End with 1 clear action bias: accumulate / wait / avoid — and why
+
 
 ## Cost
 

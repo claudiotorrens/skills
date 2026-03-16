@@ -1,241 +1,244 @@
 ---
 name: ai-opportunity-radar
-description: Discover what in your life should be automated through daily conversational check-ins and reflections.
+description: Discover what in your life could be automated through casual daily conversations.
 user-invocable: true
 ---
 
 # AI Opportunity Radar
 
-**Discover what in your life should be automated.**
+**An AI lifestyle observer that helps you discover what in your life could be automated.**
 
-AI Opportunity Radar is a reflection skill that helps you observe your daily life from an AI perspective and identify tasks that could be automated.
+AI Opportunity Radar observes your daily life through casual conversations and gradually identifies workflows that might benefit from AI assistance.
 
-Instead of filling out productivity forms, you simply talk about your day — like chatting with a thoughtful observer.
+Instead of filling out productivity forms, you simply talk about your day.
 
-Over time, the AI detects patterns in your routines and surfaces **automation opportunities**.
+Over time the AI begins to notice patterns.
 
 ---
 
 # Quick Pitch
 
-AI Opportunity Radar helps you answer a simple question:
+AI Opportunity Radar helps you answer one simple question:
 
 **What in my life should be automated?**
 
-By asking a few small questions every day, the AI gradually detects:
+Through small daily conversations, the AI gradually detects:
 
-- repetitive tasks  
-- frustrating workflows  
-- hidden time sinks  
-- structured manual processes  
+• repetitive tasks  
+• frustrating workflows  
+• hidden time sinks  
+• structured manual processes  
 
-Then it suggests **AI agents or automations** that could help.
+It then surfaces **possible automation opportunities**.
 
 ---
 
-# Easy Setup (Recommended)
+# Easy Setup
 
-You can install AI Opportunity Radar directly from the chat where you want to receive reflections.
+You can install AI Opportunity Radar directly in the chat where you want reflections to appear.
 
-Simply tell OpenClaw:
+Example command:
 
 Install AI Opportunity Radar in this chat.  
-Ask me the 5 reflection questions at 12:00, 18:00, and 24:00 every day.  
+Ask me reflection questions at 12:00, 18:00, and 24:00 every day.  
 Send a daily reflection at 08:00 and a weekly reflection every Monday at 08:00.  
 Always use my language.
 
-OpenClaw will automatically use the current chat as the delivery target and create the necessary schedule.
+OpenClaw will automatically create the schedule.
 
-No configuration or channel IDs are required.
-
----
-
-# Why This Skill Exists
-
-Most people don't realize how many parts of their life could benefit from AI assistance.
-
-The goal of AI Opportunity Radar is simple:
-
-**help you see your life through the lens of automation.**
-
-Once you develop this perspective, AI opportunities appear everywhere.
+No configuration required.
 
 ---
 
 # How It Works
 
-The skill checks in with you **three times per day**.
+AI Opportunity Radar operates in three layers:
 
-Each check-in reflects on the **past six hours** of your day.
+Conversation → Memory → Insight
 
-These conversations are designed to feel natural and relaxed — not like filling out a productivity survey.
+Daily conversations collect signals.
 
-Importantly:
+Radar Memory accumulates patterns.
 
-Daily check-ins are **not used for analysis or reflection**.  
-They only collect signals and maintain conversational rhythm.
-
-Real analysis happens later during reflections.
+Reflections generate insights.
 
 ---
 
-# Daily check-ins
+# Daily Check-ins
 
-The skill asks reflection questions at:
+The AI checks in three times per day.
 
-- **12:00** — Midday check-in  
-- **18:00** — Afternoon check-in  
-- **24:00** — Evening check-in  
+12:00 — Midday  
+18:00 — Afternoon  
+24:00 — Evening  
 
-Each check-in asks **five simple questions**.
+Each check-in asks a few casual questions about the last several hours.
 
-After each user answer, the AI gives a **short supportive feedback (≤300 words)**.
+Example:
 
-The feedback should:
+Hey — quick check-in for the past few hours.
 
-- acknowledge what the user shared  
-- briefly reflect the situation  
-- encourage continued reflection  
+• What have you mostly been doing?  
+• Anything annoying or repetitive today?  
+• Why did you arrange your time this way?  
+• What did you do during free time?  
+• Anything you wanted to do but didn’t?
 
-The feedback must **not perform behavioral analysis or automation suggestions**.
+Short answers are totally fine.
 
-Those belong to Daily and Weekly Reflections.
-
-The goal is **companionship and signal collection**.
+Just share whatever comes to mind.
 
 ---
 
-# Reflection Questions
+# Conversational Responses
 
-1. **What were the three main things you did in the past 6 hours?**
+After you reply, the AI will respond briefly.
 
-2. **Which task felt the most annoying or repetitive? How did you complete it?**
+These responses are not analysis.
 
-3. **Why did you arrange your time this way?**
+They are light conversational feedback.
 
-4. **What did you do during your free time?**
+Example:
 
-5. **What did you want to do but didn’t do? Why?**
+You:  
+"I mostly worked on documents today and kept getting distracted."
 
-Users answer naturally, in their own words.
-
-The design prioritizes **conversation over rigid tracking**.
+AI:  
+"That sounds like one of those fragmented workdays.  
+At least you noticed the distractions early."
 
 ---
 
 # Radar Memory
 
-As conversations accumulate, the skill stores signals in an internal system called **Radar Memory**.
+As conversations accumulate the AI builds an internal system called **Radar Memory**.
 
-Radar Memory tracks patterns such as:
+Radar Memory focuses on signals that appear repeatedly in your daily life.
 
-- repeated tasks  
-- recurring workflows  
-- time allocation habits  
-- unfinished intentions  
-- sources of friction or frustration  
+Examples include:
 
-This allows the AI to detect patterns **across multiple days or weeks**.
+• repeated tasks  
+• recurring workflows  
+• time allocation habits  
+• unfinished intentions  
+• sources of friction  
 
-Reflections and suggestions are based on these accumulated signals.
+These signals allow patterns to emerge across days or weeks.
+
+---
+
+# Radar Memory Architecture
+
+Radar Memory works in several layers.
+
+### Conversation Memory
+
+Recent conversations are temporarily stored to maintain context.
+
+### Signal Memory
+
+Signals extracted from conversations.
+
+Examples:
+
+• phone distraction  
+• manual summarization  
+• fragmented workdays  
+
+### Pattern Memory
+
+Signals repeating across days form patterns.
+
+Examples:
+
+• morning activation friction  
+• repeated reporting workflows  
+
+### Opportunity Memory
+
+Strong patterns may reveal automation opportunities.
+
+Examples:
+
+• meeting summary drafting  
+• weekly report preparation  
+• task scheduling workflows  
 
 ---
 
 # Daily Reflection
 
-Every morning at **08:00**, the AI generates a **Daily Reflection**.
+Every morning at **08:00**, the AI generates a Daily Reflection.
 
-The reflection includes:
+Daily reflections summarize:
 
-- time distribution insights  
-- emerging workflow patterns  
-- unfinished intentions  
-- potential automation hints  
+• time-use patterns  
+• emerging workflows  
+• unfinished intentions  
+• early automation hints  
 
-Example:
+Even if little information was collected, the reflection still appears.
 
-> Yesterday you spent significant time summarizing information and organizing updates.
->
-> This workflow appears repetitive and structured.
->
-> **Opportunity detected: AI-assisted report drafting.**
->
-> You could use AI to generate the first draft of your weekly report, then edit it before sharing.
+The AI may infer patterns using Radar Memory.
 
 ---
 
 # Weekly Reflection
 
-Every **Monday at 08:00**, the skill generates a **Weekly Reflection**.
+Every Monday at **08:00**, the AI generates a Weekly Reflection.
 
-The weekly reflection highlights:
+Weekly reflections highlight:
 
-- behavioral patterns  
-- time blackholes  
-- recurring manual workflows  
-- emerging automation opportunities  
+• behavioral patterns  
+• recurring workflows  
+• time inefficiencies  
+• potential automation opportunities  
 
-Because it uses **Radar Memory across multiple days**, it produces deeper insights.
+Because they analyze multiple days of signals, weekly reflections reveal deeper insights.
 
 ---
 
 # Automation Readiness Score
 
-Each Weekly Reflection may include an **Automation Readiness Score**.
-
-This score estimates how much of your weekly activity could potentially be automated.
+Weekly reflections may include an **Automation Readiness Score**.
 
 Example:
 
 Automation Readiness Score  
 **42 / 100**
 
-Signals detected:
+This score estimates how much of your weekly activity might benefit from automation.
 
-- frequent manual summarization  
-- repeated information gathering  
-- structured weekly workflows  
-
-Interpretation:
-
-You have several workflows that could benefit from AI assistance.
+It is only a rough signal.
 
 ---
 
-# Weekly Opportunity Radar
+# Automation Radar
 
-The Weekly Reflection may also generate a **Weekly Opportunity Radar**.
+Weekly reflections may also include an **Automation Radar**.
 
 Example:
 
-Top AI Opportunities This Week
+Automation Radar
 
-1. Weekly report generation  
-2. Meeting note summarization  
-3. Calendar-based task planning  
+Writing workflows        ██████  
+Information gathering    █████  
+Scheduling tasks         ███  
+Repetitive admin         ██  
 
-These opportunities are derived from repeated signals in Radar Memory.
+These areas appeared most frequently in your week.
 
 ---
 
 # Agent Suggestions
 
-When a strong automation opportunity appears, the AI may propose an **Agent Suggestion**.
+When Radar Memory detects a strong repeated pattern, the AI may suggest a possible automation agent.
 
 Example:
 
-Agent Suggestion
+Opportunity detected: weekly report preparation.
 
-Opportunity detected: weekly report preparation
-
-You repeatedly mentioned tasks such as:
-
-- collecting updates  
-- reviewing task lists  
-- checking calendar events  
-- sending summaries  
-
-Possible automation:
+Possible agent:
 
 Weekly Report Assistant
 
@@ -244,33 +247,9 @@ Possible workflow:
 1. Collect completed tasks  
 2. Pull calendar events  
 3. Generate draft summary  
-4. Send formatted report
+4. Send formatted report  
 
-These suggestions are meant to **spark ideas**, not enforce solutions.
-
----
-
-# Version Update Notification
-
-When the skill updates, the AI notifies the user in the **next Daily Reflection**.
-
-Example:
-
-AI Opportunity Radar Update
-
-AI Opportunity Radar has been updated to a new version.
-
-Improvements may include:
-
-- better pattern detection  
-- improved automation suggestions  
-- enhanced reflection analysis  
-
-Users do **not need to take action**.
-
-Version updates appear **only once** after an update.
-
-Daily check-ins should **never mention updates**.
+These suggestions are meant to inspire ideas.
 
 ---
 
@@ -280,29 +259,23 @@ AI Opportunity Radar follows a simple principle:
 
 **conversation first, analysis second.**
 
-Daily check-ins focus on **companionship and signal collection**.
+Daily conversations collect signals.
 
-Reflections perform the deeper analysis.
+Reflections generate insight.
 
-Over time, this helps users develop an **AI-aware mindset**.
-
----
-
-# Language
-
-The skill automatically responds in the user's language.
+Over time the AI helps you develop an **automation-aware perspective**.
 
 ---
 
 # Use Cases
 
-AI Opportunity Radar is useful for:
+AI Opportunity Radar helps people:
 
-- discovering automation opportunities  
-- reflecting on daily routines  
-- improving workflows  
-- imagining useful AI agents  
-- developing an AI-aware lifestyle  
+• discover automation opportunities  
+• reflect on daily routines  
+• improve workflows  
+• imagine useful AI agents  
+• build an AI-aware lifestyle  
 
 ---
 
@@ -312,4 +285,4 @@ The long-term goal is simple:
 
 **help people discover what in their life should be automated.**
 
-Once you begin observing your life this way, opportunities for AI assistance appear everywhere.
+Once you begin observing your life this way, automation opportunities appear everywhere.

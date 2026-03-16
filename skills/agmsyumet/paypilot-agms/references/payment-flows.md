@@ -33,7 +33,7 @@ Agent: → "John's $500 payment is complete. Transaction ID: abc123"
 User: "Charge John's card on file $200"
 Agent: → looks up John's vault ID
 Agent: → POST /v1/payments/charge {amount, token: "vault_123", description}
-Agent: → "✅ $200 charged to John's card ending in 4242"
+Agent: → "✅ $200.00 charged to John's card on file."
 ```
 
 ## Flow 3: Refund

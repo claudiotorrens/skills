@@ -1,23 +1,7 @@
 ---
 name: paypilot
 description: Process payments, send invoices, issue refunds, manage subscriptions, and detect fraud via a secure payment gateway proxy. Use when a user asks to charge someone, send a payment link, check sales, issue a refund, create recurring billing, view fraud analytics, configure fraud rules, or manage any payment-related task. Supports 3D Secure, AVS/CVV verification, and risk scoring. Also use for merchant onboarding and first-time payment setup.
-homepage: https://agms.com/paypilot/
-source: https://github.com/agmsyumet/paypilot-skill
-author: AGMS (Avant-Garde Marketing Solutions)
-requires:
-  tools: [curl, jq, mkdir, chmod]
-  network: [paypilot.agms.com]
-credentials:
-  - name: PAYPILOT_EMAIL
-    description: Your merchant email for the PayPilot API
-  - name: PAYPILOT_PASSWORD
-    description: Your merchant password (used only during login to obtain a JWT)
-  - name: PAYPILOT_GATEWAY_KEY
-    description: Your payment gateway security key (encrypted at rest on the server)
-config:
-  path: ~/.config/paypilot/config.json
-  permissions: "600"
-  contents: api_url, email, token (JWT)
+metadata: {"openclaw":{"requires":{"bins":["curl","jq"]},"homepage":"https://agms.com/paypilot/"}}
 ---
 
 # PayPilot — Payment Processing for AI Agents
@@ -69,6 +53,8 @@ EOF
 chmod 600 ~/.config/paypilot/config.json
 ```
 
+**Note:** The password is used only during registration and login to obtain a JWT. It is never stored in the config file or read from environment variables.
+
 If the user doesn't have a gateway account, start the onboarding process:
 
 1. Collect basic info conversationally:
@@ -106,15 +92,18 @@ AUTH="Authorization: Bearer $TOKEN"
 If a request returns 401, re-login and update the saved token.
 
 To refresh an expired token:
+Prompt the user for their password — never store it or read it from environment variables:
 ```bash
 # Re-login
 LOGIN=$(curl -s "$API/v1/auth/login" -X POST \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"$(echo $CONFIG | jq -r '.email')\",\"password\":\"YOUR_PASSWORD\"}")
+  -d "{\"email\":\"$(echo $CONFIG | jq -r '.email')\",\"password\":\"$USER_PASSWORD\"}")
 NEW_TOKEN=$(echo $LOGIN | jq -r '.access_token')
 
 # Update config
-jq --arg t "$NEW_TOKEN" '.token = $t' ~/.config/paypilot/config.json > /tmp/pp.json && mv /tmp/pp.json ~/.config/paypilot/config.json
+TMP=$(mktemp)
+chmod 600 "$TMP"
+jq --arg t "$NEW_TOKEN" '.token = $t' ~/.config/paypilot/config.json > "$TMP" && mv "$TMP" ~/.config/paypilot/config.json
 chmod 600 ~/.config/paypilot/config.json
 ```
 
@@ -225,11 +214,28 @@ curl -s "$API/v1/fraud/rules" -X POST \
   -H "Content-Type: application/json" -H "$AUTH" \
   -d '{"rule_type":"max_amount","threshold":"5000","action":"flag"}'
 
-# Other rule types: min_amount, velocity_limit
+# Supported rule types: max_amount, min_amount, velocity_limit
 # Actions: flag (alert), block (reject), review (hold)
+
+# View a specific rule (if supported)
+curl -s "$API/v1/fraud/rules/RULE_ID" -H "$AUTH" | jq .
 
 # Delete a rule
 curl -s "$API/v1/fraud/rules/RULE_ID" -X DELETE -H "$AUTH"
+```
+
+Note: rule updates are not supported. Delete and recreate the rule instead.
+
+Example response from creating a rule:
+```json
+{
+  "rule_id": "rule_123",
+  "rule_type": "max_amount",
+  "threshold": "5000",
+  "action": "flag",
+  "status": "active",
+  "created_at": "2026-03-15T00:00:00Z"
+}
 ```
 
 When reporting fraud stats:
@@ -244,6 +250,14 @@ When reporting fraud stats:
 - API tokens and gateway keys must stay in config files, never in chat
 - The proxy encrypts gateway keys at rest (AES-256-GCM)
 - Rate limited: 60 requests/min global, 5/min on auth endpoints
+
+## Error Handling
+
+- 401 Unauthorized: re-login, update the saved token, then retry.
+- 400 Bad Request: validate request body and log the error message.
+- 429 Rate Limited: 60 req/min global, 5/min auth. Back off and retry.
+- 5xx Server Error: retry with exponential backoff.
+- Network errors: verify HTTPS connectivity, then retry.
 
 ## Response Patterns
 

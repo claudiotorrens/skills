@@ -3,6 +3,49 @@
 ## Overview
 PayPilot uses a secure payment gateway proxy. All gateway interactions go through the PayPilot API — you never call the underlying gateway directly.
 
+## Authentication & Onboarding
+
+### Register
+```
+POST /v1/auth/register
+{
+  "name": "Business Name",
+  "email": "merchant@example.com",
+  "password": "strong_password"
+}
+```
+
+### Login
+Returns a JWT access token.
+```
+POST /v1/auth/login
+{
+  "email": "merchant@example.com",
+  "password": "strong_password"
+}
+```
+
+### Configure Gateway Key (Authenticated)
+Requires a Bearer token.
+```
+POST /v1/auth/configure
+{
+  "gateway_key": "your_gateway_key"
+}
+```
+
+### Onboarding Lead
+```
+POST /v1/onboard
+{
+  "business_name": "Acme Corp",
+  "contact_name": "John Doe",
+  "email": "john@acme.com",
+  "phone": "555-1234",
+  "business_type": "retail"
+}
+```
+
 ## Transaction Types
 
 ### Sale (Direct Charge)
@@ -15,6 +58,11 @@ POST /v1/payments/charge
   "description": "Order #1234"
 }
 ```
+
+### 3D Secure
+Enable 3DS by sending `three_d_secure: true` on a charge request.
+The response includes a `three_d_secure` field confirming it was used.
+Use 3DS for higher-value or flagged transactions.
 
 ### Refund
 ```
@@ -97,6 +145,40 @@ GET /v1/transactions
 ```
 GET /v1/transactions/summary
 ```
+
+## Fraud Detection & Rules
+
+### Fraud Summary (30-day analytics)
+```
+GET /v1/fraud/summary
+```
+Returns transaction count, flagged count, blocked count, active rules, and fraud rate.
+
+### List Fraud Rules
+```
+GET /v1/fraud/rules
+```
+
+### Get Specific Rule
+```
+GET /v1/fraud/rules/<rule_id>
+```
+
+### Create Fraud Rule
+```
+POST /v1/fraud/rules
+{
+  "rule_type": "max_amount",   // max_amount | min_amount | velocity_limit
+  "threshold": "5000",
+  "action": "flag"             // flag (alert) | block (reject) | review (hold)
+}
+```
+
+### Delete Fraud Rule
+```
+DELETE /v1/fraud/rules/<rule_id>
+```
+Note: updates are not supported — delete and recreate instead.
 
 ## Response Codes
 - **200** — Success (transaction processed, data returned)

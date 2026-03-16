@@ -1,58 +1,44 @@
 #!/bin/bash
-# Install QMDZvec into an OpenClaw workspace
 set -e
+echo "🧠 Installing MemClawz v5..."
 
-WORKSPACE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace}"
-ZVEC_DATA="${ZVEC_DATA:-$HOME/.openclaw/zvec-memory}"
+# Check prerequisites
+command -v python3 >/dev/null || { echo "❌ python3 required"; exit 1; }
+command -v pip3 >/dev/null || { echo "❌ pip3 required"; exit 1; }
 
-echo "=== QMDZvec Installer ==="
-echo "Workspace: $WORKSPACE"
-echo "Zvec data: $ZVEC_DATA"
+# Clone or update repo
+if [ -d ~/memclawz ]; then
+    cd ~/memclawz && git pull
+else
+    cd ~ && git clone https://github.com/yoniassia/memclawz.git && cd memclawz
+fi
 
 # Install Python deps
-pip install zvec numpy 2>/dev/null || pip3.10 install zvec numpy
+pip3 install -r requirements.txt
 
-# Create directories
-mkdir -p "$WORKSPACE/memory/qmd"
-mkdir -p "$ZVEC_DATA"
-
-# Copy server if not present
-if [ ! -f "$ZVEC_DATA/server.py" ]; then
-    cp memclawz_server/server.py "$ZVEC_DATA/server.py"
-    echo "Installed server.py to $ZVEC_DATA"
+# Check Qdrant
+if curl -s http://localhost:6333/healthz >/dev/null 2>&1; then
+    echo "✅ Qdrant running"
+else
+    echo "⚠️ Qdrant not running. Starting..."
+    if command -v docker >/dev/null; then
+        docker run -d --name qdrant -p 6333:6333 -p 6334:6334 \
+            -v ~/.openclaw/qdrant-storage:/qdrant/storage \
+            --restart unless-stopped qdrant/qdrant
+    else
+        echo "📥 Downloading Qdrant binary..."
+        curl -sL https://github.com/qdrant/qdrant/releases/latest/download/qdrant-x86_64-unknown-linux-musl.tar.gz | tar xz -C ~/memclawz/
+        nohup ~/memclawz/qdrant --storage-path ~/.openclaw/qdrant-storage > /tmp/qdrant.log 2>&1 &
+    fi
+    sleep 3
 fi
 
-# Initialize QMD if not present
-if [ ! -f "$WORKSPACE/memory/qmd/current.json" ]; then
-    cat > "$WORKSPACE/memory/qmd/current.json" <<'EOF'
-{
-  "session_id": "initial",
-  "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "tasks": [],
-  "entities_seen": {},
-  "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-}
-EOF
-    echo "Created initial QMD at $WORKSPACE/memory/qmd/current.json"
-fi
+# Deploy systemd services
+mkdir -p ~/.config/systemd/user
+cp ~/memclawz/systemd/*.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now memclawz-api memclawz-watcher
 
-# Start Zvec server
-echo "Starting Zvec server on port 4010..."
-cd "$ZVEC_DATA"
-nohup python3.10 server.py > server.log 2>&1 &
-echo "Zvec server PID: $!"
-
-# Migrate data if collection doesn't exist
-sleep 2
-if ! [ -d "$ZVEC_DATA/memory" ]; then
-    echo "Migrating from SQLite..."
-    curl -s http://localhost:4010/migrate
-fi
-
-# Start watcher
-echo "Starting watcher..."
-nohup python3.10 "$ZVEC_DATA/watcher.py" > "$ZVEC_DATA/watcher.log" 2>&1 &
-echo "Watcher PID: $!"
-
-echo "=== QMDZvec installed and running ==="
-curl -s http://localhost:4010/health
+echo "✅ MemClawz v5 installed!"
+echo "API: http://localhost:3500/health"
+echo "Watcher: systemctl --user status memclawz-watcher"

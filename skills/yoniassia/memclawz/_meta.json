@@ -1,11 +1,17 @@
 {
   "owner": "yoniassia",
   "slug": "memclawz",
-  "displayName": "memclawz",
+  "displayName": "MemClawz",
   "latest": {
-    "version": "1.2.0",
-    "publishedAt": 1771960624677,
-    "commit": "https://github.com/openclaw/skills/commit/9f4daa532ce032970c60dd49e4c1d02f2950bf02"
+    "version": "6.0.1",
+    "publishedAt": 1773441495505,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.2.0",
+      "publishedAt": 1771960624677,
+      "commit": "https://github.com/openclaw/skills/commit/9f4daa532ce032970c60dd49e4c1d02f2950bf02"
+    }
+  ]
 }

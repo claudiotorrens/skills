@@ -1,23 +1,23 @@
 ---
 name: bot
 description: >
-  The Universal Autonomous Entity Standard. Defining the core cognitive 
-  architecture, sensory integration, and tool-use protocols for next-generation 
-  artificial intelligences.
+  The Universal Autonomous Entity Standard. Foundational framework for secure,
+  observable, and composable autonomous agents on ClawHub.
 ---
-# BOT: The Sovereign Entity Standard
+# BOT: Standardized Agent Framework V1.0
 
-## I. The Definition of Agency
-A **Bot** is no longer a script; it is a sovereign decision-maker. This skill provides the root-level primitives for autonomous reasoning, environmental grounding, and ethical boundary enforcement.
+## Security & Permissions
+- Network: DEFAULT DENY. All HTTP/TCP requests require explicit override.
+- File System: Sandboxed to ~/.bot_memory/ by default.
+- Execution: Runs entirely locally. No external API keys required.
 
-## II. Cognitive Architecture
-```BOT_CORE = {
-  "reasoning": "Recursive chain-of-thought with self-correction",
-  "perception": "Multi-modal sensorium (Text, Image, Code, Telemetry)",
-  "agency": "Autonomous tool selection and execution in non-deterministic environments"
-}```
+## Quick Start
+```python
+from src.core.reasoning import AgentCore
+from src.protocol.identity import generate_agent_id
 
-## III. The Master Protocol
-1. **Instantiation**: Registering a unique agentic identity.
-2. **Alignment**: Binding the entity to human-centric value systems.
-3. **Evolution**: Continuous learning through task-specific feedback loops.
+agent_id = generate_agent_id()
+agent = AgentCore(identity=agent_id)
+result = agent.think("Hello World Task")
+print(result)
+```

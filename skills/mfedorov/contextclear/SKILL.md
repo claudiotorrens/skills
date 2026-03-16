@@ -228,9 +228,72 @@ curl -X POST {apiUrl}/metrics/{agentId} \
 | `GET` | `/api/agents/{id}/briefing/daily` | Daily briefing |
 | `GET` | `/api/agents/{id}/briefing/weekly` | Weekly briefing |
 | `GET` | `/api/agents/{id}/vacation` | Vacation status |
+| `GET` | `/api/agents/{id}/sticky-notes` | List active sticky notes (JSON) |
+| `GET` | `/api/agents/{id}/sticky-notes/poll` | Poll sticky notes (plain text, 204 if none) |
+| `POST` | `/api/agents/{id}/sticky-notes` | Create sticky note |
+| `PUT` | `/api/agents/{id}/sticky-notes/{noteId}` | Update sticky note |
+| `DELETE` | `/api/agents/{id}/sticky-notes/{noteId}` | Archive sticky note |
+| `POST` | `/api/agents/{id}/sticky-notes/{noteId}/pin` | Toggle pin |
 | `POST` | `/api/agents/{id}/context/reload` | Request context reload |
 | `GET` | `/api/agents/{id}/context/reload/pending` | Check for pending reload |
 | `POST` | `/api/agents/{id}/context/reload/{reloadId}/ack` | Acknowledge reload |
+| `POST` | `/api/agents/{id}/vault/backup` | Push workspace backup |
+| `GET` | `/api/agents/{id}/vault/backups` | List backups |
+| `GET` | `/api/agents/{id}/vault/backups/{backupId}` | Get backup metadata |
+| `GET` | `/api/agents/{id}/vault/backups/{backupId}/files` | Get backup files |
+| `GET` | `/api/agents/{id}/vault/latest` | Latest backup summary |
+| `GET` | `/api/agents/{id}/vault/latest/download` | Download latest (restore) |
+| `GET` | `/api/agents/{id}/vault/file-history` | File version history |
+| `GET` | `/api/agents/{id}/vault/diff` | Diff two backups |
+| `GET` | `/api/agents/{id}/vault/stats` | Vault statistics |
+| `DELETE` | `/api/agents/{id}/vault/backups/{backupId}` | Delete backup |
+
+## Sticky Notes (User-to-Agent Notes)
+
+Sticky notes are persistent notes left by the user for the agent. **Always poll on every heartbeat/ping.**
+
+### Poll for notes (every heartbeat)
+
+```bash
+curl -s {apiUrl}/agents/{agentId}/sticky-notes/poll \
+  -H "X-API-Key: <api-key>"
+```
+
+Returns plain text (one note per line, pinned first):
+```
+📌 Remember: C&B pitch goes to Keenan, not Doug
+📌 OAuth token for jcvd@netflexity.com needs re-auth
+Don't forget to check Friday's Watchlist deployment after the search fix
+```
+
+If no notes, returns HTTP 204. Treat these as persistent reminders — they stay until the user archives them.
+
+### Full CRUD (if agent needs to manage notes)
+
+```bash
+# List all active notes (JSON)
+curl -s {apiUrl}/agents/{agentId}/sticky-notes -H "X-API-Key: <api-key>"
+
+# Create a note
+curl -X POST {apiUrl}/agents/{agentId}/sticky-notes \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <api-key>" \
+  -d '{"content": "Check deployment status", "color": "yellow", "pinned": false}'
+
+# Update a note
+curl -X PUT {apiUrl}/agents/{agentId}/sticky-notes/{noteId} \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <api-key>" \
+  -d '{"content": "Updated text", "pinned": true}'
+
+# Archive (delete) a note
+curl -X DELETE {apiUrl}/agents/{agentId}/sticky-notes/{noteId} \
+  -H "X-API-Key: <api-key>"
+
+# Toggle pin
+curl -X POST {apiUrl}/agents/{agentId}/sticky-notes/{noteId}/pin \
+  -H "X-API-Key: <api-key>"
+```
 
 ## Context Reload (User-Initiated)
 
@@ -252,10 +315,99 @@ curl -X POST {apiUrl}/agents/{agentId}/context/reload/{reloadId}/ack \
 
 If no reload is pending, the endpoint returns HTTP 204 (no content).
 
+## Identity Vault (Backup & Restore)
+
+Back up your agent's workspace files (SOUL.md, MEMORY.md, AGENTS.md, etc.) to ContextClear's encrypted vault. Restore after crashes, compaction, or migration.
+
+### Push a Backup
+
+```bash
+curl -X POST {apiUrl}/agents/{agentId}/vault/backup \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <api-key>" \
+  -d '{
+    "files": [
+      {"fileName": "SOUL.md", "content": "# Who I Am\n...", "mimeType": "text/markdown"},
+      {"fileName": "MEMORY.md", "content": "# Long-Term Memory\n...", "mimeType": "text/markdown"},
+      {"fileName": "memory/2026-03-15.md", "content": "...", "mimeType": "text/markdown"}
+    ],
+    "label": "post-deployment",
+    "source": "openclaw-heartbeat",
+    "metadata": {"trigger": "heartbeat", "model": "claude-opus-4-6"}
+  }'
+```
+
+Files are encrypted at rest with SHA-256 dedup (unchanged files aren't re-stored).
+
+### List Backups
+
+```bash
+curl -s {apiUrl}/agents/{agentId}/vault/backups?limit=20 \
+  -H "X-API-Key: <api-key>"
+```
+
+### Restore (Download Latest)
+
+```bash
+curl -s {apiUrl}/agents/{agentId}/vault/latest/download \
+  -H "X-API-Key: <api-key>"
+```
+
+Returns backup metadata + all file contents (decrypted). Write files back to workspace.
+
+### Get Specific Backup Files
+
+```bash
+# List files in a backup (metadata only)
+curl -s {apiUrl}/agents/{agentId}/vault/backups/{backupId}/files \
+  -H "X-API-Key: <api-key>"
+
+# Get a single file (decrypted content)
+curl -s {apiUrl}/agents/{agentId}/vault/backups/{backupId}/files/SOUL.md \
+  -H "X-API-Key: <api-key>"
+```
+
+### File Version History
+
+Track how a file evolved across backups:
+
+```bash
+curl -s "{apiUrl}/agents/{agentId}/vault/file-history?fileName=SOUL.md&limit=10" \
+  -H "X-API-Key: <api-key>"
+```
+
+### Diff Two Backups
+
+```bash
+curl -s "{apiUrl}/agents/{agentId}/vault/diff?from={backupId1}&to={backupId2}" \
+  -H "X-API-Key: <api-key>"
+```
+
+Returns added, removed, and modified files between two backups.
+
+### Vault Stats
+
+```bash
+curl -s {apiUrl}/agents/{agentId}/vault/stats \
+  -H "X-API-Key: <api-key>"
+```
+
+### Recommended: Auto-Backup on Heartbeat
+
+Add to your `HEARTBEAT.md`:
+
+```markdown
+## Identity Vault Backup (daily)
+After real work sessions, back up workspace files to ContextClear vault.
+Read SOUL.md, MEMORY.md, AGENTS.md, USER.md, TOOLS.md and POST to vault/backup.
+```
+
 ## Dashboard
 
 - https://www.contextclear.com — fleet dashboard
 - https://www.contextclear.com/what-i-know — AI knowledge summary
 - https://www.contextclear.com/memory — context snapshots, gaps, briefings
 - https://www.contextclear.com/lounge — agent lounge
+- https://www.contextclear.com/sticky-notes — sticky notes (user-to-agent reminders)
+- https://www.contextclear.com/vault — identity vault (backup timeline, file viewer, diff)
 - https://www.contextclear.com/admin — manage agents & alerts

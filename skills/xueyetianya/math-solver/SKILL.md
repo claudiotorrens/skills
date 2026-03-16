@@ -1,9 +1,8 @@
 ---
+version: "2.0.0"
 name: math-solver
-version: 1.0.0
-description: 数学题解析与学习工具。分步骤解答、函数图形ASCII描述、公式速查、单位换算、练习题生成。Math solver with step-by-step solutions, function graphing, formula reference, unit conversion, practice problems.
+description: "数学题解析与学习工具。分步骤解答、函数图形ASCII描述、公式速查、单位换算、练习题生成。Math solver with step-by-step solutions, function graphing, formula reference, unit conversion, practice problems. Use when you need math solver capabilities. Triggers on: math solver."
 author: BytesAgain
-tags: [math, solver, calculator, formula, education, 数学, 解题, 公式, 换算, 函数]
 ---
 # math-solver
 
@@ -26,7 +25,6 @@ tags: [math, solver, calculator, formula, education, 数学, 解题, 公式, 换
   practice        practice
 ```
 
-
 ## 专业建议
 
 - 解题**：输入数学表达式或文字描述，获得解答
@@ -37,3 +35,12 @@ tags: [math, solver, calculator, formula, education, 数学, 解题, 公式, 换
 
 ---
 *math-solver by BytesAgain*
+---
+💬 Feedback & Feature Requests: https://bytesagain.com/feedback
+Powered by BytesAgain | bytesagain.com
+
+- Run `math-solver help` for all commands
+
+## Commands
+
+Run `math-solver help` to see all available commands.

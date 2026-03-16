@@ -39,7 +39,7 @@ $env:BAIDU_API_KEY="your_appbuilder_api_key_here"
 
 ## 脚本路径
 
-脚本文件：`skill/baidu/baidu.py`
+脚本文件：`skills/baidu/baidu.py`
 
 ## 使用方式与请求参数
 
@@ -48,7 +48,7 @@ $env:BAIDU_API_KEY="your_appbuilder_api_key_here"
 ### 1. 最简单的搜索
 
 ```bash
-python3 skill/baidu/baidu.py search '{"query":"北京有哪些旅游景区"}'
+python3 skills/baidu/baidu.py search '{"query":"北京有哪些旅游景区"}'
 ```
 
 这会在网页（web）中检索相关内容，默认返回 `top_k = 20` 条网页结果。
@@ -56,7 +56,7 @@ python3 skill/baidu/baidu.py search '{"query":"北京有哪些旅游景区"}'
 ### 2. 控制返回条数、时间范围
 
 ```bash
-python3 skill/baidu/baidu.py search '{
+python3 skills/baidu/baidu.py search '{
   "query": "北京天气预报",
   "top_k": 5,
   "search_recency_filter": "week"
@@ -70,7 +70,7 @@ python3 skill/baidu/baidu.py search '{
 ### 3. 限定站点搜索
 
 ```bash
-python3 skill/baidu/baidu.py search '{
+python3 skills/baidu/baidu.py search '{
   "query": "VIN 解析 API",
   "sites": ["www.jisuapi.com","www.jisuepc.com"]
 }'
@@ -168,6 +168,6 @@ python3 skill/baidu/baidu.py search '{
 
 1. 用户提问：「帮我查一下最近一周北京天气的相关新闻。」  
 2. 代理调用：  
-   `python3 skill/baidu/baidu.py search '{"query":"北京 天气 新闻","top_k":5,"search_recency_filter":"week"}'`  
+   `python3 skills/baidu/baidu.py search '{"query":"北京 天气 新闻","top_k":5,"search_recency_filter":"week"}'`  
 3. 从 `references` 中提取前几条网页的 `title/url/snippet/date`，用自然语言总结近期天气情况，并附上关键信息的来源链接。  
 

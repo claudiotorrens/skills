@@ -1,13 +1,18 @@
 {
   "owner": "jisuapi",
   "slug": "jisu-baidu",
-  "displayName": "百度网页搜索 - Baidu Web Search",
+  "displayName": "Baidu Web Search - 百度网页搜索",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773392678149,
-    "commit": "https://github.com/openclaw/skills/commit/59f601a7839e56ca15d3e0603164a4401c8b1af7"
+    "version": "1.0.4",
+    "publishedAt": 1773671112159,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773392678149,
+      "commit": "https://github.com/openclaw/skills/commit/59f601a7839e56ca15d3e0603164a4401c8b1af7"
+    },
     {
       "version": "1.0.1",
       "publishedAt": 1773202152535,

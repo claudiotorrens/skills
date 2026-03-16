@@ -3,9 +3,15 @@
   "slug": "prediction-stack-setup",
   "displayName": "Prediction Stack Setup",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773278818142,
-    "commit": "https://github.com/openclaw/skills/commit/b7657155a29103acff22e7444ee8ba5ba5d0acad"
+    "version": "1.1.1",
+    "publishedAt": 1773512232050,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773278818142,
+      "commit": "https://github.com/openclaw/skills/commit/b7657155a29103acff22e7444ee8ba5ba5d0acad"
+    }
+  ]
 }

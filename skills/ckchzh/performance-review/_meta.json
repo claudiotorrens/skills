@@ -3,11 +3,16 @@
   "slug": "performance-review",
   "displayName": "Performance Review",
   "latest": {
-    "version": "2.2.0",
-    "publishedAt": 1773421633835,
-    "commit": "https://github.com/openclaw/skills/commit/bccc10fbf7e0670ae930c40aeb1cbfa174d56a84"
+    "version": "2.3.4",
+    "publishedAt": 1773666720383,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.2.0",
+      "publishedAt": 1773421633835,
+      "commit": "https://github.com/openclaw/skills/commit/bccc10fbf7e0670ae930c40aeb1cbfa174d56a84"
+    },
     {
       "version": "1.1.1",
       "publishedAt": 1773141025305,

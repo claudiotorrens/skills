@@ -1,7 +1,9 @@
 ---
+version: "2.0.0"
 name: Performance Review
-description: >-
+description: "绩效评估和述职报告生成器。自评、主管评语、KPI总结、晋升述职、SMART目标设定、360反馈撰写。. Use when you need performance review capabilities. Triggers on: performance review."
   绩效评估助手。自评、上级评语、OKR复盘、KPI分析、改进计划、SMART目标设定、360反馈撰写。Performance review assistant with self-assessment, manager feedback, OKR review, SMART goals, 360 feedback writing. 绩效考核、年终评估、360评估。Use when writing performance reviews.
+author: BytesAgain
 ---
 
 # performance-review
@@ -48,3 +50,6 @@ bash scripts/review.sh feedback "同事" "项目合作中沟通积极,但deadlin
 
 - Python 3.6+
 - No external dependencies
+---
+💬 Feedback & Feature Requests: https://bytesagain.com/feedback
+Powered by BytesAgain | bytesagain.com

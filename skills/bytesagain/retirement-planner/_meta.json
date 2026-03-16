@@ -3,11 +3,16 @@
   "slug": "retirement-planner",
   "displayName": "Retirement Planner",
   "latest": {
-    "version": "2.3.0",
-    "publishedAt": 1773446934342,
-    "commit": "https://github.com/openclaw/skills/commit/f3340caafff5914defbc29b3637b844611259fd8"
+    "version": "1.0.6",
+    "publishedAt": 1773666914531,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.3.0",
+      "publishedAt": 1773446934342,
+      "commit": "https://github.com/openclaw/skills/commit/f3340caafff5914defbc29b3637b844611259fd8"
+    },
     {
       "version": "2.2.0",
       "publishedAt": 1773421738299,

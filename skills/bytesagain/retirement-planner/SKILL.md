@@ -1,6 +1,8 @@
 ---
+version: "2.0.0"
 name: retirement-planner
 description: "退休规划工具。退休金计算、投资策略、社保养老金、投资组合、提取策略、缺口分析。Retirement planner with pension calculation, investment strategy, social security, portfolio, withdrawal strategy, gap analysis. Use when you need retirement planner capabilities. Triggers on: retirement planner."
+author: BytesAgain
 ---
 # retirement-planner
 
@@ -23,7 +25,6 @@ description: "退休规划工具。退休金计算、投资策略、社保养老
 - **low** — low
 - **medium** — medium
 
-
 ## 专业建议
 
 - 算清需求** — 退休后月开销 × 12 × 预期寿命年数
@@ -37,3 +38,17 @@ description: "退休规划工具。退休金计算、投资策略、社保养老
 ---
 💬 Feedback & Feature Requests: https://bytesagain.com/feedback
 Powered by BytesAgain | bytesagain.com
+
+## Examples
+
+```bash
+# Show help
+retirement-planner help
+
+# Run
+retirement-planner run
+```
+
+## Commands
+
+Run `retirement-planner help` to see all available commands.

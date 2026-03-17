@@ -1,0 +1,11 @@
+{
+  "owner": "bytesagain",
+  "slug": "redis",
+  "displayName": "Redis",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1773666892518,
+    "commit": null
+  },
+  "history": []
+}

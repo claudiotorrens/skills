@@ -1,13 +1,27 @@
 ---
 name: fitness-skill
-description: Personal fitness planning, live workout tracking with session support, auto-stale-session cleanup, Feishu-integrated reminders, and exportable training reports. Use when a user asks to create a workout plan, log exercises (real-time or after), track fitness progress, or manage gym/tennis schedules.
-version: 1.2.1
+description: "运动健康管家 Pro — 专为 Open Claw + 飞书生态打造的 AI 健身管家。双模式打卡（事后总结 / 边练边记）、3 层 Session 防丢失、飞书云文档同步、极致 Token 优化。Route to this skill when the user mentions workouts, logs exercises, asks for fitness stats, or provides post-workout feedback."
+version: 1.2.2
 metadata: {"clawdbot":{"emoji":"💪","requires":{"bins":["python3"],"env":[]},"os":["linux","darwin"]}}
 ---
 
-# Fitness Skill
+# 运动健康管家 Pro (Fitness & Workout Manager Pro)
 
-Manage fitness plans, log workouts (real-time or one-shot), view history with token-efficient queries, and export full reports. Includes smart session lifecycle management with auto-close and proactive Claw check-ins.
+> ⚠️ **平台要求**：本 Skill 依赖「飞书 (Feishu)」生态，需为 Open Claw 绑定的机器人开通消息读写与云文档管理权限。
+
+专为 Open Claw 打造的 AI 健身管家。无论是健身房力量训练还是网球对战，通过自然语言即可完美记录——你最省心的赛博教练。
+
+### ✨ 核心亮点
+
+- **双模式无缝打卡** — 事后一句话总结（"打网球 2 小时感觉很累"）或沉浸式边练边记（"卧推 60kg 8个 3组"），AI 自动解析入库。
+- **防遗忘 Session 保护** — 3 层生命周期管理（主动关怀 → 心跳巡检 → 硬截止），练完忘了说"结束"也能自动闭环，绝不丢失数据。
+- **飞书全景同步** — 计划 & 周/月度统计自动推送至飞书云文档，内置 Cron 定时提醒。
+- **极致 Token 优化** — 日常查询仅返回紧凑摘要，全量记录自动导出为 Markdown，拒绝上下文爆炸。
+
+### 🤖 Agent 路由指南
+
+- **Capabilities**: Stateful session handling (`fitness-log start/end`), NLP workout parsing, localized JSON storage, Feishu document sync, auto-stale-session cleanup.
+- **Trigger**: Route here when the user mentions workout routines, logs exercises, asks for fitness stats (`fitness-status`), or provides unstructured post-workout feedback.
 
 ## Quick Start
 

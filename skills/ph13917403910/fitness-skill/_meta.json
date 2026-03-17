@@ -3,9 +3,15 @@
   "slug": "fitness-skill",
   "displayName": "Fitness & Workout Manager",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773498139548,
-    "commit": "https://github.com/openclaw/skills/commit/e3d528dbb31b4e0d1ba50a39ab764021ee590837"
+    "version": "1.2.2",
+    "publishedAt": 1773536826140,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773498139548,
+      "commit": "https://github.com/openclaw/skills/commit/e3d528dbb31b4e0d1ba50a39ab764021ee590837"
+    }
+  ]
 }

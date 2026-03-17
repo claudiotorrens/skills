@@ -1,10 +1,10 @@
 ---
 name: giggle-generation-image
-description: 支持文生图和图生图。当用户需要创建或生成图像时使用。使用场景：(1) 根据文字描述生成，(2) 使用参考图生成，(3) 自定义模型、画幅比例、分辨率。触发词：生成图片、画画、创建图片、AI 艺术图
-version: "0.0.9"
+description: "支持文生图和图生图。当用户需要创建或生成图像时使用。使用场景：(1) 根据文字描述生成，(2) 使用参考图生成，(3) 自定义模型、画幅比例、分辨率。触发词：生成图片、画画、创建图片、AI 艺术图"
+version: "0.0.10"
 license: MIT
-author: storyclaw-official
-homepage: https://github.com/storyclaw-official/storyclaw-skills
+author: giggle-official
+homepage: https://github.com/giggle-official/skills
 requires:
   bins: [python3]
   env: [GIGGLE_API_KEY]
@@ -27,13 +27,15 @@ metadata:
 
 # Giggle 图像生成（多模型）
 
-**来源**：[storyclaw-official/storyclaw-skills](https://github.com/storyclaw-official/storyclaw-skills) · API：[giggle.pro](https://giggle.pro/)
+**来源**：[giggle-official/skills](https://github.com/giggle-official/skills) · API：[giggle.pro](https://giggle.pro/)
 
 通过 giggle.pro 平台的 Generation API 生成 AI 图像，支持多种模型（Seedream、Midjourney、Nano Banana）。提交任务 → 需要时查询。无轮询、无 Cron。
 
 **API Key**：设置系统环境变量 `GIGGLE_API_KEY`。若未配置，脚本会提示配置。
 
 > **禁止内联 Python**：所有命令必须通过 `exec` 工具直接执行。**切勿**使用 `python3 << 'EOF'` 或 heredoc 内联代码。
+
+> **报错禁止重试**：调用脚本如果出现报错，**禁止重试**。直接将错误信息报告给用户并停止执行。
 
 ## 支持的模型
 
@@ -142,7 +144,7 @@ python3 scripts/generation_api.py --query --task-id <task_id>
   "prompt": "一只可爱的橘猫坐在窗台上晒太阳，写实风格",
   "reference_images": [
     {
-      "url": "https://assets.ggltest.com/private/test_ai_director/0ebc2ffa7512a58df5/9y91pxl0hju.thumb.jpg?Expires=1772409599000&Key-Pair-Id=K271ZF3SQS38SK&Signature=..."
+      "url": "https://assets.giggle.pro/private/example/image.jpg?Policy=EXAMPLE_POLICY&Key-Pair-Id=EXAMPLE_KEY_PAIR_ID&Signature=EXAMPLE_SIGNATURE"
     }
   ],
   "generate_count": 1,

@@ -3,11 +3,16 @@
   "slug": "giggle-generation-image",
   "displayName": "Giggle Generation Image",
   "latest": {
-    "version": "0.0.9",
-    "publishedAt": 1773395380648,
-    "commit": "https://github.com/openclaw/skills/commit/9ae8f089bbe5bde6a1fabbce4c1876de7524789c"
+    "version": "0.0.10",
+    "publishedAt": 1773628456631,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.0.9",
+      "publishedAt": 1773395380648,
+      "commit": "https://github.com/openclaw/skills/commit/9ae8f089bbe5bde6a1fabbce4c1876de7524789c"
+    },
     {
       "version": "0.0.5",
       "publishedAt": 1773391999356,

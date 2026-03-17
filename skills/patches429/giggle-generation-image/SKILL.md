@@ -1,10 +1,10 @@
 ---
 name: giggle-generation-image
-description: Supports text-to-image and image-to-image. Use when the user needs to create or generate images. Use cases: (1) Generate from text description, (2) Use reference images, (3) Customize model, aspect ratio, resolution. Triggers: generate image, draw, create image, AI art.
-version: "0.0.9"
+description: "Supports text-to-image and image-to-image. Use when the user needs to create or generate images. Use cases: (1) Generate from text description, (2) Use reference images, (3) Customize model, aspect ratio, resolution. Triggers: generate image, draw, create image, AI art."
+version: "0.0.10"
 license: MIT
-author: storyclaw-official
-homepage: https://github.com/storyclaw-official/storyclaw-skills
+author: giggle-official
+homepage: https://github.com/giggle-official/skills
 requires:
   bins: [python3]
   env: [GIGGLE_API_KEY]
@@ -27,13 +27,15 @@ metadata:
 
 # Giggle Image Generation (Multi-Model)
 
-**Source**: [storyclaw-official/storyclaw-skills](https://github.com/storyclaw-official/storyclaw-skills) · API: [giggle.pro](https://giggle.pro/)
+**Source**: [giggle-official/skills](https://github.com/giggle-official/skills) · API: [giggle.pro](https://giggle.pro/)
 
 Generates AI images via giggle.pro's Generation API. Supports multiple models (Seedream, Midjourney, Nano Banana). Submit task → query when ready. No polling or Cron.
 
 **API Key**: Set system environment variable `GIGGLE_API_KEY`. The script will prompt if not configured.
 
 > **No inline Python**: All commands must be executed via the `exec` tool. **Never** use `python3 << 'EOF'` or heredoc inline code.
+
+> **No Retry on Error**: If script execution encounters an error, **do not retry**. Report the error to the user directly and stop.
 
 ## Supported Models
 
@@ -142,7 +144,7 @@ The image-to-image API's `reference_images` is an array of objects. Each element
   "prompt": "A cute orange cat sitting on the windowsill in the sun, realistic style",
   "reference_images": [
     {
-      "url": "https://assets.ggltest.com/private/test_ai_director/0ebc2ffa7512a58df5/9y91pxl0hju.thumb.jpg?Expires=1772409599000&Key-Pair-Id=K271ZF3SQS38SK&Signature=..."
+      "url": "https://assets.giggle.pro/private/example/image.jpg?Policy=EXAMPLE_POLICY&Key-Pair-Id=EXAMPLE_KEY_PAIR_ID&Signature=EXAMPLE_SIGNATURE"
     }
   ],
   "generate_count": 1,

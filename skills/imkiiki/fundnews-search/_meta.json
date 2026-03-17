@@ -1,0 +1,11 @@
+{
+  "owner": "imkiiki",
+  "slug": "fundnews-search",
+  "displayName": "基金新闻日报",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1773500868789,
+    "commit": null
+  },
+  "history": []
+}

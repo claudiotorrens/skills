@@ -1,6 +1,8 @@
 ---
 name: send-usms-uspeedo
 description: Sends international SMS (USMS) via uspeedo platform HTTP API. Use when the user needs to send international SMS, batch SMS, verification/notification/marketing messages, or when integrating with uspeedo SendBatchUSMSMessage API.
+homepage: https://uspeedo.com
+metadata: {"openclaw":{"homepage":"https://uspeedo.com","requires":{"env":["USPEEDO_ACCESSKEY_ID","USPEEDO_ACCESSKEY_SECRET"]},"primaryEnv":"USPEEDO_ACCESSKEY_ID"}}
 ---
 
 # Send International SMS via uspeedo

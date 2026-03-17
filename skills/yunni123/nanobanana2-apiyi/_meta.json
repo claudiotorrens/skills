@@ -3,9 +3,15 @@
   "slug": "nanobanana2-apiyi",
   "displayName": "nanobanana2-apiyi",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773365681410,
-    "commit": "https://github.com/openclaw/skills/commit/323bd9f476730d842ae65152e0da9a51123dd513"
+    "version": "1.0.2",
+    "publishedAt": 1773651000941,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773365681410,
+      "commit": "https://github.com/openclaw/skills/commit/323bd9f476730d842ae65152e0da9a51123dd513"
+    }
+  ]
 }

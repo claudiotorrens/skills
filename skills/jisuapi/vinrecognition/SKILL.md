@@ -27,7 +27,7 @@ $env:JISU_API_KEY="your_appkey_here"
 
 ## 脚本路径
 
-脚本文件：`skill/vinrecognition/vinrecognition.py`
+脚本文件：`skills/vinrecognition/vinrecognition.py`
 
 ## 使用方式
 
@@ -36,13 +36,13 @@ $env:JISU_API_KEY="your_appkey_here"
 ### 1. 从本地图片识别 VIN
 
 ```bash
-python3 skill/vinrecognition/vinrecognition.py '{"path":"vin.jpg"}'
+python3 skills/vinrecognition/vinrecognition.py '{"path":"vin.jpg"}'
 ```
 
 ### 2. 直接传 base64 图片内容
 
 ```bash
-python3 skill/vinrecognition/vinrecognition.py '{
+python3 skills/vinrecognition/vinrecognition.py '{
   "pic": "<base64-encoded-image>"
 }'
 ```
@@ -123,6 +123,6 @@ JSON 请求体字段说明：
 
 1. 用户上传一张挡风玻璃或行驶证照片，提问：「帮我识别下这辆车的 VIN、品牌和厂家」。  
 2. 代理将图片保存为临时文件路径（如 `vin.jpg`），调用：  
-   `python3 skill/vinrecognition/vinrecognition.py '{"path":"vin.jpg"}'`  
+   `python3 skills/vinrecognition/vinrecognition.py '{"path":"vin.jpg"}'`  
 3. 从返回结果中读取 `vin/iscorrect/brand/manufacturer` 字段，用自然语言总结给用户；如有需要，还可以结合 `vin/query` 接口获取更详细的车辆配置信息。  
 

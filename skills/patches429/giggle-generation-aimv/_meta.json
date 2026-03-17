@@ -3,9 +3,15 @@
   "slug": "giggle-generation-aimv",
   "displayName": "Giggle Generation Aimv",
   "latest": {
-    "version": "0.0.1",
-    "publishedAt": 1773311997891,
-    "commit": "https://github.com/openclaw/skills/commit/19e2c095a277d22541084a8caf472bfdbc872053"
+    "version": "0.0.10",
+    "publishedAt": 1773628473215,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.0.1",
+      "publishedAt": 1773311997891,
+      "commit": "https://github.com/openclaw/skills/commit/19e2c095a277d22541084a8caf472bfdbc872053"
+    }
+  ]
 }

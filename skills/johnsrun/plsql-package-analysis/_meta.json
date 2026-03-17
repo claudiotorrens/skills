@@ -1,0 +1,11 @@
+{
+  "owner": "johnsrun",
+  "slug": "plsql-package-analysis",
+  "displayName": "SP Analysis in PL/SQL Package",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773560886287,
+    "commit": null
+  },
+  "history": []
+}

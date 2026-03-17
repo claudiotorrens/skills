@@ -1,11 +1,17 @@
 {
   "owner": "smallmj",
   "slug": "memory-indexer",
-  "displayName": "Memory Indexer",
+  "displayName": "memory-indexer",
   "latest": {
-    "version": "1.0.12",
-    "publishedAt": 1773402000492,
-    "commit": "https://github.com/openclaw/skills/commit/d6f71716cc7e047b5ec0cd174c4f54784e9aa233"
+    "version": "2.0.1",
+    "publishedAt": 1773596753474,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.12",
+      "publishedAt": 1773402000492,
+      "commit": "https://github.com/openclaw/skills/commit/d6f71716cc7e047b5ec0cd174c4f54784e9aa233"
+    }
+  ]
 }

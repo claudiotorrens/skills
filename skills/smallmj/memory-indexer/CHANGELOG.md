@@ -1,10 +1,112 @@
 # Changelog / 更新日志
 
+> **版本号规则：** Feature 分支不更新版本号，合并到 main 时统一递增版本号
+
 ---
 
-## v1.0.9 (2026-03-13)
+## v2.0.0 (2026-03-14)
 
 ### English
+- 🎨 feat: Add three-level cascade search (keyword → vector → raw text)
+  - Level 1: Keyword search (existing)
+  - Level 2: Vector semantic search (HuggingFace bge-base-zh-v1.5)
+  - Level 3: Raw text search
+  - Automatic fallback: upper level no results → next level
+- 🧠 feat: Add embedding.py - Vector semantic search module
+  - Support HuggingFace local models (recommended)
+  - Support Ollama local models
+  - Support MiniMax API
+  - Default model: BAAI/bge-base-zh-v1.5 (768 dimensions)
+- 🔧 feat: Add vector management commands
+  - `vector status` - View vector index status
+  - `vector test` - Test vector generation
+  - `vector reindex` - Batch regenerate vectors
+- ✨ feat: Add --embed flag to add command for vector generation
+- 📝 docs: Update AGENTS.md with three-level search and proactive trigger
+- 🐛 fix: Fix score display bug in search results
+- ♻️ refactor: Remove Hook (Agent now intelligently decides when to search)
+  - No more auto-search on session start
+  - Agent judges based on user question content
+
+### 中文
+- 🎨 feat: 添加三级级联搜索（关键词 → 向量 → 原文）
+  - 第1层：关键词搜索（现有）
+  - 第2层：向量语义搜索（HuggingFace bge-base-zh-v1.5）
+  - 第3层：原文全文搜索
+  - 自动降级：上层无结果时自动使用下一层
+- 🧠 feat: 添加 embedding.py - 向量语义搜索模块
+  - 支持 HuggingFace 本地模型（推荐）
+  - 支持 Ollama 本地模型
+  - 支持 MiniMax API
+  - 默认模型：BAAI/bge-base-zh-v1.5（768维）
+- 🔧 feat: 添加向量管理命令
+  - `vector status` - 查看向量索引状态
+  - `vector test` - 测试向量生成
+  - `vector reindex` - 批量重新生成向量
+- ✨ feat: add 命令添加 --embed 参数支持向量生成
+- 📝 docs: 更新 AGENTS.md，添加三级搜索和智能触发
+- 🐛 fix: 修复搜索结果分数显示 bug
+- ♻️ refactor: 删除 Hook（由 Agent 智能判断是否搜索）
+  - 不再自动搜索
+  - Agent 根据问题内容判断
+
+---
+
+## v1.0.10 (2026-03-13)
+
+### English
+- 🎨 feat: Add three-level cascade search (keyword → vector → raw text)
+  - Level 1: Keyword search (existing)
+  - Level 2: Vector semantic search (HuggingFace bge-base-zh-v1.5)
+  - Level 3: Raw text search
+  - Automatic fallback: upper level no results → next level
+- 🧠 feat: Add embedding.py - Vector semantic search module
+  - Support HuggingFace local models (recommended)
+  - Support Ollama local models
+  - Support MiniMax API
+  - Default model: BAAI/bge-base-zh-v1.5 (768 dimensions)
+- 🔧 feat: Add vector management commands
+  - `vector status` - View vector index status
+  - `vector test` - Test vector generation
+  - `vector reindex` - Batch regenerate vectors
+- ✨ feat: Add --embed flag to add command for vector generation
+- 📝 docs: Update AGENTS.md with three-level search and proactive trigger
+- 🐛 fix: Fix score display bug in search results
+- ♻️ refactor: Remove Hook (Agent now intelligently decides when to search)
+  - No more auto-search on session start
+  - Agent judges based on user question content
+
+### 中文
+- 🎨 feat: 添加三级级联搜索（关键词 → 向量 → 原文）
+  - 第1层：关键词搜索（现有）
+  - 第2层：向量语义搜索（HuggingFace bge-base-zh-v1.5）
+  - 第3层：原文全文搜索
+  - 自动降级：上层无结果时自动使用下一层
+- 🧠 feat: 添加 embedding.py - 向量语义搜索模块
+  - 支持 HuggingFace 本地模型（推荐）
+  - 支持 Ollama 本地模型
+  - 支持 MiniMax API
+  - 默认模型：BAAI/bge-base-zh-v1.5（768维）
+- 🔧 feat: 添加向量管理命令
+  - `vector status` - 查看向量索引状态
+  - `vector test` - 测试向量生成
+  - `vector reindex` - 批量重新生成向量
+- ✨ feat: add 命令添加 --embed 参数支持向量生成
+- 📝 docs: 更新 AGENTS.md，添加三级搜索和智能触发
+- 🐛 fix: 修复搜索结果分数显示 bug
+- ♻️ refactor: 删除 Hook（由 Agent 智能判断是否搜索）
+  - 不再自动搜索
+  - Agent 根据问题内容判断
+
+---
+
+## v1.0.10 (2026-03-13)
+
+### English
+- 📝 docs: Update AGENTS.md and install.sh with proactive search rules
+  - Add memory search order: memory-indexer first
+  - Add proactive search triggers: "找找", "为什么", "之前", "记得"
+  - Search automatically when user mentions historical context
 - 🔧 fix: update.sh now supports auto-update of OpenClaw config files (AGENTS.md, MEMORY.md, HEARTBEAT.md) and Hooks
   - Add --skip-config option to skip config update
   - Add --skip-hooks option to skip hooks update
@@ -23,6 +125,10 @@
   - Support listing and restoring snapshots
 
 ### 中文
+- 📝 docs: 更新 AGENTS.md 和 install.sh，添加主动搜索规则
+  - 添加记忆搜索顺序：memory-indexer 最先
+  - 添加主动搜索触发词："找找"、"为什么"、"之前"、"记得"
+  - 用户提到历史相关内容时自动搜索
 - 🔧 fix: update.sh 现在支持自动更新 OpenClaw 配置文件（AGENTS.md, MEMORY.md, HEARTBEAT.md）和 Hooks
   - 添加 --skip-config 选项跳过配置更新
   - 添加 --skip-hooks 选项跳过 Hook 更新
@@ -56,7 +162,6 @@
 - 🐛 fix: memory_compact.py now supports custom paths via command line arguments
 - 🐛 fix: session_backup.py now supports custom paths via command line arguments
 - 🔧 fix: Keyword extraction now filters GitHub tokens (ghp_xxx, gho_xxx, etc.) and other common API tokens
-- 🔧 fix: Enhanced GitHub token filtering, filter token prefixes split by jieba
 
 ### 中文
 - 🎨 feat: 新增 memory_compact.py - Memory 文件精简脚本
@@ -70,11 +175,10 @@
 - 🐛 fix: memory_compact.py 现在支持通过命令行参数指定自定义路径
 - 🐛 fix: session_backup.py 现在支持通过命令行参数指定自定义路径
 - 🔧 fix: 关键词提取现在会过滤 GitHub Token（ghp_xxx, gho_xxx 等）和其他常见 API Token
-- 🔧 fix: 增强 GitHub Token 过滤，过滤被 jieba 拆分后的 token 前缀
 
 ---
 
-## v1.0.7 (2026-03-13)
+## v1.0.8 (2026-03-13)
 
 ### English
 - 🔧 fix: session_backup.py improved message extraction, filter System: and JSON metadata, keep only real user messages
@@ -86,7 +190,7 @@
 
 ---
 
-## v1.0.6 (2026-03-12)
+## v1.0.5 (2026-03-12)
 
 ### English
 - ⚙️ config: install.sh now includes Hook installation (memory-indexer-on-new)
@@ -133,8 +237,8 @@
 ## v1.0.3 (2026-03-12)
 
 ### English
-- 📖 docs: Added "Why Compact Session Memory" documentation
-- 🔄 integration: README explains session_backup.py purpose and effects
+- 📖 docs: 添加"为什么要精简 Session Memory"说明文档
+- 🔄 integration: README 说明 session_backup.py 用途和效果
 
 ### 中文
 - 📖 docs: 添加"为什么要精简 Session Memory"说明文档
@@ -145,8 +249,8 @@
 ## v1.0.3 (2026-03-12)
 
 ### English
-- 🎨 feat: Add session_backup.py - Session backup and compact script
-- 🔄 integration: Heartbeat auto-backs up session content to indexer, compacts files to 10KB
+- 🎨 feat: 添加 session_backup.py - 会话备份与精简脚本
+- 🔄 integration: heartbeat 自动备份会话内容到 indexer，精简原文件到 10KB
 
 ### 中文
 - 🎨 feat: 添加 session_backup.py - 会话备份与精简脚本

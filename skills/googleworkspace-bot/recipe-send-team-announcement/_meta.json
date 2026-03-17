@@ -1,0 +1,11 @@
+{
+  "owner": "googleworkspace-bot",
+  "slug": "recipe-send-team-announcement",
+  "displayName": "Recipe Send Team Announcement",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773494459962,
+    "commit": null
+  },
+  "history": []
+}

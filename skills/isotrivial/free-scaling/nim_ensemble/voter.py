@@ -48,15 +48,63 @@ COPILOT_MODELS = {
 
 
 def _refresh_copilot_token() -> bool:
-    """Try to refresh the Copilot token via OpenClaw gateway."""
-    import subprocess
+    """Refresh the Copilot session token using GitHub OAuth token.
+    
+    Uses the stored GitHub user token (ghu_*) to request a fresh
+    Copilot session token from api.github.com/copilot_internal/v2/token.
+    """
+    import urllib.request
+    import urllib.error
+    import glob
+    
+    token_path = os.path.expanduser("~/.openclaw/credentials/github-copilot.token.json")
+    
+    # Find GitHub OAuth token from auth-profiles
+    oauth_token = None
+    for profile_path in glob.glob(os.path.expanduser("~/.openclaw/agents/*/agent/auth-profiles.json")):
+        try:
+            with open(profile_path) as f:
+                data = json.load(f)
+            # Profiles may be nested under "profiles" key
+            profiles = data.get("profiles", data)
+            for profile_name, profile_data in profiles.items():
+                if isinstance(profile_data, dict):
+                    tok = profile_data.get("token", "")
+                    if isinstance(tok, str) and tok.startswith("ghu_"):
+                        oauth_token = tok
+                        break
+            if oauth_token:
+                break
+        except Exception:
+            continue
+    
+    if not oauth_token:
+        return False
+    
     try:
-        # A quick gateway call triggers token refresh
-        subprocess.run(
-            ["curl", "-sf", "http://localhost:18789/v1/models"],
-            capture_output=True, timeout=10
+        req = urllib.request.Request(
+            "https://api.github.com/copilot_internal/v2/token",
+            headers={
+                "Authorization": f"token {oauth_token}",
+                "Editor-Version": "vscode/1.96.0",
+                "Editor-Plugin-Version": "copilot/1.250.0",
+                "User-Agent": "GithubCopilot/1.250.0",
+            },
         )
-        time.sleep(1)  # give it a moment to write the new token
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        
+        if "token" not in data:
+            return False
+        
+        # Save refreshed token
+        with open(token_path, "w") as f:
+            json.dump({
+                "token": data["token"],
+                "expiresAt": int(data.get("expires_at", 0)),
+                "updatedAt": int(time.time() * 1000),
+            }, f, indent=2)
+        
         return True
     except Exception:
         return False
@@ -72,19 +120,23 @@ def _get_copilot_token() -> str:
         data = json.load(f)
     
     token = data.get("token", "")
-    expires = data.get("expiresAt", 0) / 1000
+    expires_raw = data.get("expiresAt", 0)
+    # Handle both seconds and milliseconds format
+    expires = expires_raw / 1000 if expires_raw > 1e12 else expires_raw
     
-    if time.time() > expires:
-        # Try auto-refresh
+    # Proactive refresh: if <5min remaining, refresh before it expires
+    if time.time() > expires - 300:
         if _refresh_copilot_token():
             with open(token_path) as f:
                 data = json.load(f)
             token = data.get("token", "")
-            expires = data.get("expiresAt", 0) / 1000
+            expires_raw = data.get("expiresAt", 0)
+            expires = expires_raw / 1000 if expires_raw > 1e12 else expires_raw
             if time.time() > expires:
                 raise RuntimeError("Copilot token expired — auto-refresh failed")
-        else:
-            raise RuntimeError("Copilot token expired — gateway refresh needed")
+        elif time.time() > expires:
+            raise RuntimeError("Copilot token expired — no OAuth token found")
+        # else: refresh failed but token still valid, continue
     
     return token
 
@@ -96,8 +148,15 @@ def call_copilot(
     max_tokens: int = 300,
     temperature: float = 0.1,
 ) -> tuple[str, str]:
-    """Call a Copilot model. Returns (parsed_answer, raw_content)."""
+    """Call a Copilot model directly. Auto-refreshes token via GitHub OAuth."""
     api_model = COPILOT_MODELS.get(model_alias, model_alias)
+    try:
+        from .models import MODELS
+        if model_alias in MODELS and MODELS[model_alias].get("backend") == "copilot":
+            api_model = MODELS[model_alias]["id"]
+    except (ImportError, KeyError):
+        pass
+    
     token = _get_copilot_token()
     
     messages = []
@@ -128,7 +187,7 @@ def call_copilot(
             },
         )
         
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with urllib.request.urlopen(req, timeout=45) as resp:
             raw = resp.read().decode("utf-8")
         
         if not raw or not raw.startswith("{"):
@@ -154,7 +213,17 @@ def call_model(
     max_tokens: int = 150,
     temperature: float = 0.1,
 ) -> tuple[str, str]:
-    """Call a single NIM model. Returns (parsed_answer, raw_content)."""
+    """Call a single model. Routes Copilot aliases (cp-*) automatically."""
+    # Route Copilot models to call_copilot()
+    if model_alias in COPILOT_MODELS:
+        return call_copilot(prompt, model_alias, system_prompt, max_tokens, temperature)
+    # Also route models with backend=copilot from registry
+    try:
+        model_check = get_model(model_alias)
+        if model_check.get("backend") == "copilot":
+            return call_copilot(prompt, model_alias, system_prompt, max_tokens, temperature)
+    except KeyError:
+        pass
     model_info = get_model(model_alias)
     api_model = model_info["id"]
     key = _get_nim_key()
@@ -275,8 +344,8 @@ def vote(
     
     models_used_ordered = []
     
-    if parallel and not short_circuit:
-        # Full parallel execution — collect results with model identity
+    if parallel:
+        # Parallel execution — submit all, optionally short-circuit on agreement
         with ThreadPoolExecutor(max_workers=len(model_aliases)) as pool:
             futures = {pool.submit(_call, alias): alias for alias in model_aliases}
             for fut in as_completed(futures):
@@ -286,30 +355,30 @@ def vote(
                 raw_responses.append(raw)
                 if ans == "ERROR":
                     errors.append(f"{alias}: {raw[:100]}")
+                
+                # Short-circuit: cancel remaining if first 2 non-error votes agree
+                if short_circuit and len(votes) >= 2:
+                    non_error = [v for v in votes if v != "ERROR"]
+                    if len(non_error) >= 2 and len(set(non_error)) == 1:
+                        # Cancel remaining futures
+                        for f in futures:
+                            f.cancel()
+                        break
     
-    elif short_circuit:
-        # Sequential with early exit on agreement
+    else:
+        # Sequential execution with optional short-circuit
         for i, alias in enumerate(model_aliases):
             _, ans, raw = _call(alias)
+            models_used_ordered.append(alias)
             votes.append(ans)
             raw_responses.append(raw)
             if ans == "ERROR":
                 errors.append(f"{alias}: {raw[:100]}")
             
-            # Check for short circuit after 2 votes
-            if i >= 1 and short_circuit:
+            if short_circuit and i >= 1:
                 non_error = [v for v in votes if v != "ERROR"]
                 if len(non_error) >= 2 and len(set(non_error)) == 1:
                     break
-    
-    else:
-        # Sequential, no short circuit
-        for alias in model_aliases:
-            _, ans, raw = _call(alias)
-            votes.append(ans)
-            raw_responses.append(raw)
-            if ans == "ERROR":
-                errors.append(f"{alias}: {raw[:100]}")
     
     # Count votes (exclude errors)
     non_error_votes = [v for v in votes if v != "ERROR"]
@@ -366,11 +435,19 @@ def vote_batch(
     
     with ThreadPoolExecutor(max_workers=parallel_questions) as pool:
         futures = {
-            pool.submit(_vote_one, i, q): i 
+            pool.submit(_vote_one, i, q): i
             for i, q in enumerate(questions)
         }
         for fut in as_completed(futures):
-            idx, result = fut.result()
-            results[idx] = result
-    
+            try:
+                idx, result = fut.result()
+                results[idx] = result
+            except Exception as e:
+                idx = futures[fut]
+                results[idx] = VoteResult(
+                    answer="ERROR", confidence="0/0",
+                    votes=[], raw_responses=[], models_used=[],
+                    errors=[f"Batch item error: {e}"],
+                )
+
     return results

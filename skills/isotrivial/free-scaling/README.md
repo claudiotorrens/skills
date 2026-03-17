@@ -1,43 +1,39 @@
 # Free Scaling
 
-$0 test-time scaling using [NVIDIA NIM](https://build.nvidia.com) free tier. Ask multiple models, get one reliable answer.
+$0 test-time scaling infrastructure using [NVIDIA NIM](https://build.nvidia.com) free tier.
+
+Three patterns, one API key, zero cost:
 
 ```python
-from nim_ensemble import scale
+from free_scaling import scale, generate, health
 
-result = scale("Is this code safe?", k=3, answer_patterns=["SAFE", "VULNERABLE"])
-# → VULNERABLE (k=3, conf=100%, 3 calls, 1.2s)
+# Classify — 3 models vote on labels
+result = scale("Is this code safe?", context=code, k=3,
+               answer_patterns=["SAFE", "VULNERABLE"])
+# → VULNERABLE (100%, 3 calls, 1.2s)
+
+# Generate — best-of-k with cross-evaluation
+result = generate("Summarize this paper.", context=paper, k=3)
+# → best summary picked by 3 independent judges
+
+# Verify — just scale() with source+output as context
+check = scale("Any hallucinated claims? Answer YES or NO.",
+              context=f"Source:\n{source}\n\nOutput:\n{draft}", k=3)
 ```
 
 ## Why
 
-Single models hallucinate. Ensembles don't (as much). NIM gives you 15 models for free. This library turns them into a single reliable oracle with one parameter: **k** — the number of models to ask.
+Single models hallucinate. Ensembles don't (as much). NIM gives you 13 models for free. This library turns them into reliable infrastructure with one parameter: **k**.
 
 **Zero cost. Zero dependencies. Just stdlib Python + a free API key.**
 
 ## Setup
 
-### NIM Backend (primary)
-1. Get a free API key at [build.nvidia.com](https://build.nvidia.com) — sign in, pick any model, click "Get API Key"
-2. One key works for all 15 models:
-   ```bash
-   export NVIDIA_API_KEY="nvapi-..."
-   ```
-
-### Copilot Backend (optional)
-GitHub Copilot models (cp-4.1, cp-mini, cp-sonnet, etc.) can also be used as voters — useful for hybrid setups where you want smarter models on harder questions and NIM for fast/diverse voting.
-
-```python
-from nim_ensemble import call_copilot
-
-# Requires a Copilot token at ~/.openclaw/credentials/github-copilot.token.json
-ans, raw = call_copilot("Is this safe?", "cp-4.1")
-```
-
-Available Copilot models: `cp-4.1` (GPT-4.1), `cp-mini` (GPT-5-mini), `cp-4o`, `cp-flash`, `cp-haiku`, `cp-sonnet`.
-
-### Clone and use
 ```bash
+# 1. Get a free key at build.nvidia.com (one key works for all 13 models)
+export NVIDIA_API_KEY="nvapi-..."
+
+# 2. Clone
 git clone https://github.com/isotrivial/free-scaling.git
 cd free-scaling
 ```
@@ -48,101 +44,142 @@ No pip install needed — stdlib only (Python 3.10+).
 
 ### CLI
 ```bash
-# Scale to 3 models
+# Classify
 python3 -m nim_ensemble.cli scale "Is eval(input()) safe?" -k 3 --answers "SAFE,VULNERABLE"
-# → VULNERABLE (k=3, conf=100%, 3 calls, 1.2s)
 
-# Single model (fastest)
-python3 -m nim_ensemble.cli scale "Is 91 prime?" -k 1 --answers "YES,NO"
-# → NO (k=1, conf=100%, 1 call, 0.5s)
-
-# Auto-scale (smart cascade — starts with 1, adds more if uncertain)
+# Auto-scale (smart cascade — 1 call if confident, up to 5 if uncertain)
 python3 -m nim_ensemble.cli scale "Is this compliant?" -k auto
+
+# Check model health
+python3 -m nim_ensemble.cli models
 ```
 
 ### Python
 ```python
-from nim_ensemble import scale
+from free_scaling import scale, scale_batch, generate, generate_batch, health
 
-# k=1: single best model (fast, cheap)
-result = scale("Is this safe?", k=1)
+# ── Classify ──────────────────────────────────────────
+result = scale("Is this urgent?", context=email, k=3,
+               answer_patterns=["URGENT", "NORMAL", "IGNORE"])
 
-# k=3: 3 diverse models (balanced)
-result = scale("Is this safe?", k=3, answer_patterns=["SAFE", "VULNERABLE"])
+# Batch classify (parallel)
+results = scale_batch([
+    {"question": "Urgent?", "context": e, "answer_patterns": ["YES", "NO"]}
+    for e in emails
+], k=3)
 
-# k=5: maximum confidence
-result = scale("Is this safe?", k=5)
+# ── Generate ──────────────────────────────────────────
+result = generate("Summarize this.", context=paper, k=3)
+print(result.output)       # best of 3 summaries
+print(result.winner_model) # which model won
 
-# k="auto": smart cascade (1→2→N, escalates on uncertainty)
-result = scale("Is this safe?", k="auto")
-
-print(result.answer)      # VULNERABLE
-print(result.confidence)  # 1.0
-print(result.calls_made)  # 3
+# ── Health ────────────────────────────────────────────
+status = health()
+for model, h in status.items():
+    print(f"{model}: {h.status} ({h.latency_s:.1f}s)")
 ```
 
 ## How It Works
 
-**`k=1`**: Asks the single best model (mistral-large).
+### `scale(question, context, k)` — Classification
 
-**`k=N`**: Asks N models from diverse families (Mistral, Meta, Qwen, Google, etc.), majority vote. Models are selected to maximize architectural diversity — independent errors cancel out.
+Ask k models the same question, majority vote. Context goes in system message so the question stays clean.
 
-**`k="auto"`** (smart cascade):
+| k | Behavior | Calls |
+|---|----------|-------|
+| 1 | Single best model for task type | 1 |
+| 3 | 3 diverse models, majority vote | 3 |
+| 5 | 5 models for maximum confidence | 5 |
+| `"auto"` | Smart cascade: start with 1, escalate on uncertainty | 1-5 |
+
+### `generate(question, context, k)` — Generation
+
+Round 1: k models generate independently (parallel).
+Round 2: k *different* models judge which output is best.
+Returns the winner. Judges use different model families to avoid self-evaluation bias.
+
+### `health()` — Model Probing
+
+Probes all models with a trivial question. Reports ok/dead/slow/error + latency.
+Dead models (404/410) are auto-skipped in subsequent calls and retried after 5 minutes.
+
+## Online Learning (v3.3)
+
+Models self-select through deployment data. No manual benchmarking.
+
+```python
+from free_scaling import elo, feedback
+from free_scaling.evolve import evolve, report
+
+# Every scale() call automatically:
+# 1. Logs votes to ELO tracker
+# 2. Runs 1 shadow challenger for A/B data
+
+# Check rankings after deployment
+print(elo.summary())
+
+# User feedback — 4× stronger than consensus
+feedback.resolve_by_reaction(msg_id, "👍")   # confirm
+feedback.resolve_by_reaction(msg_id, "🅱️")   # Panel B wins
+feedback.resolve_by_reaction(msg_id, "🔴")   # override to URGENT
+
+# Weekly: check if panel should evolve
+result = evolve(dry_run=True)
+if result["changed"]:
+    evolve(dry_run=False)  # apply
 ```
-Question → classify task type → call best expert (1 call)
-        → confident? → done
-        → uncertain? → call arbiter
-        → still split? → full panel vote
-```
 
-Most questions resolve with 1-2 calls. Scales up only when needed.
+**Signal sources:**
+- **Consensus** (automatic): models agreeing/disagreeing with majority → K=16
+- **Shadow challenger**: 1 extra model per call for free competitive data
+- **User feedback**: reactions on output → K=64 (4× stronger)
+- **A/B splits**: when panels disagree, user picks winner
 
-## Capability Profiling (optional)
+After ~30 calls/model, ELO data replaces static panel selection.
 
-Default panels are diversity-based. For data-driven routing, profile models on your tasks:
+## Smart Features
 
-```bash
-python3 -m nim_ensemble.capability_map --models llama-3.3 gemma-27b mistral-large --trials 3
-```
+- **Online learning**: ELO-based model scoring from deployment data
+- **A/B testing**: shadow challengers run alongside panel for competitive signal
+- **Auto-heal**: Dead models get substituted with same-tier alternatives automatically
+- **Parallel short-circuit**: Submits all k in parallel, cancels when first 2 agree
+- **Task routing** (`k="auto"`): Classifies question type, routes to best expert
+- **Copilot integration**: `cp-*` aliases route through GitHub Copilot API
+- **User feedback loop**: Discord reactions → ELO updates (👍 🅰️🅱️ 🔴🟡⚪)
+- **Error isolation**: Batch functions catch per-item failures without killing the batch
+- **Thinking model support**: Handles MiniMax `<think>` blocks and Kimi `reasoning_content`
 
-Generates `capability_map.json` — the cascade loads it automatically to route around each model's measured blind spots.
-
-## 15 Models Included
+## 13 Models
 
 | Tier | Models |
 |------|--------|
 | Fast (<1s) | llama-3.3 70B, gemma-27b, nemotron-super-49b, dracarys-70b, jamba-mini |
 | Medium (1-3s) | mistral-large 675B, kimi-k2, qwen-397b, llama-405b, mistral-medium |
-| Slow (3s+) | deepseek-v3.1, minimax-m2.5 🧠, kimi-k2.5 🧠 |
+| Thinking (3s+) | deepseek-v3.1, minimax-m2.5 🧠, kimi-k2.5 🧠 |
 
 All free via NVIDIA NIM. One API key covers everything.
 
-## Presets
+## Model Selection
 
-### Audit Preset
-A ready-made behavioral compliance auditor. Collects system state, generates judgment questions, and pipes them through `scale()` with hybrid routing (Copilot for behavioral checks, NIM for operational checks):
+**Default**: panels are data-driven via ELO scoring from deployment. Start with static defaults, evolve automatically.
+
+**Manual profiling** (optional): for a quick snapshot before ELO accumulates data:
 
 ```bash
-# Full audit with hybrid backend (default)
-python3 -m presets.audit --backend hybrid -k 3
-
-# NIM-only (no Copilot token needed)
-python3 -m presets.audit --backend nim -k 3
-
-# JSON output for CI pipelines
-python3 -m presets.audit --json
+python3 -m nim_ensemble.capability_map --models llama-3.3 gemma-27b mistral-large --trials 3
 ```
 
-Produces a structured report with severity classification (🔴 CRITICAL / 🟡 WARNING / ✅ OK) and health score.
+**ELO state**: stored at `~/.cache/free-scaling/elo.json`. View with `elo.summary()`. Reset by deleting the file.
 
 ## Use Cases
 
-- **Code review** — "Is this code vulnerable?" across multiple models
-- **Fact-checking** — consensus answers to factual questions
-- **Compliance auditing** — check if outputs follow rules/policies
-- **Agent self-evaluation** — verify agent behavior against specs
-- **CI pipelines** — automated judgment gates with JSON output
-- **Any binary/categorical judgment** — scale compute to match stakes
+- **Email triage** — classify priority across 20 emails in one batch
+- **Code review** — "Is this vulnerable?" with 3-model consensus
+- **Content moderation** — TOXIC/BORDERLINE/CLEAN at scale
+- **Fact-checking** — consensus answers from diverse architectures
+- **Agent self-evaluation** — verify behavior against specs
+- **Summarization** — best-of-3 summaries, judged by 3 different models
+- **CI gates** — automated judgment with JSON output
 
 ## Also an OpenClaw Skill
 

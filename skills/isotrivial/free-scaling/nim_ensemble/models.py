@@ -104,22 +104,74 @@ MODELS = {
         "thinking": True,
         "think_style": "separate",  # reasoning_content field, content can be null
     },
-}
 
-# Models that give false passes — excluded from default panels
-EXCLUDED = {"phi-4-mini", "phi-3-small", "deepseek-v3.1", "chatglm3-6b", "italia-10b"}
+    # ── Copilot models (free tier, 0× cost, 1M context) ──
+    "cp-4.1": {
+        "id": "gpt-4.1",
+        "speed": "fast",
+        "family": "openai",
+        "params": "?",
+        "thinking": False,
+        "backend": "copilot",
+        "context": 1000000,
+    },
+    "cp-mini": {
+        "id": "gpt-5-mini",
+        "speed": "fast",
+        "family": "openai",
+        "params": "?",
+        "thinking": False,
+        "backend": "copilot",
+        "context": 1000000,
+    },
+    "cp-4o": {
+        "id": "gpt-4o",
+        "speed": "fast",
+        "family": "openai",
+        "params": "?",
+        "thinking": False,
+        "backend": "copilot",
+        "context": 128000,
+    },
+    "cp-flash": {
+        "id": "gemini-3-flash-preview",
+        "speed": "fast",
+        "family": "google-cp",
+        "params": "?",
+        "thinking": False,
+        "backend": "copilot",
+        "context": 1000000,
+    },
+    "cp-haiku": {
+        "id": "claude-haiku-4.5",
+        "speed": "fast",
+        "family": "anthropic-cp",
+        "params": "?",
+        "thinking": False,
+        "backend": "copilot",
+        "context": 200000,
+    },
+}
 
 # Default panels — diversity-based (mix model families for independent errors).
 # Override with capability_map.json for data-driven routing.
 PANELS = {
-    # General: 3 different families (Mistral/Meta/Google)
-    "general": ["mistral-large", "llama-3.3", "gemma-27b"],
-    # Fast: all <1.5s, different families
-    "fast": ["llama-3.3", "nemotron-super-49b", "gemma-27b"],
-    # Max: 5 models for highest confidence
-    "max": ["mistral-large", "llama-3.3", "gemma-27b", "nemotron-super-49b", "kimi-k2"],
-    # Arbiter: single tiebreaker
-    "arbiter": ["mistral-large"],
+    # General: top 3 by ELO (seeded 2026-03-14, 20 questions × ground truth)
+    # kimi-k2 85%, jamba-mini 75%, dracarys-70b 75% (all NIM)
+    # Copilot models scored 50-60% on classification — better for analysis
+    "general": ["kimi-k2", "jamba-mini", "dracarys-70b"],
+    # Fast: all <1s, max diversity
+    "fast": ["jamba-mini", "dracarys-70b", "llama-3.3"],
+    # Hybrid: NIM for voting + 1 Copilot for diversity
+    "hybrid": ["kimi-k2", "jamba-mini", "dracarys-70b", "cp-4.1", "gemma-27b"],
+    # Max: 5 best NIM models
+    "max": ["kimi-k2", "jamba-mini", "dracarys-70b", "gemma-27b", "llama-3.3"],
+    # Deep: long-context analysis (1M context Copilot models)
+    "deep": ["cp-4.1", "cp-mini", "cp-flash"],
+    # NIM-only: same as general (NIM won on classification)
+    "nim": ["kimi-k2", "jamba-mini", "dracarys-70b"],
+    # Arbiter: single best (kimi-k2 = 85% accuracy)
+    "arbiter": ["kimi-k2"],
 }
 
 

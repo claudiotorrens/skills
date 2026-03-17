@@ -3,9 +3,15 @@
   "slug": "free-scaling",
   "displayName": "Free Scaling",
   "latest": {
-    "version": "2.1.2",
-    "publishedAt": 1773514559792,
-    "commit": "https://github.com/openclaw/skills/commit/23d0fa899627cfd81f4c88d09601b3fba7d67a85"
+    "version": "3.3.1",
+    "publishedAt": 1773631334980,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.1.2",
+      "publishedAt": 1773514559792,
+      "commit": "https://github.com/openclaw/skills/commit/23d0fa899627cfd81f4c88d09601b3fba7d67a85"
+    }
+  ]
 }

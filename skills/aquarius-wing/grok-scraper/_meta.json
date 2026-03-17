@@ -1,0 +1,11 @@
+{
+  "owner": "aquarius-wing",
+  "slug": "grok-scraper",
+  "displayName": "Grok Scraper",
+  "latest": {
+    "version": "0.1.1",
+    "publishedAt": 1773571723885,
+    "commit": null
+  },
+  "history": []
+}

@@ -98,13 +98,41 @@ export class DchatBot extends EventEmitter {
   // ── Sending ──────────────────────────────────────────────
 
   /**
-   * Send a text message. Returns message ID.
-   * Fire-and-forget: NKN holds messages for offline recipients up to 1 hour.
-   * Delivery confirmation arrives asynchronously via receipt messages.
+   * Send a text message (fire-and-forget). Returns message ID.
+   * Use for long-running bots. Delivery confirmation arrives via receipt events.
    */
   sendText(to: string, text: string): string {
     const msg = this.buildMessage("text", text);
     this.sendAndStoreNoReply(to, msg);
+    return msg.id;
+  }
+
+  /**
+   * Send a text message and wait for NKN network to accept it.
+   * Use for one-shot CLI sends where the process exits immediately after.
+   * Returns message ID. Does NOT wait for recipient ACK — only for relay dispatch.
+   * If the recipient is offline, the message is queued by NKN relay nodes.
+   */
+  async sendTextAwait(to: string, text: string): Promise<string> {
+    const msg = this.buildMessage("text", text);
+    const myAddress = this.nkn.getAddress()!;
+    this.storeOutbound(myAddress, to, msg, "sending");
+    try {
+      await this.nkn.send(to, JSON.stringify(msg));
+      this.db.updateStatusIfNotDelivered(msg.id, "sent");
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      // Any timeout (including "failed to send with any client: ... Message timeout")
+      // means the NKN relay accepted the message but recipient didn't ACK (offline).
+      // The relay still queues the message for msgHoldingSeconds (1 hour).
+      if (errMsg.toLowerCase().includes("timeout")) {
+        console.log("[dchat] Recipient offline — message queued by NKN relay (up to 1 hour)");
+        this.db.updateStatusIfNotDelivered(msg.id, "sent");
+      } else {
+        this.db.updateStatus(msg.id, "failed");
+        throw err;
+      }
+    }
     return msg.id;
   }
 

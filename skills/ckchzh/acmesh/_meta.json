@@ -3,9 +3,15 @@
   "slug": "acmesh",
   "displayName": "Acmesh",
   "latest": {
-    "version": "2.3.0",
-    "publishedAt": 1773447013250,
-    "commit": "https://github.com/openclaw/skills/commit/234bb5ceabdb65eb4c90c302542087cf62eaaf13"
+    "version": "1.0.6",
+    "publishedAt": 1773664417827,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.3.0",
+      "publishedAt": 1773447013250,
+      "commit": "https://github.com/openclaw/skills/commit/234bb5ceabdb65eb4c90c302542087cf62eaaf13"
+    }
+  ]
 }

@@ -2,7 +2,7 @@
 name: skill-validator
 description: "技能检验工具：基于ClawHub技能格式规范的验证工具，确保技能符合最新发布要求。自动检测格式问题，提供修复建议，与ClawHub规范同步更新。"
 author: "puppetcat-fire (柏然)"
-version: "1.0.2"
+version: "1.0.4"
 created: "2026-03-13"
 updated: "2026-03-14"
 license: "MIT-0"
@@ -27,7 +27,7 @@ metadata:
         output: "输出JSON格式详细验证报告"
 ---
 
-# 技能检验工具 v1.0.2
+# 技能检验工具 v1.0.4
 
 ## 🎯 设计目标
 提供与**ClawHub技能格式规范同步**的验证工具，确保技能符合最新发布要求。每日自动检查规范更新，保持验证规则与ClawHub源码一致。

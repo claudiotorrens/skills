@@ -1,0 +1,11 @@
+{
+  "owner": "n0nu",
+  "slug": "n0nu-security-audit",
+  "displayName": "Security Audit for OpenClaw",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773644006000,
+    "commit": null
+  },
+  "history": []
+}

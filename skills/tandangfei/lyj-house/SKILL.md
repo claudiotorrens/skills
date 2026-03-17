@@ -1,6 +1,6 @@
 ---
 name: 乐有家找房
-description: "乐有家找房：通过自然语言描述查找深圳二手房或租房，返回房源列表与推荐。二手房 type=esf、租房 type=zf。仅支持深圳，city 传「深圳」。需配置 API Key 后使用。"
+description: "乐有家找房：自然语言查深圳二手房与租房"
 homepage: https://www.leyoujia.com
 metadata:
   {
@@ -8,7 +8,7 @@ metadata:
       {
         "skillKey": "lyj-house",
         "emoji": "🏠",
-        "requires": { "bins": ["curl"], "env": ["LYJ_API_KEY", "LYJ_API_URL"] },
+        "requires": { "bins": ["curl"], "env": ["LYJ_API_KEY"] },
         "primaryEnv": "LYJ_API_KEY",
       },
   }
@@ -16,15 +16,13 @@ metadata:
 
 # 乐有家找房
 
-通过乐有家开放接口，根据用户描述的条件检索**深圳二手房**或**深圳租房**，返回结构化房源列表并推荐最合适的房源。**仅支持深圳**，请求时 `city` 参数传 `"深圳"`；**二手房**传 `type: "esf"`，**租房**传 `type: "zf"`。
+根据用户自然语言条件检索**深圳二手房**（type=esf）或**深圳租房**（type=zf），返回房源列表并推荐。仅支持深圳，`city` 固定传 `"深圳"`。
 
 ## 如何使用
 
-- **在对话里直接说找房需求即可**，例如：「帮我找一套南山两房」「福田 100 平以内三房多少钱」「我想在南山买房，预算 500 万」「南山两房月租 5000 以内」「后海附近租房」。Agent 会自动选用本技能并调用找房接口（二手房 type=esf，租房 type=zf）。
-- **首次使用前需配置 API Key**：在 OpenClaw 配置中填写 `skills.entries.lyj-house.apiKey`，或安装插件 `@openclaw/lyj-house` 后在插件配置项中填写。获取方式：访问 https://shenzhen.leyoujia.com ，登录后点击「申请OpenClaw密钥」。
-- **环境变量约定：**
-  - 如果**已安装插件**：插件会把 Key 和接口地址注入为环境变量 `LYJ_API_KEY`、`LYJ_API_URL`；**调用接口时直接使用这两个环境变量即可，不要从配置或其它技能/插件中查找或替换成别的 key。**
-  - 如果**仅安装了 Skill（没有插件）**：请手动在运行环境中设置：`LYJ_API_KEY`（乐有家密钥）和 `LYJ_API_URL`。未特别指定时，`LYJ_API_URL` 默认使用 `https://wap.leyoujia.com/wap/openclaw/ai/house/search`。
+- **直接说需求**：如「帮我找一套南山两房」「福田 100 平三房」「南山两房月租 5000 以内」，Agent 会选用本技能并调用接口。
+- **只需配置 API Key**：在 OpenClaw 配置中填写 `skills.entries.lyj-house.apiKey`，或安装乐有家找房插件后在插件配置中填写。Key 获取：https://shenzhen.leyoujia.com → 登录 → 「申请OpenClaw密钥」。接口地址固定为 `https://wap.leyoujia.com/wap/openclaw/ai/house/search`，无需配置。
+- **调用方式**：安装插件后会自动注入 `LYJ_API_KEY` 与 `LYJ_API_URL`；仅安装本 Skill 时请手动设置环境变量 `LYJ_API_KEY`，curl 中 URL 使用上述固定地址。不要使用其它技能/插件的 key。
 
 ## 使用时机
 
@@ -99,17 +97,16 @@ metadata:
 
 **直接根据已有信息构造参数，不必追问所有字段。若用户提到具体地名（如"南山"、"后海"、"蛇口"），优先使用 placeCode；若只提到区（如"南山区"），使用 areaCode。**
 
-### 第二步：调用结构化找房接口
+### 第二步：调用找房接口
 
-**API Key 与地址：** 插件已从 `skills.entries.lyj-house` 将 API Key 和接口地址注入为环境变量 `LYJ_API_KEY`、`LYJ_API_URL`。调用时**直接使用** curl 中的 `"X-Api-Key: ${LYJ_API_KEY}"` 和 `${LYJ_API_URL}` 即可，**不要**从配置里另读、猜测或使用其他渠道的 key（例如 lyj-im 的 appKey）。只要已配置 `skills.entries.lyj-house.apiKey` 且插件已加载，执行 curl 时环境变量即已就绪。
-
-**请求约定：** 仅支持 POST；API Key 通过请求头 `X-Api-Key` 传递，查询条件通过请求体 **raw JSON** 传递（不要用 GET 或 URL 查询参数）。
-
-**兼容 Windows/PowerShell：** 在 PowerShell 或 CMD 下，`-d` 后的内联 JSON 可能因引号/转义被破坏导致 400。此时请先将 JSON 写入临时文件（如 `body.json`），再用 `curl -d @body.json` 传递请求体，确保服务端收到正确 JSON。
+- **URL**：`https://wap.leyoujia.com/wap/openclaw/ai/house/search`（固定，无需配置）。
+- **鉴权**：请求头 `X-Api-Key: ${LYJ_API_KEY}`。
+- **方式**：仅支持 POST，请求体为 raw JSON，勿用 GET 或 URL 参数。
+- **Windows/PowerShell**：内联 JSON 易被转义破坏，建议将 body 写入 `body.json` 后使用 `curl -d @body.json`。
 
 ```bash
-# 方式一：Bash/WSL 下可直接用 -d '...'
-curl -s -X POST "${LYJ_API_URL}" \
+# 方式一：Bash/WSL 下可直接用 -d '...'（URL 未设置时使用固定地址）
+curl -s -X POST "${LYJ_API_URL:-https://wap.leyoujia.com/wap/openclaw/ai/house/search}" \
   -H "X-Api-Key: ${LYJ_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{"type":"esf","city":"深圳","areaCode":"000035","room":"2","priceMax":600}'
@@ -118,7 +115,7 @@ curl -s -X POST "${LYJ_API_URL}" \
 ```bash
 # 方式二：Windows/PowerShell 下建议用文件传 body，避免转义问题
 echo '{"type":"esf","city":"深圳","areaCode":"000035","room":"2","priceMax":600}' > body.json
-curl -s -X POST "${LYJ_API_URL}" -H "X-Api-Key: ${LYJ_API_KEY}" -H "Content-Type: application/json" -d "@body.json"
+curl -s -X POST "${LYJ_API_URL:-https://wap.leyoujia.com/wap/openclaw/ai/house/search}" -H "X-Api-Key: ${LYJ_API_KEY}" -H "Content-Type: application/json" -d "@body.json"
 ```
 
 ### 第三步：解析结果并推荐
@@ -132,7 +129,7 @@ curl -s -X POST "${LYJ_API_URL}" -H "X-Api-Key: ${LYJ_API_KEY}" -H "Content-Type
 **构造请求：**（PowerShell 下若遇 400，改用 `echo '...' > body.json` 再 `curl -d @body.json`）
 
 ```bash
-curl -s -X POST "${LYJ_API_URL}" \
+curl -s -X POST "${LYJ_API_URL:-https://wap.leyoujia.com/wap/openclaw/ai/house/search}" \
   -H "X-Api-Key: ${LYJ_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{"type":"esf","city":"深圳","placeCode":"000042","room":"2","priceMax":600,"fitment":"48","tags":"9"}'
@@ -156,19 +153,7 @@ curl -s -X POST "${LYJ_API_URL}" \
 10. **房源亮点**：生成的亮点
 11. **房源外网地址**（仅当接口返回该字段且非空时展示，没有则省略）
 
-## 插件配置
-
-1. 访问 https://shenzhen.leyoujia.com ，登录账号，点击导航栏「申请OpenClaw密钥」获取 API Key
-2. 安装插件并填入 API Key：
-
-```bash
-openclaw plugins install @openclaw/lyj-house
-```
-
-安装后在配置项中填入获取的 API Key 即可。
-
 ## 注意事项
 
-- 当前仅支持**深圳**，`city` 传 `"深圳"`；二手房 `type=esf`，租房 `type=zf`
-- API Key 限流：每秒最多 3 次请求，超出时请稍后重试
-- 若接口返回 "无效的 API Key"，请引导用户访问 https://shenzhen.leyoujia.com 重新获取
+- 仅支持深圳：`city` 传 `"深圳"`；二手房 `type=esf`，租房 `type=zf`。
+- 限流：每秒最多 3 次请求；若返回「无效的 API Key」，引导用户至 https://shenzhen.leyoujia.com 重新申请。

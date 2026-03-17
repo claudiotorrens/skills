@@ -3,9 +3,15 @@
   "slug": "lyj-house",
   "displayName": "乐有家找房",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773716466737,
-    "commit": "https://github.com/openclaw/skills/commit/13754fccd86d426efac5e96f2e7028184bd218a5"
+    "version": "1.0.5",
+    "publishedAt": 1773721481008,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773716466737,
+      "commit": "https://github.com/openclaw/skills/commit/13754fccd86d426efac5e96f2e7028184bd218a5"
+    }
+  ]
 }

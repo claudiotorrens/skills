@@ -4,10 +4,17 @@ import json
 import os
 import sys
 from datetime import date, datetime, time, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 from icalendar import Calendar
+
+
+ENV_CANDIDATES = [
+    Path.cwd() / ".env",
+    Path.home() / ".openclaw" / ".env",
+]
 
 
 def fail(message: str, code: int = 1, pretty: bool = False) -> int:
@@ -31,27 +38,78 @@ def get_args() -> Tuple[bool, Optional[str]]:
     return pretty, url
 
 
+def strip_quotes(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+        return value[1:-1]
+    return value
+
+
+
+def read_env_file(path: Path) -> Dict[str, str]:
+    values: Dict[str, str] = {}
+
+    if not path.exists() or not path.is_file():
+        return values
+
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :].strip()
+        if "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key:
+            continue
+
+        values[key] = strip_quotes(value)
+
+    return values
+
+
+
+def get_env_value(key: str) -> str:
+    value = os.getenv(key, "").strip()
+    if value:
+        return value
+
+    for env_path in ENV_CANDIDATES:
+        file_values = read_env_file(env_path)
+        value = file_values.get(key, "").strip()
+        if value:
+            return value
+
+    return ""
+
+
+
 def get_feed_url(cli_url: Optional[str]) -> str:
     if cli_url and cli_url.strip():
         return cli_url.strip()
 
-    env_url = os.getenv("TRIPIT_ICAL_URL", "").strip()
+    env_url = get_env_value("TRIPIT_ICAL_URL")
     if env_url:
         return env_url
 
     raise ValueError(
-        "Missing TripIt iCal URL. Pass it as an argument or set TRIPIT_ICAL_URL."
+        "Missing TripIt iCal URL. Pass it as an argument or set TRIPIT_ICAL_URL in the environment or ~/.openclaw/.env."
     )
+
 
 
 def fetch_ics(url: str) -> str:
     response = requests.get(
         url,
-        headers={"User-Agent": "TripIt-iCal-Skill/1.0"},
+        headers={"User-Agent": "TripIt-iCal-Skill/1.1"},
         timeout=30,
     )
     response.raise_for_status()
     return response.text
+
 
 
 def ensure_datetime(value: Any) -> Optional[datetime]:
@@ -72,10 +130,12 @@ def ensure_datetime(value: Any) -> Optional[datetime]:
     return None
 
 
+
 def serialize_dt(dt: Optional[datetime]) -> Optional[str]:
     if dt is None:
         return None
     return dt.astimezone().isoformat()
+
 
 
 def format_dt_human(dt_str: Optional[str]) -> str:
@@ -88,11 +148,13 @@ def format_dt_human(dt_str: Optional[str]) -> str:
         return dt_str
 
 
+
 def short_text(value: str, limit: int = 300) -> str:
     value = value.replace("\r", " ").replace("\n", " ").strip()
     if len(value) <= limit:
         return value
     return value[:limit].rstrip() + "..."
+
 
 
 def parse_events(ics_text: str) -> List[Dict[str, Any]]:
@@ -123,6 +185,7 @@ def parse_events(ics_text: str) -> List[Dict[str, Any]]:
     return events
 
 
+
 def filter_upcoming(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     now = datetime.now(timezone.utc)
     result: List[Dict[str, Any]] = []
@@ -141,13 +204,13 @@ def filter_upcoming(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return result
 
 
+
 def same_trip(prev: Dict[str, Any], curr: Dict[str, Any]) -> bool:
     prev_uid = prev.get("uid", "")
     curr_uid = curr.get("uid", "")
 
-    if prev_uid and curr_uid:
-        if prev_uid.split("@")[0] == curr_uid.split("@")[0]:
-            return True
+    if prev_uid and curr_uid and prev_uid.split("@")[0] == curr_uid.split("@")[0]:
+        return True
 
     prev_end = prev.get("end") or prev.get("start")
     curr_start = curr.get("start")
@@ -158,6 +221,7 @@ def same_trip(prev: Dict[str, Any], curr: Dict[str, Any]) -> bool:
             return True
 
     return False
+
 
 
 def group_trips(events: List[Dict[str, Any]]) -> List[List[Dict[str, Any]]]:
@@ -175,6 +239,7 @@ def group_trips(events: List[Dict[str, Any]]) -> List[List[Dict[str, Any]]]:
     return groups
 
 
+
 def make_event_payload(event: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "uid": event.get("uid") or None,
@@ -185,6 +250,7 @@ def make_event_payload(event: Dict[str, Any]) -> Dict[str, Any]:
         "end": serialize_dt(event.get("end")),
         "description_short": event.get("description_short") or None,
     }
+
 
 
 def make_trip_payload(events: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -221,6 +287,7 @@ def make_trip_payload(events: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+
 def build_output(upcoming_events: List[Dict[str, Any]]) -> Dict[str, Any]:
     trips = group_trips(upcoming_events)
     next_trip = make_trip_payload(trips[0]) if trips else None
@@ -236,6 +303,7 @@ def build_output(upcoming_events: List[Dict[str, Any]]) -> Dict[str, Any]:
         "next_trip": next_trip,
         "upcoming_events": [make_event_payload(event) for event in upcoming_events[:20]],
     }
+
 
 
 def print_pretty(output: Dict[str, Any]) -> None:
@@ -294,6 +362,7 @@ def print_pretty(output: Dict[str, Any]) -> None:
             if event.get("status"):
                 print(f"     Status   : {event.get('status')}")
             print()
+
 
 
 def main() -> int:

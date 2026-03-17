@@ -77,6 +77,8 @@ forge install OpenZeppelin/openzeppelin-contracts-upgradeable@v<VERSION>
 > **Note**
 > The above remappings mean that both `@openzeppelin/contracts/` (including proxy contracts) and `@openzeppelin/contracts-upgradeable/` come from the `openzeppelin-contracts-upgradeable` submodule and its subdirectories, which includes its own transitive copy of `openzeppelin-contracts` of the same release version number. This format is needed for Etherscan verification to work. Particularly, any copies of `openzeppelin-contracts` that are installed separately are NOT used.
 
+> **Compiler version:** OpenZeppelin Contracts v5 requires `pragma solidity ^0.8.20`. If deploying to chains that do not support the `PUSH0` opcode (some L2s), set the EVM version to `paris` in the compiler configuration (e.g., `evmVersion: "paris"` in Hardhat, `evm_version = "paris"` in `foundry.toml`).
+
 ## Import Conventions
 
 - Standard: `@openzeppelin/contracts/token/ERC20/ERC20.sol`

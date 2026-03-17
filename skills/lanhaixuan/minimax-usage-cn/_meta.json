@@ -1,11 +1,17 @@
 {
   "owner": "lanhaixuan",
   "slug": "minimax-usage-cn",
-  "displayName": "Minimax Usage (国内版)",
+  "displayName": "minimax-usage-cn",
   "latest": {
-    "version": "1.0.4",
-    "publishedAt": 1773502625819,
-    "commit": "https://github.com/openclaw/skills/commit/05a6829b806f54da2e0e9054aa09216bde29202b"
+    "version": "1.0.5",
+    "publishedAt": 1773568428050,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.4",
+      "publishedAt": 1773502625819,
+      "commit": "https://github.com/openclaw/skills/commit/05a6829b806f54da2e0e9054aa09216bde29202b"
+    }
+  ]
 }

@@ -1,20 +1,52 @@
 ---
 name: minimax-usage-cn
-description: Monitor Minimax Coding Plan usage to stay within API limits. Fetches current usage stats and provides status alerts.
+description: >
+  Monitor Minimax Coding Plan usage to stay within API limits. Fetches current usage stats
+  and provides status alerts. Use when checking API quota, monitoring usage, or before running
+  large AI tasks. Shows 5-hour sliding window status.
+homepage: https://www.minimaxi.com
 metadata:
   openclaw:
     emoji: "📊"
+    category: "AI工具"
     requires:
       env:
         - MINIMAX_API_KEY
+      tools:
+        - curl
     primaryEnv: MINIMAX_API_KEY
+    triggerKeywords:
+      - "minimax"
+      - "用量"
+      - "quota"
+      - "usage"
+      - "配额"
+    examples:
+      - "查看 minimax 用量"
+      - "check minimax usage"
+      - "还有多少配额"
 ---
 
 # Minimax Usage (国内版)
 
 Monitor Minimax Coding Plan usage to stay within API limits.
 
-Designed for:
+---
+
+## 目录结构
+
+```
+~/.openclaw/workspace/skills/minimax-usage-cn/
+├── SKILL.md
+├── docs/                    # (reserved)
+├── templates/              # (reserved)
+└── scripts/
+    └── minimax-usage.sh   # Main script
+```
+
+---
+
+## 功能
 
 - Check current usage quota
 - Monitor 5-hour sliding window
@@ -34,14 +66,13 @@ Use this skill whenever:
 
 ## API Specification
 
-Endpoint:
+**Endpoint:** `GET https://www.minimaxi.com/v1/api/openplatform/coding_plan/remains`
 
-GET https://www.minimaxi.com/v1/api/openplatform/coding_plan/remains
-
-Headers:
-
+**Headers:**
+```
 Authorization: Bearer <MINIMAX_API_KEY>
 Content-Type: application/json
+```
 
 **注意：** 此接口仅适用于国内版 `www.minimaxi.com`。
 
@@ -49,17 +80,39 @@ Content-Type: application/json
 
 ## Response Fields
 
-| 字段 | 含义 |
-|------|------|
-| `remains_time` | 订阅周期剩余时间 (秒)，和5小时窗口无关 |
-| `current_interval_total_count` | 周期总配额 (1500) |
-| `current_interval_usage_count` | **剩余用量** |
-| `model_name` | 模型名称 (MiniMax-M2/M2.1/M2.5) |
-| `start_time` / `end_time` | 当前5小时滑动窗口起止时间 (毫秒时间戳) |
+| 字段 | 含义 | 示例 |
+|------|------|------|
+| `remains_time` | 订阅周期剩余时间 (秒)，和5小时窗口无关 | 8277752 |
+| `current_interval_total_count` | 周期总配额 (固定1500) | 1500 |
+| `current_interval_usage_count` | **当前窗口剩余可用次数** | 1263 |
+| `model_name` | 模型名称 | MiniMax-M2.5 |
+| `start_time` / `end_time | 当前5小时滑动窗口起止时间 (毫秒时间戳) | 1773558000000 |
 
-**计算公式：**
-- 已用 = `current_interval_total_count` - `current_interval_usage_count`
-- 使用率 = 已用 / 总配额 * 100%
+### 计算公式（重要！）
+
+```python
+# ❌ 错误理解
+已用 = current_interval_usage_count  # 误以为这是"已用量"
+
+# ✅ 正确理解
+剩余 = current_interval_usage_count  # 这是"剩余可用次数"
+已用 = current_interval_total_count - current_interval_usage_count
+使用率 = (current_interval_total_count - current_interval_usage_count) / current_interval_total_count * 100%
+```
+
+**示例**：API 返回 `current_interval_total_count=1500`, `current_interval_usage_count=1263`
+- 剩余 = 1263 次
+- 已用 = 1500 - 1263 = **237 次**
+- 使用率 = 237 / 1500 = **15.8%**
+
+### 状态阈值
+
+| 剩余量 | 使用率 | 状态 |
+|--------|--------|------|
+| >600 | <60% | 💚 GREEN |
+| 375-600 | 60-75% | ⚠️ CAUTION |
+| 150-375 | 75-90% | ⚠️ WARNING |
+| <150 | >90% | 🚨 CRITICAL |
 
 ---
 
@@ -102,8 +155,6 @@ Content-Type: application/json
 ---
 
 ## Error Handling
-
-Common API error codes (status_code):
 
 | 错误码 | 含义 | 解决方法 |
 |--------|------|----------|

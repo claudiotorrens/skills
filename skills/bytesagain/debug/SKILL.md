@@ -1,66 +1,72 @@
 ---
 name: debug
-version: 1.0.0
+version: "3.2.0"
 author: BytesAgain
-license: MIT-0
-tags: [debug, tool, utility]
+homepage: https://bytesagain.com
+source: https://github.com/bytesagain/ai-skills
+tags: [debug, error, trace, log, crash, stacktrace]
+description: "Trace errors in logs, parse stack traces, detect memory leaks, profile commands, and debug HTTP."
 ---
 
 # Debug
 
-Debugging toolkit — log analysis, error tracing, memory profiling, network inspection, performance bottleneck detection, and crash report parsing.
+Trace errors in log files, parse stack traces, detect memory leaks, profile slow code paths.
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `debug logs` | <file> |
-| `debug trace` | <error> |
-| `debug memory` | Memory |
-| `debug network` | <pid> |
-| `debug profile` | <command> |
-| `debug crash` | <report> |
-
-## Usage
-
+### trace
+Find error patterns in log files.
 ```bash
-# Show help
-debug help
-
-# Quick start
-debug logs <file>
+bash scripts/script.sh trace /var/log/app.log
+bash scripts/script.sh trace --pattern "OOM\|Segfault\|FATAL" /var/log/syslog
+bash scripts/script.sh trace --last 1h /var/log/app.log
 ```
 
-## Examples
-
+### stacktrace
+Parse and summarize a stack trace or crash dump.
 ```bash
-# Example 1
-debug logs <file>
-
-# Example 2
-debug trace <error>
+bash scripts/script.sh stacktrace crash.log
+echo "TypeError: cannot read property 'x' of undefined\n    at foo (app.js:42)" | bash scripts/script.sh stacktrace -
 ```
 
-- Run `debug help` for all available commands
+### leaks
+Detect potential memory leaks by analyzing process memory over time.
+```bash
+bash scripts/script.sh leaks --pid 1234
+bash scripts/script.sh leaks --pid 1234 --duration 60 --interval 5
+```
 
----
-*Powered by BytesAgain | bytesagain.com*
-*Feedback & Feature Requests: https://bytesagain.com/feedback*
+### profile
+Measure execution time of a command, show CPU and memory usage.
+```bash
+bash scripts/script.sh profile "python3 slow_script.py"
+bash scripts/script.sh profile --repeat 5 "curl -s https://api.example.com"
+```
 
-## When to Use
+### diff-logs
+Compare two log files and highlight differences (new errors, missing entries).
+```bash
+bash scripts/script.sh diff-logs before.log after.log
+bash scripts/script.sh diff-logs --errors-only old.log new.log
+```
 
-- Quick debug tasks from terminal
-- Automation pipelines
+### http
+Debug HTTP requests — show headers, timing, redirects, SSL info.
+```bash
+bash scripts/script.sh http https://example.com
+bash scripts/script.sh http --verbose --timing https://api.example.com/health
+```
 
 ## Output
+- Plain text summary to stdout
+- Error counts, unique patterns, timestamps
+- Exit code 0 = clean, 1 = errors found
 
-Results go to stdout. Save with `debug run > output.txt`.
 
-## Configuration
+## Requirements
+- bash 4+
+- python3 (standard library only)
 
-Set `DEBUG_DIR` to change data directory. Default: `~/.local/share/debug/`
-
-## When to Use
-
-- Quick debug tasks from terminal
-- Automation pipelines
+## Feedback
+https://bytesagain.com/feedback/
+Powered by BytesAgain | bytesagain.com

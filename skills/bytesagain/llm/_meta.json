@@ -1,0 +1,11 @@
+{
+  "owner": "bytesagain",
+  "slug": "llm",
+  "displayName": "Llm",
+  "latest": {
+    "version": "3.2.0",
+    "publishedAt": 1773716887594,
+    "commit": null
+  },
+  "history": []
+}

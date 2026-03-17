@@ -1,12 +1,13 @@
 ---
+version: "2.0.0"
 name: link-checker
 description: "Error: --url required. Use when you need link checker capabilities. Triggers on: link checker, url, depth, timeout, max, format."
+author: BytesAgain
 ---
 
 # link-checker
 
 Broken link finder that crawls web pages and checks all hyperlinks for HTTP errors (404 Not Found), redirects (301/302), timeouts, and connection failures. Generates detailed reports with status codes, response times, and link locations. Supports recursive crawling with depth control, domain filtering, and multiple output formats. Uses Python3 urllib — no external dependencies. Essential for website maintenance, SEO hygiene, and quality assurance.
-
 
 ## Commands
 

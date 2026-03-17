@@ -1,0 +1,11 @@
+{
+  "owner": "yannlong",
+  "slug": "ifind",
+  "displayName": "iFind http API",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773544166878,
+    "commit": null
+  },
+  "history": []
+}

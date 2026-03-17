@@ -1,0 +1,11 @@
+{
+  "owner": "gentleyo",
+  "slug": "video-generation-t2v-i2v",
+  "displayName": "Video Generation (t2v & i2v)",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1773548996886,
+    "commit": null
+  },
+  "history": []
+}

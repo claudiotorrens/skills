@@ -1,0 +1,11 @@
+{
+  "owner": "membranedev",
+  "slug": "nextcloud-integration",
+  "displayName": "Nextcloud",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773630152595,
+    "commit": null
+  },
+  "history": []
+}

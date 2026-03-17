@@ -1,6 +1,6 @@
 # TqSdk 天勤期货 Skill
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/shinnytech/tqsdk-python)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/shinnytech/tqsdk-python)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE)
 [![ClawHub](https://img.shields.io/badge/ClawHub-BossQuant-purple.svg)](https://clawhub.com)
 
@@ -89,7 +89,7 @@ Apache License 2.0
 
 ## 📊 更新日志
 
-### v1.0.0 (2026-03-01)
+### v1.1.0 (2026-03-15)
 - 🎉 初始版本发布
 - 📊 支持期货期权实时行情与交易
 

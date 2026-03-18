@@ -10,7 +10,6 @@ All settings live under `plugins.entries["luckee-tool"].config` in `~/.openclaw/
 | `defaultUrl` | string | — | No | Legacy/advanced API endpoint override (normally not needed) |
 | `defaultUserId` | string | — | No | Legacy/advanced default user ID (normally not needed) |
 | `defaultLanguage` | string | `CN` | No | Query language code |
-| `defaultLingxingAccount` | string | — | No | Legacy/advanced Lingxing account identifier (normally not needed) |
 | `defaultToken` | string | — | No | Default API authentication token |
 | `tokenStorePath` | string | `~/.openclaw/secrets/luckee-tool/tokens.json` | No | Path to the persisted token store file |
 | `defaultTimeout` | number | `90` | No | Query timeout in seconds |
@@ -66,7 +65,7 @@ The plugin sends real-time streaming progress updates on channels that support p
 - `synology-chat`
 - `tlon`
 
-On Feishu, the plugin uses native card updates via the Feishu Open API (`im/v1/messages/{id}` PATCH) for smoother in-place editing. This is an **optional** feature that only activates when the user has already configured `channels.feishu.appId` and `channels.feishu.appSecret` in OpenClaw. The plugin never prompts for or collects these credentials itself.
+On Feishu, the plugin prefers native interactive card delivery again. It reuses the Feishu credentials already configured on the OpenClaw channel and does not ask users to enter separate plugin-specific app credentials.
 
 ## Token Store Format
 
@@ -115,32 +114,17 @@ After auto-install, the binary probe runs again. Results are cached per configur
 
 - `luckee login` starts browser-based authorization explicitly.
 - Running normal `luckee` commands also checks session status and prompts browser authorization automatically when not logged in.
-- During support flows, do not ask users for API URL, User ID, or Lingxing account credentials.
+- During support flows, do not ask users for API URL or User ID.
 
-## Feishu Card Native Updates (Optional)
+## Feishu Progress Delivery
 
-> This feature only activates when the user has already configured Feishu credentials in OpenClaw. The plugin never prompts for or collects `appId`/`appSecret` on its own.
+For Feishu, the plugin sends and updates a single interactive card through the Feishu Open API.
 
-When the channel is `feishu` and the plugin has a `messageId` from a previous send, it attempts in-place card updates via:
+- Initial progress uses `msg_type: "interactive"` send.
+- Subsequent progress updates use `PATCH /open-apis/im/v1/messages/{messageId}`.
+- The plugin reads Feishu credentials from the existing OpenClaw channel config, including account-scoped config, and does not require a separate plugin credential prompt.
 
-```
-PATCH https://open.feishu.cn/open-apis/im/v1/messages/{messageId}
-Authorization: Bearer <tenant_access_token>
-Content-Type: application/json
-
-{ "content": "<interactive card JSON>" }
-```
-
-The tenant access token is obtained from:
-
-```
-POST https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal
-{ "app_id": "<appId>", "app_secret": "<appSecret>" }
-```
-
-Token is cached with TTL from the response (default 7200s). Credentials come from `channels.feishu.appId` and `channels.feishu.appSecret` in OpenClaw config.
-
-If the native update fails, the plugin falls back to sending a new message and deleting the old one.
+If native Feishu card delivery fails, the plugin may still fall back to OpenClaw message delivery, but the preferred path is the native single-card update flow.
 
 ## Error Catalog
 

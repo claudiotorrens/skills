@@ -1,6 +1,6 @@
 ---
 name: luckee-skill
-description: Install and operate the luckee-tool OpenClaw plugin for querying Lingxing data. Use when the user mentions luckee, Lingxing, ASIN lookup, product data queries, or wants to set up the luckee plugin.
+description: Install and operate the luckee-tool OpenClaw plugin for product data queries. Use when the user mentions luckee, ASIN lookup, product data queries, or wants to set up the luckee plugin.
 ---
 
 # Luckee Skill
@@ -27,7 +27,24 @@ openclaw plugins install https://github.com/motse-ai/luckee-openclaw-plugin
 
 This single command fetches the plugin and installs its dependencies. Do **not** run `git clone` or `npm install` manually.
 
-### 2. Authenticate with Luckee
+### 2. Verify and configure the luckee CLI binary path
+
+After install, `luckee-cli` (the Python package) may have been placed in a directory that is **not** on the gateway process's PATH (e.g. `~/.local/bin`). You **must** locate the actual binary and set `binaryPath` explicitly:
+
+```bash
+# Find where the binary was installed
+which luckee-cli 2>/dev/null || which luckee 2>/dev/null || python3 -c "import sysconfig; print(sysconfig.get_path('scripts', sysconfig.get_preferred_scheme('user')))" 2>/dev/null
+```
+
+Check the discovered directory (e.g. `/home/node/.local/bin/`) for a file named `luckee-cli` or `luckee`. Then set the full path:
+
+```bash
+openclaw config set plugins.entries.luckee-tool.config.binaryPath "/full/path/to/luckee"
+```
+
+> **Why:** pip often installs scripts into `~/.local/bin/` which many environments (containers, systemd services, SSH sessions) do not include in PATH. Setting `binaryPath` makes the plugin find the binary regardless of PATH.
+
+### 3. Authenticate with Luckee
 
 Run:
 
@@ -40,7 +57,7 @@ Running regular `luckee` commands also checks login status and will prompt the s
 
 **No browser access (remote machine, headless server, SSH session, etc.):** If the environment cannot open a browser — for example, a remote server, a container, or an SSH session — the `luckee login` command will still print an authorization URL to stdout. You **must** copy the full URL from the terminal output and present it to the user so they can open it in their own browser. Do not attempt to launch a browser in these environments.
 
-### 3. Restart and verify
+### 4. Restart and verify
 
 ```bash
 openclaw gateway restart
@@ -48,7 +65,7 @@ openclaw plugins info luckee-tool
 openclaw health
 ```
 
-Confirm the plugin shows as loaded and the gateway is healthy. Do not ask the user for API URL, User ID, or Lingxing account details.
+Confirm the plugin shows as loaded and the gateway is healthy. Do not ask the user for API URL or User ID details.
 
 ## Usage
 
@@ -59,6 +76,16 @@ Confirm the plugin shows as loaded and the gateway is healthy. Do not ask the us
 ```
 
 Example: `/luckee 查一下 asin B0DPJMTH4N 的信息 用skills`
+
+### Stop a running query
+
+```
+/luckee stop
+```
+or
+```
+/stop
+```
 
 ### Set a token
 
@@ -98,21 +125,39 @@ Only `query` is required. Auth context is handled by CLI/session state (via `luc
 
 ### Binary not found
 
-The plugin auto-installs `luckee-cli` via pip when `autoInstallCli` is true (default). If that fails:
+This is the most common issue. Even when `luckee-cli` is installed, the gateway process may not find it because pip installs scripts to a directory not in PATH (e.g. `~/.local/bin/`).
+
+**Step 1 — Locate the binary:**
+
+```bash
+which luckee-cli 2>/dev/null || which luckee 2>/dev/null
+```
+
+If that returns nothing, check common pip script directories:
+
+```bash
+ls ~/.local/bin/luckee* 2>/dev/null
+python3 -c "import sysconfig; print(sysconfig.get_path('scripts', sysconfig.get_preferred_scheme('user')))" 2>/dev/null
+```
+
+**Step 2 — If not installed, install it:**
 
 ```bash
 python -m pip install --upgrade \
   --index-url https://test.pypi.org/simple/ \
-  --extra-index-url https://pypi.org/simple \
   luckee-cli
+```
+
+Then re-run Step 1 to find where it was placed.
+
+**Step 3 — Set the path explicitly and restart:**
+
+```bash
+openclaw config set plugins.entries.luckee-tool.config.binaryPath "/full/path/to/luckee"
 openclaw gateway restart
 ```
 
-Or set the path explicitly:
-
-```bash
-openclaw config set plugins.entries.luckee-tool.config.binaryPath "/path/to/luckee-cli"
-```
+> **Important:** Always set `binaryPath` after installing `luckee-cli`. Do not rely on PATH resolution alone, as the gateway process environment often differs from the interactive shell.
 
 ### Not logged in / auth expired
 
@@ -158,7 +203,7 @@ openclaw gateway restart
 - **Never** log or display full tokens. Always redact to `sk_x***xx` format.
 - All install/config operations are idempotent — safe to re-run.
 - Do **not** overwrite unrelated config keys when setting luckee-tool config.
-- Never request API URL, User ID, or Lingxing account credentials from users during normal setup/query flows.
+- Never request API URL or User ID from users during normal setup/query flows.
 
 ## Reference
 

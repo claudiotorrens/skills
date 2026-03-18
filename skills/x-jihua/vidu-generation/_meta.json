@@ -1,0 +1,11 @@
+{
+  "owner": "x-jihua",
+  "slug": "vidu-generation",
+  "displayName": "Input prompts and generate images, videos, effects, speech synthesis, voice cloning, etc., using a single API key.",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773717277389,
+    "commit": null
+  },
+  "history": []
+}

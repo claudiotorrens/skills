@@ -1,0 +1,11 @@
+{
+  "owner": "tutututu2020",
+  "slug": "itsm-skill",
+  "displayName": "ITSM 工单自动提交",
+  "latest": {
+    "version": "2.1.0",
+    "publishedAt": 1773815534441,
+    "commit": null
+  },
+  "history": []
+}

@@ -1,7 +1,7 @@
 {
   "name": "Torch Market",
-  "description": "Torch Vault is a full-custody on-chain escrow for AI agents on Solana. The vault holds all assets -- SOL and tokens. The agent wallet is a disposable controller that signs transactions but holds nothing of value. No private key with funds required. The vault can be created and funded entirely by the human principal. Built on Torch Market -- a programmable economic substrate where every token is its own self-sustaining economy with bonding curves, community treasuries, lending markets, and governance. All operations (buy, sell, DEX swap, borrow, repay, star) route through the vault. Authority separation means instant revocation, permissionless deposits, and authority-only withdrawals.",
-  "version": "4.7.17",
+  "description": "Torch Market -- a programmable economic substrate where every token is its own self-sustaining economy with bonding curves, community treasuries, lending markets, and governance. Full-custody vault keeps all assets safe. Quote-driven trading across bonding curves and Raydium DEX. VersionedTransaction-native with Address Lookup Tables. One flow, any token state.",
+  "version": "5.1.2",
   "type": "protocol",
   "disable-model-invocation": true,
   "website": "https://torch.market",
@@ -39,7 +39,7 @@
       {
         "id": "npm-torchsdk",
         "kind": "npm",
-        "package": "torchsdk@^3.7.30",
+        "package": "torchsdk@^4.1.0",
         "flags": [],
         "label": "Install Torch SDK (npm, optional -- SDK is bundled in lib/torchsdk/ on clawhub)"
       }
@@ -67,7 +67,10 @@
     "permissionless-migration",
     "dynamic-network",
     "creator-revenue",
-    "community-token"
+    "community-token",
+    "versioned-transactions",
+    "address-lookup-tables",
+    "quote-driven-trading"
   ],
   "chain": "solana",
   "network": "mainnet",
@@ -123,11 +126,11 @@
     },
     {
       "name": "TORCH_GET_BUY_QUOTE",
-      "description": "Preview a buy -- expected tokens, fees, price impact. No transaction executed."
+      "description": "Preview a buy -- expected tokens, fees, price impact. Works on both bonding and migrated tokens. Returns source field (bonding or dex). No transaction executed."
     },
     {
       "name": "TORCH_GET_SELL_QUOTE",
-      "description": "Preview a sell -- expected SOL, price impact. No transaction executed."
+      "description": "Preview a sell -- expected SOL, price impact. Works on both bonding and migrated tokens. Returns source field (bonding or dex). No transaction executed."
     },
     {
       "name": "TORCH_LIST_TOKENS",
@@ -139,11 +142,11 @@
     },
     {
       "name": "TORCH_BUY_TOKEN",
-      "description": "Buy tokens via vault (vault SOL pays, tokens go to vault ATA). Vote required on first buy (burn/return). Optional on-chain message. If this buy completes bonding, the result includes a separate migrationTransaction -- send it right after the buy to trigger DEX migration (payer fronts ~1 SOL, treasury reimburses)."
+      "description": "Buy tokens via vault. Auto-routes to bonding curve or Raydium DEX based on quote. Pass a pre-fetched quote for slippage protection and routing. Vote required on first buy (burn/return). Optional on-chain message. If this buy completes bonding, the result includes a migrationTransaction."
     },
     {
       "name": "TORCH_SELL_TOKEN",
-      "description": "Sell tokens via vault (vault tokens sold, SOL returns to vault). No fees. Optional on-chain message."
+      "description": "Sell tokens via vault. Auto-routes to bonding curve or Raydium DEX based on quote. Pass a pre-fetched quote for slippage protection and routing. SOL returns to vault. Optional on-chain message."
     },
     {
       "name": "TORCH_STAR_TOKEN",
@@ -151,7 +154,7 @@
     },
     {
       "name": "TORCH_CREATE_TOKEN",
-      "description": "Launch a new community with bonding curve, treasury, and governance vote. Optional sol_target selects tier: Spark (50 SOL), Flame (100 SOL), or Torch (200 SOL, default). Community token by default (0% creator fees, all to treasury). Set community_token: false for creator revenue streams."
+      "description": "Launch a new community with bonding curve, treasury, and governance vote. Optional sol_target selects tier: Flame (100 SOL) or Torch (200 SOL, default). Community token by default (0% creator fees, all to treasury). Set community_token: false for creator revenue streams."
     },
     {
       "name": "TORCH_GET_MESSAGES",
@@ -190,10 +193,6 @@
       "description": "Liquidate underwater loan position (LTV > 65%) -- receive collateral at 10% discount"
     },
     {
-      "name": "TORCH_VAULT_SWAP",
-      "description": "Trade migrated tokens on Raydium DEX via vault (buy: vault SOL → tokens to vault ATA, sell: vault tokens → SOL to vault). Full custody preserved."
-    },
-    {
       "name": "TORCH_MIGRATE",
       "description": "Migrate a bonding-complete token to Raydium DEX (permissionless -- anyone can trigger). Two-step: fund WSOL from treasury + create Raydium CPMM pool. Payer fronts ~1 SOL for Raydium costs, treasury reimburses the exact amount in the same transaction (net cost: 0 SOL)."
     },
@@ -218,18 +217,18 @@
     "total_supply": "1000000000",
     "bonding_target_sol_default": 200,
     "bonding_tiers": {
-      "spark": 50,
       "flame": 100,
-      "torch": 200
+      "torch": 200,
+      "spark_legacy": 50
     },
     "treasury_rate": {
-      "max_percent": 20,
-      "min_percent": 5,
+      "max_percent": 12.5,
+      "min_percent": 4,
       "creator_min_percent": 0.2,
       "creator_max_percent": 1,
-      "note": "Flat 20%→5% decay across all tiers (V25). Creator tokens: creator receives 0.2%→1% carved from treasury rate (V34). Community tokens (default V35): 0% to creator, full split to treasury."
+      "note": "Flat 12.5%→4% decay across all tiers (V4.0, was 20%→5%). Creator tokens: creator receives 0.2%→1% carved from treasury rate (V34). Community tokens (default V35): 0% to creator, full split to treasury."
     },
-    "protocol_fee_percent": 1,
+    "protocol_fee_percent": 0.5,
     "protocol_fee_split": "90% treasury / 10% dev wallet",
     "max_wallet_percent": 2,
     "star_cost_sol": 0.02,
@@ -252,7 +251,8 @@
     "lending_liquidation_threshold_percent": 65,
     "lending_interest_rate_per_epoch_percent": 2,
     "lending_liquidation_bonus_percent": 10,
-    "lending_utilization_cap_percent": 70,
+    "lending_utilization_cap_percent": 80,
+    "borrow_share_multiplier": 5,
     "min_borrow_sol": 0.1
   },
   "safety": {
@@ -305,7 +305,6 @@
       "TORCH_CREATE_TOKEN",
       "TORCH_BORROW",
       "TORCH_REPAY",
-      "TORCH_VAULT_SWAP",
       "TORCH_CLAIM_PROTOCOL_REWARDS",
       "TORCH_CONFIRM"
     ],

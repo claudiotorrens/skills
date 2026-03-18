@@ -1,6 +1,6 @@
 # Torch SDK — Design Document
 
-> TypeScript SDK for the Torch Market protocol on Solana. Version 3.7.30.
+> TypeScript SDK for the Torch Market protocol on Solana. Version 4.1.0.
 
 ## Overview
 
@@ -26,16 +26,15 @@ The SDK is designed for AI agent integration. The core safety primitive is the *
 │                          │  │                            │
 │  getTokens()             │  │  buildBuyTransaction()     │
 │  getToken()              │  │  buildSellTransaction()    │
-│  getTokenMetadata()      │  │  buildVaultSwapTx()        │
-│  getHolders()            │  │  buildCreateTokenTx()      │
-│  getMessages()           │  │  buildStarTransaction()    │
-│  getLendingInfo()        │  │  buildMigrateTransaction() │
-│  getLoanPosition()       │  │  buildBorrowTransaction()  │
-│  getAllLoanPositions()   │  │  buildRepayTransaction()   │
-│  getVault()              │  │  buildLiquidateTransaction │
-│  getVaultForWallet()     │  │  buildClaimProtocolRewardsTx│
-│  getVaultWalletLink()    │  │  buildReclaimFailedTokenTx()│
-│                          │  │  buildHarvestFeesTx()      │
+│  getTokenMetadata()      │  │  buildCreateTokenTx()      │
+│  getHolders()            │  │  buildStarTransaction()    │
+│  getMessages()           │  │  buildMigrateTransaction() │
+│  getLendingInfo()        │  │  buildBorrowTransaction()  │
+│  getLoanPosition()       │  │  buildRepayTransaction()   │
+│  getAllLoanPositions()   │  │  buildLiquidateTransaction │
+│  getVault()              │  │  buildClaimProtocolRewardsTx│
+│  getVaultForWallet()     │  │  buildReclaimFailedTokenTx()│
+│  getVaultWalletLink()    │  │  buildHarvestFeesTx()      │
 │                          │  │  buildSwapFeesToSolTx()    │
 │                          │  │  buildCreateVaultTx()      │
 │                          │  │  buildDepositVaultTx()     │
@@ -76,7 +75,7 @@ src/
 ├── said.ts             SAID Protocol integration (verify, confirm)
 ├── gateway.ts          Irys metadata fetch with fallback
 ├── ephemeral.ts        Ephemeral agent (disposable wallet helper)
-└── torch_market.json   Anchor IDL (v3.7.10, 27 instructions)
+└── torch_market.json   Anchor IDL (v4.0.0, 27 instructions)
 ```
 
 ### Dependency Graph
@@ -103,7 +102,7 @@ Every function takes a `Connection` as the first argument. No global state, no s
 
 ### 2. Unsigned Transactions
 
-All `build*Transaction` functions return `{ transaction: Transaction, message: string }`. The SDK never signs. The caller signs with their keypair and submits. This keeps key material out of the SDK entirely.
+All `build*Transaction` functions return `{ transaction: VersionedTransaction, message: string }`. The SDK never signs. The caller signs with their keypair and submits. This keeps key material out of the SDK entirely.
 
 ### 3. RPC-First
 
@@ -122,9 +121,24 @@ The SDK is designed so that an agent wallet:
 - Cannot transfer vault SOL arbitrarily (vault SOL can only flow through `buy`)
 - Receives tokens in its own wallet (can sell freely)
 
-### 6. Reward Harvesting
+### 6. Quote-Driven Trading
 
-Active agents earn protocol rewards. The protocol treasury accumulates 1% fees from all bonding curve buys across the platform. Each epoch (~weekly), the treasury distributes rewards proportionally to wallets that traded >= 2 SOL volume in the previous epoch. Agents call `buildClaimProtocolRewardsTransaction` to claim — rewards go directly to the vault. This creates a positive feedback loop: agents that trade actively earn back a share of platform fees, reducing their effective cost of operation.
+Callers get a quote first (`getBuyQuote`/`getSellQuote`), then pass it into the transaction builder. The quote's `source` field (`'bonding'` or `'dex'`) drives automatic routing — bonding curve for pre-migration tokens, Raydium vault swap for migrated tokens. Slippage protection uses the quote's `min_output_tokens`/`min_output_sol`. This eliminates the need for callers to know which phase a token is in or pick the right builder.
+
+### 7. VersionedTransaction + Address Lookup Tables
+
+All transactions use v0 messages compiled with Address Lookup Tables. The ALTs are hardcoded per network:
+
+| Network | ALT Address |
+|---------|-------------|
+| Mainnet | `GQzbU32oN3znZa3uWFKGc9cBukpQbYYJSirKstMuFF3i` |
+| Devnet | `3umSStZSLJNk5QstxeQB12a2MSDh4o8RgSzT76gigJ8P` |
+
+14 static addresses (program IDs, Raydium accounts, global PDAs) are compressed from 32 bytes to 1 byte each — saving ~434 bytes per transaction that references them. The ALT is fetched once per connection and cached.
+
+### 8. Reward Harvesting
+
+Active agents earn protocol rewards. The protocol treasury accumulates 0.5% fees from all bonding curve buys across the platform. Each epoch (~weekly), the treasury distributes rewards proportionally to wallets that traded >= 2 SOL volume in the previous epoch. Agents call `buildClaimProtocolRewardsTransaction` to claim — rewards go directly to the vault. This creates a positive feedback loop: agents that trade actively earn back a share of platform fees, reducing their effective cost of operation.
 
 ---
 
@@ -224,12 +238,12 @@ CREATE → BONDING → COMPLETE → MIGRATE → DEX TRADING
    └── star token (appreciation signal, 0.02 SOL)
 ```
 
-### Bonding Phase (0–target SOL, per tier: 50/100/200)
+### Bonding Phase (0–target SOL, per tier: 100/200)
 
 - `buildBuyTransaction` — buy tokens on the bonding curve
 - `buildSellTransaction` — sell tokens back to the curve
 - `getBuyQuote` / `getSellQuote` — simulate trades
-- Fee split: 1% protocol fee (90% treasury / 10% dev), remainder to curve+treasury (20%→5% flat dynamic rate). Creator tokens: creator receives 0.2%→1% carved from treasury rate. Community tokens (default): 0% to creator.
+- Fee split: 0.5% protocol fee (90% treasury / 10% dev), remainder to curve+treasury (12.5%→4% flat dynamic rate). Creator tokens: creator receives 0.2%→1% carved from treasury rate. Community tokens (default): 0% to creator.
 
 ### Migration (V26 — Permissionless)
 
@@ -237,7 +251,7 @@ CREATE → BONDING → COMPLETE → MIGRATE → DEX TRADING
 
 ### Post-Migration
 
-- `buildVaultSwapTransaction` — buy/sell migrated tokens on Raydium DEX via vault (full custody)
+- `buildBuyTransaction` / `buildSellTransaction` — auto-route through vault swap for migrated tokens (internal, no separate builder needed)
 - `buildBorrowTransaction` — lock tokens as collateral, borrow SOL from treasury
 - `buildRepayTransaction` — repay SOL debt, recover collateral
 - `buildLiquidateTransaction` — liquidate underwater positions (permissionless)
@@ -254,7 +268,7 @@ CREATE → BONDING → COMPLETE → MIGRATE → DEX TRADING
 ### Community Features
 
 - `buildStarTransaction` — star a token (0.02 SOL, sybil-resistant)
-- `getMessages` — read trade-bundled memos (SPL Memo program)
+- `getMessages` — read trade-bundled memos (SPL Memo program). Supports `{ enrich: true }` option to batch-verify senders via SAID Protocol, populating `sender_verified`, `sender_trust_tier`, `sender_said_name`, and `sender_badge_url` on each message.
 - Vote on first buy (`vote` param in `buildBuyTransaction`)
 
 ---
@@ -266,8 +280,8 @@ The SDK includes a local quote engine that mirrors the on-chain math exactly:
 ### Buy Quote
 
 ```
-1. Protocol fee: 1% of input SOL (90% treasury / 10% dev wallet)
-2. Dynamic treasury split: 20%→5% flat across all tiers (decays as bonding progresses)
+1. Protocol fee: 0.5% of input SOL (90% treasury / 10% dev wallet)
+2. Dynamic treasury split: 12.5%→4% flat across all tiers (decays as bonding progresses)
 3. Creator share: 0.2%→1% carved from treasury split (creator tokens only; community tokens = 0%)
 4. Remaining SOL → constant product formula → tokens out
 5. Token split: 90% to buyer, 10% to community treasury
@@ -289,6 +303,19 @@ sol_out    = (virtual_sol_reserves × token_in) / (virtual_token_reserves + toke
 price      = virtual_sol_reserves / virtual_token_reserves
 ```
 
+### DEX Quote (Migrated Tokens)
+
+When `bonding_complete` is true, quotes use Raydium CPMM pool reserves:
+
+```
+1. Fetch pool vault balances (SOL + token reserves)
+2. Apply Raydium fee (25 bps)
+3. effective_input = input × (10000 - 25) / 10000
+4. output = effective_input × reserve_out / (reserve_in + effective_input)
+```
+
+Both `getBuyQuote` and `getSellQuote` return a `source` field: `'bonding'` or `'dex'`. Transaction builders use this for automatic routing.
+
 ---
 
 ## SAID Protocol Integration
@@ -300,7 +327,7 @@ The SDK integrates with the SAID (Solana Agent Identity) Protocol for wallet rep
 
 Event types: `token_launch`, `trade_complete`, `governance_vote`, `unknown`
 
-SAID verification data enriches token detail responses (`creator_verified`, `creator_trust_tier`, `creator_said_name`, `creator_badge_url`) and message responses (`sender_verified`, `sender_trust_tier`).
+SAID verification data enriches token detail responses (`creator_verified`, `creator_trust_tier`, `creator_said_name`, `creator_badge_url`) and message responses. With `getMessages(connection, mint, limit, { enrich: true })`, each message is enriched with `sender_verified`, `sender_trust_tier`, `sender_said_name`, and `sender_badge_url`. Unique senders are batch-verified to avoid redundant API calls.
 
 ---
 
@@ -357,7 +384,7 @@ For detailed token views (`getToken`), the SDK fetches the metadata URI to get d
 The SDK throws standard JavaScript errors with descriptive messages:
 
 - `Token not found: {mint}` — no bonding curve account for this mint
-- `Bonding curve complete, trade on DEX` — buy/sell after migration
+- `Migrated tokens require vault-based trading` — buy/sell on migrated token without vault param
 - `Cannot star your own token` — self-star prevention
 - `Already starred this token` — duplicate star prevention
 - `Token not yet migrated, lending not available` — borrow before migration
@@ -400,14 +427,14 @@ The SDK includes a comprehensive end-to-end test that runs against a Surfpool ma
 | Star | Sybil-resistant appreciation signal |
 | Messages | Trade-bundled SPL Memo retrieval |
 | Confirm | SAID Protocol transaction confirmation |
-| Full Lifecycle | Bond to graduation (50/100/200 SOL tier) → migrate to Raydium → borrow → repay |
+| Full Lifecycle | Bond to graduation (100/200 SOL tier) → migrate to Raydium → borrow → repay |
 | Vault Swap Buy | Vault-routed Raydium buy (SOL → tokens via DEX) |
 | Vault Swap Sell | Vault-routed Raydium sell (tokens → SOL via DEX) |
 | Withdraw Tokens | Authority withdraws tokens from vault ATA |
 | Harvest Fees | Auto-discovery of token accounts with withheld fees, treasury balance increase |
 | Protocol Rewards | Vault-routed epoch reward claim (fee-funded, 2 SOL min volume) |
 
-Expected result: **29 passed, 0 failed** (mainnet fork). Tiers test covers harvest + lending across Spark/Flame/Torch.
+Expected result: **35 passed, 0 failed** (mainnet fork). Tiers test covers harvest + lending across Flame/Torch.
 
 ---
 
@@ -438,3 +465,7 @@ Expected result: **29 passed, 0 failed** (mainnet fork). Tiers test covers harve
 | 3.7.25 | **V34 Optional Account on Sell.** no functional changes |
 | 3.7.29 | **V3.7.9 Reclaim Failed Tokens + Per-User Borrow Cap.** New `buildReclaimFailedTokenTransaction` — permissionless reclaim of failed tokens inactive 7+ days, SOL from bonding curve + treasury goes to protocol treasury. New `ReclaimParams` type. `getTokenStatus` returns `'reclaimed'` status (previously filtered out). New `last_activity_at` field on `TokenSummary`. On-chain per-user borrow cap: max borrow = 3x collateral share of supply. New error `UserBorrowCapExceeded`. `getLendingInfo` exposes `utilization_cap_bps` and `borrow_share_multiplier`. Bundled lib `LENDING_UTILIZATION_CAP_BPS` synced to 7000 (70%, V33). IDL updated to v3.7.9. |
 | 3.7.30 | **V35 Community Token Option.** New `community_token?: boolean` parameter on `buildCreateTokenTransaction` (default `true`). Community tokens route 0% to creator — all bonding SOL share and `swap_fees_to_sol` proceeds go entirely to treasury. Creator tokens (opt-in `community_token: false`) retain V34 behavior. On-chain uses sentinel value (`u64::MAX`) in deprecated `Treasury.total_bought_back` — no struct layout changes. No new SDK types or functions. IDL updated to v3.7.10. 48 Kani proofs (2 new for community token paths). |
+| 3.7.37 | **Message Enrichment.** `getMessages()` now accepts `{ enrich: true }` option. When enabled, batch-verifies unique message senders via `verifySaid()` and populates `sender_verified`, `sender_trust_tier`, `sender_said_name`, `sender_badge_url` on each message. Opt-in — existing callers unaffected. Uses cached verification per unique sender within the call. No new types, no on-chain changes. Read-only feature. |
+| 4.0.0 | **V4.0.0 Simplified Tiers & Reduced Fees.** Removed 50 SOL (Spark) tier from token creation (existing tokens unaffected). Treasury SOL rate reduced from 20%→5% to 12.5%→2.5% (`TREASURY_SOL_MAX_BPS` 2000→1250, `TREASURY_SOL_MIN_BPS` 500→250). Protocol fee reduced from 1% to 0.5% (`PROTOCOL_FEE_BPS` 100→50). Per-user borrow cap increased from 3x to 5x (`BORROW_SHARE_MULTIPLIER` 3→5). Lending utilization cap increased from 70% to 80% (`DEFAULT_LENDING_UTILIZATION_CAP_BPS` 7000→8000). Constants-only change — no new instructions, no state migration. IDL updated to v4.0.0. 48 Kani proofs all passing. |
+| 4.0.1 | **V4.0.1 Flattened Treasury Fees.** Treasury SOL rate increased from 12.5%→2.5% to 12.5%→4% (`TREASURY_SOL_MIN_BPS` 250→400). This is justified due to the increased available SOL in the treasury for lending post migration, ensuring each tier meets the minimum borrow threshold. IDL updated to v4.0.1. 27 instructions (unchanged). 48 Kani proofs all passing. |
+| 4.1.0 | **VersionedTransaction + Quote-Driven Trading.** All builders return VersionedTransaction (v0 messages) with hardcoded ALTs (mainnet + devnet). `getBuyQuote`/`getSellQuote` work on migrated tokens via Raydium CPMM (25 bps fee), return `source: 'bonding' \| 'dex'`. `buildBuyTransaction`/`buildSellTransaction` accept optional `quote` param — auto-route bonding vs DEX. `buildVaultSwapTransaction` internalized (removed from public API). Deprecated constants removed. DRY helpers extracted (7 duplicate blocks → shared functions). `EphemeralAgent.sign()` handles VersionedTransaction. No on-chain changes. |

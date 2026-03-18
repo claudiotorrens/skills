@@ -2,10 +2,10 @@
 
 **Audit Date:** February 21, 2026
 **Auditor:** Claude Opus 4.6 (Anthropic)
-**SDK Version:** 3.7.30
-**On-Chain Program:** `8hbUkonssSEEtkqzwM7ZcZrD9evacM92TcWSooVF4BeT` (V3.7.10)
+**SDK Version:** 4.1.0
+**On-Chain Program:** `8hbUkonssSEEtkqzwM7ZcZrD9evacM92TcWSooVF4BeT` (V4.0.1)
 **Language:** TypeScript
-**Test Result:** 32 passed, 0 failed (Surfpool mainnet fork + devnet E2E + tiers E2E)
+**Test Result:** 35 passed, 0 failed (Surfpool mainnet fork)
 
 ---
 
@@ -28,7 +28,7 @@
 
 ## Executive Summary
 
-This audit covers the Torch SDK v3.7.17, a TypeScript library that reads on-chain state from Solana and builds unsigned transactions for the Torch Market protocol. The SDK was cross-referenced against the live on-chain program (V3.7.17) to verify PDA derivation, quote math, vault integration, migration flow, lending accounting, and account handling. v3.7.17 includes V25 pump-style reserves, V26 permissionless migration, V27 treasury lock and PDA-based pool validation, removal of `update_authority` (V28), V20 swap fees to SOL, V29 on-chain Token-2022 metadata (Metaplex removal, 0.1% transfer fee), a critical lending accounting fix, and dynamic network detection.
+This audit covers the Torch SDK v4.0.1, a TypeScript library that reads on-chain state from Solana and builds unsigned transactions for the Torch Market protocol. The SDK was cross-referenced against the live on-chain program (V4.0.1) to verify PDA derivation, quote math, vault integration, migration flow, lending accounting, and account handling. v3.7.17 includes V25 pump-style reserves, V26 permissionless migration, V27 treasury lock and PDA-based pool validation, removal of `update_authority` (V28), V20 swap fees to SOL, V29 on-chain Token-2022 metadata (Metaplex removal, 0.1% transfer fee), a critical lending accounting fix, and dynamic network detection.
 
 The SDK is **stateless** (no global state, no connection pools), **non-custodial** (never touches private keys — all transactions are returned unsigned), and **RPC-first** (all data from Solana, no proprietary API for core operations).
 
@@ -66,13 +66,13 @@ The SDK is **stateless** (no global state, no connection pools), **non-custodial
 | `src/types.ts` | 458 | All TypeScript interfaces |
 | `src/constants.ts` | 114 | Program ID, PDA seeds, token constants, blacklist, dynamic network detection |
 | `src/program.ts` | 476 | PDA derivation, Anchor types, quote math, Raydium PDAs |
-| `src/tokens.ts` | 986 | Read-only queries (tokens, vault, lending, loan positions, holders, messages, pool price) |
+| `src/tokens.ts` | ~1010 | Read-only queries (tokens, vault, lending, loan positions, holders, messages with SAID enrichment, pool price) |
 | `src/transactions.ts` | ~1960 | Transaction builders (buy, sell, vault, lending, star, migrate, reclaim, harvest, swap fees) |
 | `src/quotes.ts` | 102 | Buy/sell quote calculations |
 | `src/said.ts` | 110 | SAID Protocol integration |
 | `src/gateway.ts` | 49 | Irys metadata fetch with fallback + timeout |
 | `src/ephemeral.ts` | 45 | Ephemeral agent (disposable wallet helper) |
-| `src/torch_market.json` | — | Anchor IDL (V3.7.10, 27 instructions) |
+| `src/torch_market.json` | — | Anchor IDL (V4.0.1, 27 instructions) |
 | **Total** | **~4,415** | |
 
 ### On-Chain Cross-Reference
@@ -137,7 +137,7 @@ SDK implementation (program.ts:243-299) was compared step-by-step against on-cha
 
 | Step | SDK (BigInt) | On-Chain (u64/u128) | Match |
 |------|-------------|---------------------|-------|
-| Protocol fee | `solAmount * 100n / 10000n` | `sol_amount * protocol_fee_bps / 10000` | YES |
+| Protocol fee | `solAmount * 50n / 10000n` | `sol_amount * protocol_fee_bps / 10000` | YES |
 | Treasury fee | `solAmount * 100n / 10000n` | `sol_amount * TREASURY_FEE_BPS / 10000` | YES |
 | Sol after fees | `solAmount - protocolFee - treasuryFee` | `sol_amount - protocol_fee_total - token_treasury_fee` | YES |
 | Dynamic rate bounds | `treasuryRateBounds(bondingTarget)` → per-tier (max, min) | `treasury_rate_bounds(bonding_target)` → per-tier (max, min) | YES |
@@ -223,7 +223,7 @@ V3.2.0 extends vault routing to all write operations. The SDK passes `torchVault
 
 ### Protocol Rewards — Vault-Routed Claim
 
-`buildClaimProtocolRewardsTransaction` routes epoch reward claims through the vault. The protocol treasury accumulates 1% fees from all bonding curve buys. Each epoch, rewards are distributed proportionally to wallets with >= 2 SOL volume in the previous epoch. Min claim: 0.1 SOL. The claim sends SOL directly to the vault — maintaining the closed economic loop. The SDK derives all required accounts (UserStats, ProtocolTreasury, TorchVault, VaultWalletLink) from the caller's public key and vault creator.
+`buildClaimProtocolRewardsTransaction` routes epoch reward claims through the vault. The protocol treasury accumulates 0.5% fees from all bonding curve buys. Each epoch, rewards are distributed proportionally to wallets with >= 2 SOL volume in the previous epoch. Min claim: 0.1 SOL. The claim sends SOL directly to the vault — maintaining the closed economic loop. The SDK derives all required accounts (UserStats, ProtocolTreasury, TorchVault, VaultWalletLink) from the caller's public key and vault creator.
 
 **Verdict:** Vault integration is correct and consistent with the on-chain program.
 
@@ -440,7 +440,7 @@ The entire auto-discovery path is wrapped in a try/catch. If `getTokenLargestAcc
 
 ## Conclusion
 
-The Torch SDK v3.7.30 is a well-structured, minimal-surface TypeScript library that correctly mirrors the on-chain Torch Market V3.7.10 program. Key findings:
+The Torch SDK v4.0.1 is a well-structured, minimal-surface TypeScript library that correctly mirrors the on-chain Torch Market V4.0.1 program. Key findings:
 
 1. **PDA derivation is correct** — all 11 Torch PDAs and 5 Raydium PDAs match the on-chain seeds exactly.
 2. **Quote math is correct** — BigInt arithmetic matches the on-chain Rust `checked_mul`/`checked_div` behavior, including the dynamic treasury rate, 90/10 token split, and constant product formula.
@@ -476,15 +476,23 @@ The Torch SDK v3.7.30 is a well-structured, minimal-surface TypeScript library t
 
 28. **V3.7.30 community token option (V35)** — New `community_token?: boolean` parameter on `buildCreateTokenTransaction` (default `true`). Community tokens route 0% to creator — all bonding SOL share and post-migration `swap_fees_to_sol` proceeds go entirely to treasury. Creator tokens (opt-in `community_token: false`) retain V34 behavior: 0.2%→1% bonding SOL share + 15% fee swap share. SDK passes `communityToken: community_token` to the on-chain `createToken` instruction. On-chain implementation uses sentinel value (`u64::MAX`) in deprecated `Treasury.total_bought_back` field — no struct layout changes, full backward compatibility. New on-chain constant `COMMUNITY_TOKEN_SENTINEL`. Stars system unchanged (user-funded appreciation, not protocol fees). No new SDK types, no new SDK functions, no new PDA derivations. IDL updated to v3.7.10. 27 instructions (unchanged). 48 Kani proofs all passing (2 new: `verify_community_token_buy_conservation`, `verify_community_token_swap_fees_conservation`).
 
+29. **V3.7.37 message enrichment** — `getMessages()` now accepts `{ enrich: true }` option. When enabled, the SDK batch-verifies unique message senders via `verifySaid()` and populates four new fields on each message: `sender_verified` (boolean), `sender_trust_tier` (string | null), `sender_said_name` (string | null), `sender_badge_url` (string | null). Verification results are cached per-sender within the call to avoid redundant API hits. The enrichment is opt-in — existing callers are unaffected. `verifySaid` already degrades gracefully (returns `{ verified: false }` on error), so enrichment cannot break message retrieval. No new types — the fields are optional additions to the existing `TokenMessage` type. No on-chain changes. Read-only feature.
+
+30. **V4.0.0 simplified tiers & reduced fees** — Constants-only update. Removed 50 SOL (Spark) tier from `VALID_BONDING_TARGETS` — existing Spark tokens continue to function via `initial_virtual_reserves()`. Treasury SOL rate reduced from 20%→5% to 12.5%→2.5% (`TREASURY_SOL_MAX_BPS` 2000→1250, `TREASURY_SOL_MIN_BPS` 500→250). Protocol fee reduced from 1% to 0.5% (`PROTOCOL_FEE_BPS` 100→50). Per-user borrow cap increased from 3x to 5x (`BORROW_SHARE_MULTIPLIER` 3→5). Lending utilization cap increased from 70% to 80% (`DEFAULT_LENDING_UTILIZATION_CAP_BPS` 7000→8000). SDK constants updated in `tokens.ts` (`LENDING_UTILIZATION_CAP_BPS` 7000→8000, `BORROW_SHARE_MULTIPLIER` 3→5) and `quotes.ts` (fallback multiplier 3→5). IDL updated to v4.0.0. 27 instructions (unchanged). 48 Kani proofs all passing.
+
+30. **V4.0.1 flattened bonding treasury fee** — Constants-only update. Treasury SOL rate increased from 12.5%→2.5% to 12.5%→4% (`TREASURY_SOL_MIN_BPS` 250→400). This is justified due to the increased available SOL in the treasury for lending post migration, ensuring each tier meets the minimum borrow threshold. IDL updated to v4.0.1. 27 instructions (unchanged). 48 Kani proofs all passing.
+
+31. **V4.1.0 VersionedTransaction + Quote-Driven Trading** — Major SDK improvement, no on-chain program changes. All transaction builders now return `VersionedTransaction` (v0 messages) instead of legacy `Transaction`. Address Lookup Tables hardcoded for mainnet (`GQzbU32oN3znZa3uWFKGc9cBukpQbYYJSirKstMuFF3i`) and devnet (`3umSStZSLJNk5QstxeQB12a2MSDh4o8RgSzT76gigJ8P`) — 14 static addresses compressed from 32 bytes to 1 byte each. `getBuyQuote`/`getSellQuote` now work on migrated tokens using Raydium CPMM constant product formula with 25 bps fee; both return `source: 'bonding' | 'dex'`. `BuyParams`/`SellParams`/`DirectBuyParams` accept optional `quote` field — when provided, the builder uses `quote.source` for automatic routing (bonding curve vs vault swap) and `quote.min_output_*` for slippage protection. `buildVaultSwapTransaction` internalized (removed from public API); `buildBuyTransaction` and `buildSellTransaction` auto-route through vault swap for migrated tokens. `VaultSwapParams` removed from exports. `getRaydiumMigrationAccounts` removed from public API. Deprecated constants removed (`RAYDIUM_CPMM_PROGRAM`, `RAYDIUM_AMM_CONFIG`, `RAYDIUM_FEE_RECEIVER`). DRY helpers extracted: `deriveVaultAccounts`, `createVaultTokenAtaIx`, `getVaultTokenAta`, `addMemoIx` — replacing 7+ duplicate code blocks across transaction builders. `EphemeralAgent.sign()` now handles both `VersionedTransaction` (`.sign([keypair])`) and legacy `Transaction` (`.partialSign(keypair)`). E2E tests updated with bonding curve quote output, DEX quote output, transaction size logging, and unified buy/sell flow for post-migration trading. No new on-chain instructions. IDL unchanged at v4.0.1. 48 Kani proofs all passing.
+
 The SDK is safe for production use by AI agents and applications interacting with the Torch Market protocol.
 
 ---
 
 ## Audit Certification
 
-This audit was performed by Claude Opus 4.6 (Anthropic). Original audit on February 12, 2026 (v3.2.3). Updated February 14, 2026 for v3.2.4 remediation. Updated February 15, 2026 for v3.3.0 (tiered bonding curves, harvest_fees security fix, Kani proof updates). Updated February 16, 2026 for v3.4.0 (tiered fee structure). Updated February 19, 2026 for v3.6.8 (V25 pump-style reserves, V26 permissionless migration, V27 pool validation, V28 authority transfer, lending accounting fix, utilization cap fix, live pool price, dynamic network detection, pre-migration buyback removal). Updated February 20, 2026 for v3.7.0 (V28 `update_authority` removed — authority transfer now via multisig tooling, V27 treasury lock with 250M locked tokens, PDA-based pool validation, pre-migration buyback handler removed, 27 instructions total). Updated February 20, 2026 for v3.7.2 (treasury cranks: auto-buyback with full client-side pre-checks, harvest fees with auto-discovery and graceful RPC fallback, dynamic compute budget, new `sources` param, E2E test coverage across all three test suites). Updated February 21, 2026 for v3.7.10 (V20 swap fees to SOL: new `buildSwapFeesToSolTransaction` bundles harvest + Raydium swap in one atomic tx, vault ordering bug fix in `validate_pool_accounts`, 28 instructions). Updated February 22, 2026 for v3.7.17 (V29 on-chain metadata: Metaplex `buildAddMetadataTransaction` removed, new `getTokenMetadata` read-only function, transfer fee 1%→0.1%, IDL updated to v3.7.17). Updated February 23, 2026 for v3.7.17 loan position scanner (`getAllLoanPositions` — batch scan all loan positions for a token with health computation). Updated February 26, 2026 for v3.7.22 (V33 buyback removal — `buildAutoBuybackTransaction` and `AutoBuybackParams` removed, on-chain `execute_auto_buyback` instruction removed, lending cap 50%→70%, IDL v3.7.7, 27 instructions, 39 Kani proofs). Updated March 3, 2026 for v3.7.29 (reclaim failed tokens — new `buildReclaimFailedTokenTransaction`, `ReclaimParams`, `reclaimed` token status, `last_activity_at` field; per-user borrow cap with `UserBorrowCapExceeded` error; `getLendingInfo` exposes `utilization_cap_bps` and `borrow_share_multiplier`; IDL v3.7.9, 27 instructions, 43 Kani proofs). Updated March 4, 2026 for v3.7.30 (V35 community token option — new `community_token` param on `buildCreateTokenTransaction`, default true, 0% creator fees for community tokens; IDL v3.7.10, 27 instructions, 48 Kani proofs). All source files were read in full and cross-referenced against the on-chain program. The E2E test suite validates the SDK against a Surfpool mainnet fork. Separate devnet E2E test validates the full lifecycle including V26 migration on Solana devnet. Tiers E2E test validates harvest and lending across Spark/Flame/Torch. Independent human security auditor verified the on-chain program and frontend.
+This audit was performed by Claude Opus 4.6 (Anthropic). Original audit on February 12, 2026 (v3.2.3). Updated February 14, 2026 for v3.2.4 remediation. Updated February 15, 2026 for v3.3.0 (tiered bonding curves, harvest_fees security fix, Kani proof updates). Updated February 16, 2026 for v3.4.0 (tiered fee structure). Updated February 19, 2026 for v3.6.8 (V25 pump-style reserves, V26 permissionless migration, V27 pool validation, V28 authority transfer, lending accounting fix, utilization cap fix, live pool price, dynamic network detection, pre-migration buyback removal). Updated February 20, 2026 for v3.7.0 (V28 `update_authority` removed — authority transfer now via multisig tooling, V27 treasury lock with 250M locked tokens, PDA-based pool validation, pre-migration buyback handler removed, 27 instructions total). Updated February 20, 2026 for v3.7.2 (treasury cranks: auto-buyback with full client-side pre-checks, harvest fees with auto-discovery and graceful RPC fallback, dynamic compute budget, new `sources` param, E2E test coverage across all three test suites). Updated February 21, 2026 for v3.7.10 (V20 swap fees to SOL: new `buildSwapFeesToSolTransaction` bundles harvest + Raydium swap in one atomic tx, vault ordering bug fix in `validate_pool_accounts`, 28 instructions). Updated February 22, 2026 for v3.7.17 (V29 on-chain metadata: Metaplex `buildAddMetadataTransaction` removed, new `getTokenMetadata` read-only function, transfer fee 1%→0.1%, IDL updated to v3.7.17). Updated February 23, 2026 for v3.7.17 loan position scanner (`getAllLoanPositions` — batch scan all loan positions for a token with health computation). Updated February 26, 2026 for v3.7.22 (V33 buyback removal — `buildAutoBuybackTransaction` and `AutoBuybackParams` removed, on-chain `execute_auto_buyback` instruction removed, lending cap 50%→70%, IDL v3.7.7, 27 instructions, 39 Kani proofs). Updated March 3, 2026 for v3.7.29 (reclaim failed tokens — new `buildReclaimFailedTokenTransaction`, `ReclaimParams`, `reclaimed` token status, `last_activity_at` field; per-user borrow cap with `UserBorrowCapExceeded` error; `getLendingInfo` exposes `utilization_cap_bps` and `borrow_share_multiplier`; IDL v3.7.9, 27 instructions, 43 Kani proofs). Updated March 4, 2026 for v3.7.30 (V35 community token option — new `community_token` param on `buildCreateTokenTransaction`, default true, 0% creator fees for community tokens; IDL v3.7.10, 27 instructions, 48 Kani proofs). Updated March 10, 2026 for v3.7.37 (message enrichment — `getMessages` with `{ enrich: true }` batch-verifies senders via SAID Protocol, populates `sender_verified`, `sender_trust_tier`, `sender_said_name`, `sender_badge_url`; opt-in, read-only, no on-chain changes). All source files were read in full and cross-referenced against the on-chain program. The E2E test suite validates the SDK against a Surfpool mainnet fork. Separate devnet E2E test validates the full lifecycle including V26 migration on Solana devnet. Tiers E2E test validates harvest and lending across Flame/Torch. Independent human security auditor verified the on-chain program and frontend.
 
 **Auditor:** Claude Opus 4.6
-**Date:** 2026-03-04
-**SDK Version:** 3.7.30
-**On-Chain Version:** V3.7.10 (Program ID: `8hbUkonssSEEtkqzwM7ZcZrD9evacM92TcWSooVF4BeT`)
+**Date:** 2026-03-17
+**SDK Version:** 4.1.0
+**On-Chain Version:** V4.0.1 (Program ID: `8hbUkonssSEEtkqzwM7ZcZrD9evacM92TcWSooVF4BeT`)

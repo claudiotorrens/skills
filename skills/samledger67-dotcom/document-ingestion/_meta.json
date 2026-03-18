@@ -1,0 +1,11 @@
+{
+  "owner": "samledger67-dotcom",
+  "slug": "document-ingestion",
+  "displayName": "Document Ingestion Engine",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773800464535,
+    "commit": null
+  },
+  "history": []
+}

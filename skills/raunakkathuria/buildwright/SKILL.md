@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires git and gh (GitHub CLI). GITHUB_TOKEN with repo scope needed for push/PR. Optional tools for security scans (semgrep, gitleaks, trufflehog). Works with Claude Code, OpenCode, OpenClaw, and Cursor.
 metadata:
   homepage: https://github.com/raunakkathuria/buildwright
-  version: "0.0.3"
+  version: "0.0.8"
   author: raunakkathuria
   tags:
     - development
@@ -125,7 +125,9 @@ Flow: Architect analyzes → Decomposes into claw tasks → Defines interface co
 
 ### /bw-quick \<task\>
 
-Fast path for bug fixes and small tasks (<2 hrs). No spec, no approval step.
+Fast path for bug fixes and small tasks (<2 hrs). No spec, no approval step. Runs security scan and code review on the changed diff before committing.
+
+Flow: Understand → Research → TDD → Verify → Security scan → Code review → Commit
 
 ```
 /bw-quick "Fix the login timeout bug"
@@ -151,7 +153,7 @@ Quick checks only: typecheck → lint → test → build.
 
 ### /bw-analyse
 
-Analyse an existing codebase and write structured docs to `.buildwright/codebase/`. Updates `tech.md` with the discovered stack and commands. Run this first on any brownfield project to give every subsequent session real context.
+Analyse an existing codebase and write structured docs to `.buildwright/codebase/`. Creates docs from scratch if missing; auto-refreshes existing docs when `BUILDWRIGHT_AUTO_APPROVE=true` (only asks in interactive mode). Creates `tech.md` from template if it doesn't exist, then populates it with the discovered stack and commands. Run this first on any brownfield project to give every subsequent session real context.
 
 ```
 /bw-analyse

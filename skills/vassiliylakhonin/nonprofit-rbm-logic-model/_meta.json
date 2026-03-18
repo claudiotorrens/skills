@@ -1,13 +1,18 @@
 {
   "owner": "vassiliylakhonin",
   "slug": "nonprofit-rbm-logic-model",
-  "displayName": "Nonprofit RBM Logic Model",
+  "displayName": "Nonprofit Grant Orchestrator",
   "latest": {
-    "version": "1.0.6",
-    "publishedAt": 1773377040869,
-    "commit": "https://github.com/openclaw/skills/commit/8f8fd67b23ed70994bf577fc28e670deb653a2e7"
+    "version": "1.0.10",
+    "publishedAt": 1773806046291,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.6",
+      "publishedAt": 1773377040869,
+      "commit": "https://github.com/openclaw/skills/commit/8f8fd67b23ed70994bf577fc28e670deb653a2e7"
+    },
     {
       "version": "1.0.5",
       "publishedAt": 1773331390520,

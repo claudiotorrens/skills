@@ -1,6 +1,18 @@
 ---
 name: DevTaskFlow
 description: 可共享、可分发的版本化开发任务流水线。支持项目初始化、环境体检、任务分析、代码生成、审查、修复、部署与封版，并可选接入 OpenClaw 子 agent 协作。
+metadata:
+  {
+    "openclaw": {
+      "requires": {
+        "env": [
+          "DTFLOW_LLM_BASE_URL",
+          "DTFLOW_LLM_API_KEY",
+          "DTFLOW_LLM_MODEL"
+        ]
+      }
+    }
+  }
 license: Proprietary
 ---
 
@@ -41,6 +53,14 @@ dtflow fix
 dtflow deploy
 dtflow seal
 ```
+
+## 风险与边界
+
+- `analyze / write / review / fix` 会扫描项目中的部分源码/文档/JSON 文件，并把内容发送到你配置的 LLM endpoint。
+- 如果 `DTFLOW_LLM_BASE_URL` 指向外部服务，那么代码内容会离开本机。
+- 不要在含敏感密钥/生产机密的仓库里直接跑，除非你确认 endpoint 可信。
+- 推荐先在测试仓库或脱敏副本中使用。
+- 运行 `write / fix` 前请先备份仓库，因为它们会创建或覆盖文件。
 
 ## 设计原则
 

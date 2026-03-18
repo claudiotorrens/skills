@@ -5,6 +5,7 @@
 ```text
 CLI (dtflow)
   ├── config layer
+  ├── project-board layer
   ├── state layer
   ├── scaffold layer
   ├── doctor layer
@@ -32,11 +33,16 @@ CLI (dtflow)
 - API Key 禁止硬编码
 - 所有敏感信息走环境变量或本地配置
 
-### 3. 项目自描述
+### 3. 项目先于版本
+- 每次开发任务必须先绑定到一个 project
+- project 需要进入当前工作区的总看板（PROJECTS.md）
+- 然后才能启动具体版本迭代
+
+### 4. 项目自描述
 - 每个项目通过 `.dtflow/config.json` 描述自身
 - 每个版本通过 `versions/<version>/.state.json` 维护状态
 
-### 4. 可诊断
+### 5. 可诊断
 - doctor 命令统一检查环境、依赖、配置、目录结构
 
 ## 第一阶段范围

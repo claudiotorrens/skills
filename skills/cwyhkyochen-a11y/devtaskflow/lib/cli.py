@@ -11,6 +11,12 @@ from write_flow import run_write
 from review_flow import run_review
 from fix_flow import run_fix
 from release_flow import run_deploy, run_seal
+from version_flow import create_version
+from project_queries import list_projects, get_project_by_name, bump_version
+from dashboard import build_dashboard
+from serve import run_serve
+from workspace_layout import resolve_project_init_path
+from project_board import find_workspace_root
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,8 +24,9 @@ TEMPLATES_DIR = BASE_DIR / 'templates'
 
 
 def cmd_init_project(args):
-    project_root = Path(args.path or '.').resolve()
-    result = init_project_structure(project_root, TEMPLATES_DIR)
+    workspace_root = find_workspace_root(Path.cwd())
+    project_root = resolve_project_init_path(workspace_root, args.path, args.name)
+    result = init_project_structure(project_root, TEMPLATES_DIR, project_name=args.name)
     print('✅ DevTaskFlow 项目初始化完成')
     for k, v in result.items():
         print(f'- {k}: {v}')
@@ -67,6 +74,115 @@ def cmd_status(args):
         print(f'version: {version_dir.name}')
         print(f'status: {state.data.get("status")}')
         print(f'current_task: {state.data.get("current_task")}')
+    try:
+        project = get_project_by_name(config['project']['name'], root)
+        print(f'board_status: {project.get("status")}')
+        print(f'board_version: {project.get("current_version")}')
+    except Exception:
+        pass
+    return 0
+
+
+def cmd_project_list(args):
+    projects = list_projects(Path.cwd())
+    print('DevTaskFlow Projects')
+    print('=' * 24)
+    if not projects:
+        print('暂无项目')
+        return 0
+    for idx, project in enumerate(projects, start=1):
+        print(f"{idx}. {project['name']}")
+        print(f"   - status: {project.get('status', '-')}")
+        print(f"   - version: {project.get('current_version', '-')}")
+        print(f"   - path: {project.get('path', '-')}")
+        print(f"   - updated_at: {project.get('updated_at', '-')}")
+        if project.get('note'):
+            print(f"   - note: {project.get('note')}")
+    return 0
+
+
+def cmd_project_status(args):
+    if not args.name:
+        print('请通过 --name 指定项目名')
+        return 1
+    try:
+        project = get_project_by_name(args.name, Path.cwd())
+    except Exception as e:
+        print(f'project-status 失败: {e}')
+        return 1
+    print('DevTaskFlow Project Status')
+    print('=' * 24)
+    for key in ['name', 'status', 'current_version', 'path', 'updated_at', 'note']:
+        print(f'{key}: {project.get(key, "-")}')
+    return 0
+
+
+def cmd_next_version(args):
+    if not args.version:
+        print('请通过 --version 指定当前版本号')
+        return 1
+    try:
+        next_version = bump_version(args.version, args.bump)
+    except Exception as e:
+        print(f'next-version 失败: {e}')
+        return 1
+    print(next_version)
+    return 0
+
+
+def cmd_dashboard(args):
+    try:
+        result = build_dashboard(Path.cwd())
+    except Exception as e:
+        print(f'dashboard 失败: {e}')
+        return 1
+    print('✅ dashboard 已生成')
+    print(f"- board_path: {result['board_path']}")
+    print(f"- dashboard_path: {result['dashboard_path']}")
+    print(f"- project_count: {result['project_count']}")
+    return 0
+
+
+def cmd_serve(args):
+    try:
+        server, result = run_serve(Path.cwd(), port=args.port)
+    except Exception as e:
+        print(f'serve 失败: {e}')
+        return 1
+    print('✅ 本地看板服务已启动')
+    print(f"- url: {result['url']}")
+    print(f"- dashboard_path: {result['dashboard_path']}")
+    print('按 Ctrl+C 停止')
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print('\n已停止')
+    finally:
+        server.server_close()
+    return 0
+
+
+def cmd_start_version(args):
+    root = find_project_root()
+    if not root:
+        print('未找到 .dtflow/config.json，当前目录不是 DevTaskFlow 项目')
+        return 1
+    if not args.version:
+        print('请通过 --version 指定版本号，例如 v0.1.0')
+        return 1
+    mode = 'new' if args.new_project else 'iterate'
+    try:
+        config = load_config(root)
+        validate_config(config)
+        result = create_version(root, config, args.version, mode=mode)
+    except Exception as e:
+        print(f'start-version 失败: {e}')
+        return 1
+    print('✅ 版本已启动')
+    print(f"- mode: {result['mode']}")
+    print(f"- version_dir: {result['version_dir']}")
+    print(f"- requirements_file: {result['requirements_file']}")
+    print('下一步：填写 REQUIREMENTS.md，然后执行 dtflow analyze')
     return 0
 
 
@@ -238,8 +354,11 @@ def cmd_seal(args):
         return 1
     print('✅ seal 完成')
     print(f"- version: {result['version']}")
-    print(f"- archive_dir: {result['src_dir']}")
-    print(f"- items_copied: {result['items_copied']}")
+    print(f"- docs_dir: {result['docs_dir']}")
+    print(f"- src_dir: {result['src_dir']}")
+    print(f"- deployment_file: {result['deployment_file']}")
+    print(f"- docs_files: {', '.join(result['docs_files'])}")
+    print(f"- src_items: {result['src_items']}")
     return 0
 
 
@@ -249,7 +368,32 @@ def main():
 
     p_init = subparsers.add_parser('init-project', help='初始化 DevTaskFlow 项目')
     p_init.add_argument('--path', help='项目路径，默认当前目录')
+    p_init.add_argument('--name', help='项目名称，默认取目录名')
     p_init.set_defaults(func=cmd_init_project)
+
+    p_project_list = subparsers.add_parser('project-list', help='查看当前工作区项目看板')
+    p_project_list.set_defaults(func=cmd_project_list)
+
+    p_project_status = subparsers.add_parser('project-status', help='查看单个项目状态')
+    p_project_status.add_argument('--name', required=True, help='项目名')
+    p_project_status.set_defaults(func=cmd_project_status)
+
+    p_next_version = subparsers.add_parser('next-version', help='计算下一个语义化版本号')
+    p_next_version.add_argument('--version', required=True, help='当前版本号，例如 v1.2.3')
+    p_next_version.add_argument('--bump', choices=['major', 'minor', 'patch'], default='patch', help='递增类型')
+    p_next_version.set_defaults(func=cmd_next_version)
+
+    p_dashboard = subparsers.add_parser('dashboard', help='生成本地 HTML 看板界面')
+    p_dashboard.set_defaults(func=cmd_dashboard)
+
+    p_serve = subparsers.add_parser('serve', help='启动本地看板服务')
+    p_serve.add_argument('--port', type=int, default=8765, help='端口，默认 8765')
+    p_serve.set_defaults(func=cmd_serve)
+
+    p_start_version = subparsers.add_parser('start-version', help='在当前项目中启动一个新版本开发')
+    p_start_version.add_argument('--version', required=True, help='版本号，例如 v0.1.0')
+    p_start_version.add_argument('--new-project', action='store_true', help='标记为新项目首个版本')
+    p_start_version.set_defaults(func=cmd_start_version)
 
     p_doctor = subparsers.add_parser('doctor', help='检查环境与项目结构')
     p_doctor.set_defaults(func=cmd_doctor)

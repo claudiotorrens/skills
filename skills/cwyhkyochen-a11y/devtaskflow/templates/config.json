@@ -2,7 +2,9 @@
   "project": {
     "name": "your-project-name",
     "repo_path": ".",
-    "language": "typescript"
+    "language": "typescript",
+    "board_enabled": true,
+    "board_name": "your-project-name"
   },
   "pipeline": {
     "versions_dir": "versions",

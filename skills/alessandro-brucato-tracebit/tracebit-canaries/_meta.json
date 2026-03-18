@@ -1,0 +1,11 @@
+{
+  "owner": "alessandro-brucato-tracebit",
+  "slug": "tracebit-canaries",
+  "displayName": "Tracebit Canaries",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773833874066,
+    "commit": null
+  },
+  "history": []
+}

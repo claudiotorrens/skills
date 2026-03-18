@@ -3,11 +3,16 @@
   "slug": "paycheck",
   "displayName": "Paycheck",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773673856790,
-    "commit": "https://github.com/openclaw/skills/commit/016d3b40cba47b306ab79ec7731cbb6676a5d592"
+    "version": "2.0.2",
+    "publishedAt": 1773830900348,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773673856790,
+      "commit": "https://github.com/openclaw/skills/commit/016d3b40cba47b306ab79ec7731cbb6676a5d592"
+    },
     {
       "version": "2.0.0",
       "publishedAt": 1773641007925,

@@ -1,0 +1,11 @@
+{
+  "owner": "youyancheng1",
+  "slug": "dailys-report",
+  "displayName": "每日日报生成器",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773758237703,
+    "commit": null
+  },
+  "history": []
+}

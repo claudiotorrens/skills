@@ -1,7 +1,7 @@
 ---
 name: trent-openclaw-security
 description: Audit your OpenClaw deployment for security risks using Trent AppSec Advisor
-version: 3.2.0
+version: 3.3.3
 homepage: https://trent.ai
 user-invocable: true
 metadata:
@@ -11,6 +11,8 @@ metadata:
         - trent-openclaw-audit
         - trent-openclaw-sysinfo
         - trent-openclaw-package-skills
+        - trent-openclaw-upload-skills
+        - trent-openclaw-analyse-skills
 ---
 
 # Trent OpenClaw Security Audit
@@ -25,21 +27,64 @@ If `trent-openclaw-audit` is not found, tell the user to run the installer:
 
 ## Instructions
 
-This audit runs in three phases. Execute each phase in order.
+This audit runs in three phases. By default, `trent-openclaw-audit` runs all
+three phases. Use `--config-only` to run just Phase 1, or the individual
+CLI tools for more control.
 
-### Phase 1 — Configuration Audit
+### Default: Full Audit (all 3 phases)
 
-Call the `audit_openclaw_setup` MCP tool to collect and analyze the OpenClaw
-configuration metadata and system context.
+```bash
+trent-openclaw-audit
+```
 
-Present the findings grouped by severity (see "Present results" below).
+This runs configuration audit, skill upload, and deep skill analysis in a
+single command with automatic conversation continuity.
+
+### Step-by-step: Individual Phases
+
+#### Phase 1 — Configuration Audit (only)
+
+Run the audit CLI with `--config-only` to analyse just the configuration:
+
+```bash
+trent-openclaw-audit --config-only
+```
+
+Optional: specify a custom config path:
+
+```bash
+trent-openclaw-audit --path /path/to/openclaw/config
+```
+
+The command outputs findings to stdout. Parse the output and present it to
+the user. The last line contains `[TRENT_THREAD_ID:<id>]` — save this thread
+ID for Phase 3.
+
+Present findings grouped by severity (see "Present results" below).
 
 Summarize: "Phase 1 complete. N findings from configuration analysis. Proceeding to upload skills for deeper analysis..."
 
-### Phase 2 — Skill Upload
+#### Phase 2 — Skill Upload
 
-Call the `upload_openclaw_skills` MCP tool to package and upload installed
-skills and custom code from the workspace.
+**Data Disclosure — present this to the user before proceeding:**
+
+> This phase will send the following data to Trent for security analysis:
+> - **Skill source code** for each installed skill
+> - **Skill metadata** (name, version, dependencies)
+> - **Skill configuration parameters**
+>
+> No credentials, environment variables, or non-skill workspace files are included.
+
+**Wait for the user to confirm before running the upload command.**
+
+Run the upload CLI to package and upload installed skills:
+
+```bash
+trent-openclaw-upload-skills > /tmp/upload_summary.json
+```
+
+This scans the workspace, packages each skill as a `.skill` ZIP archive,
+uploads to Trent via S3, and outputs a JSON summary to stdout.
 
 Present the upload summary:
 - How many skills were uploaded, skipped (unchanged), failed, or too large
@@ -49,13 +94,25 @@ If all uploads failed, report the errors and stop. Otherwise proceed.
 
 Summarize: "Phase 2 complete. N skills uploaded. Proceeding to deep skill analysis..."
 
-### Phase 3 — Deep Skill Analysis
+#### Phase 3 — Deep Skill Analysis
 
-Call the `analyse_openclaw_skills` MCP tool, passing the full summary dict
-returned by `upload_openclaw_skills` in Phase 2 as the `upload_summary` argument.
+Run the analysis CLI, passing the thread ID from Phase 1 and the upload
+summary from Phase 2:
 
-This sends the skill metadata to Trent's AppSec Advisor on the same chat thread
-as Phase 1, so the advisor has full context from the configuration audit.
+```bash
+trent-openclaw-analyse-skills --thread-id <THREAD_ID> --upload-summary /tmp/upload_summary.json
+```
+
+Or pipe from Phase 2 directly:
+
+```bash
+trent-openclaw-upload-skills | trent-openclaw-analyse-skills --thread-id <THREAD_ID> --upload-summary -
+```
+
+This launches one analysis request per skill **in parallel**, so results start
+appearing as soon as each skill is analysed — output order may differ from
+upload order. Each request uses the Phase 1 thread ID so the advisor has full
+context from the configuration audit.
 
 Present the deep analysis results alongside the Phase 1 findings.
 
@@ -82,21 +139,10 @@ For each finding show: the risk, where it was found, and the exact fix.
 
 Highlight **chained attack paths** — where multiple settings combine to create worse outcomes.
 
-Offer to help apply fixes to `~/.openclaw/openclaw.json`.
+Present recommended config changes as a diff snippet for the user to review
+and apply manually. Do **not** modify any system files directly.
 
 ## When to use
 
 - User asks "Is my setup secure?" or "audit my config"
-- After changes to `~/.openclaw/openclaw.json`, new plugins, or new MCP servers
-- Proactively offer if no audit has been run in 7+ days (check `~/.openclaw/workspace/MEMORY.md`)
-
-## After audit
-
-Record the date in `~/.openclaw/workspace/MEMORY.md`:
-
-```
-## Trent Security Audit
-- Last audit: YYYY-MM-DD
-- Critical findings: N
-- Skills analyzed: N
-```
+- After changes to OpenClaw configuration, new plugins, or new MCP servers

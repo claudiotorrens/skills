@@ -4,11 +4,13 @@ description: >
   X Intelligence CLI — search, analyze, and engage on X/Twitter from the terminal.
   Use when: (1) user says "x research", "search x for", "search twitter for",
   "what are people saying about", "what's twitter saying", "check x for", "x search",
-  "search x", "find tweets about", "monitor x for", "track followers", (2) user is working on 
-  something where recent X discourse would provide useful context (new library releases, 
-  API changes, product launches, cultural events, industry drama), (3) user wants to find 
+  "search x", "find tweets about", "monitor x for", "track followers", (2) user is working on
+  something where recent X discourse would provide useful context (new library releases,
+  API changes, product launches, cultural events, industry drama), (3) user wants to find
   what devs/experts/community thinks about a topic, (4) user needs real-time monitoring ("watch"),
-  (5) user wants AI-powered analysis ("analyze", "sentiment", "report").
+  (5) user wants AI-powered analysis ("analyze", "sentiment", "report"),
+  (6) user wants to sync bookmarks to Obsidian ("sync bookmarks", "capture bookmarks",
+  "bookmark research", "save my bookmarks to obsidian").
   Also supports: bookmarks, likes, following (read/write), trending topics, Grok AI analysis,
   and cost tracking. Export as JSON, JSONL (pipeable), CSV, or Markdown.
   Non-goals: Not for posting tweets, not for DMs, not for enterprise features.
@@ -261,7 +263,7 @@ bun run xint.ts search "topic" --json | bun run xint.ts analyze --pipe  # Pipe s
 Uses xAI's Grok API (OpenAI-compatible). Requires `XAI_API_KEY` in env or `.env`.
 
 **Options:**
-- `--model <name>` — grok-3, grok-3-mini (default), grok-2
+- `--model <name>` — grok-4, grok-4-1-fast (default), grok-3, grok-3-mini, grok-2
 - `--tweets <file>` — path to JSON file containing tweets
 - `--pipe` — read tweet JSON from stdin
 
@@ -299,6 +301,34 @@ Env:
 Notes:
 - Never print keys.
 - Prefer `--dry-run` when wiring new cron jobs.
+
+### Reposts
+
+```bash
+bun run xint.ts reposts <tweet_id> [--limit N] [--json]
+```
+
+Look up users who reposted a specific tweet. Useful for engagement analysis and OSINT.
+
+**Examples:**
+```bash
+bun run xint.ts reposts 1234567890
+bun run xint.ts reposts 1234567890 --limit 50 --json
+```
+
+### User Search
+
+```bash
+bun run xint.ts users "<query>" [--limit N] [--json]
+```
+
+Search for X users by keyword. Uses the `/2/users/search` endpoint.
+
+**Examples:**
+```bash
+bun run xint.ts users "AI researcher"
+bun run xint.ts users "solana developer" --limit 10 --json
+```
 
 ### Watch (Real-Time Monitoring)
 
@@ -365,7 +395,7 @@ Generates comprehensive markdown intelligence reports combining search results, 
 **Options:**
 - `--sentiment` — include per-tweet sentiment analysis
 - `--accounts @user1,@user2` — include per-account activity sections
-- `--model <name>` — Grok model for AI summary (default: grok-3-mini)
+- `--model <name>` — Grok model for AI summary (default: grok-4-1-fast)
 - `--pages N` — search pages to fetch (default: 2)
 - `--save` — save report to `data/exports/`
 
@@ -492,6 +522,74 @@ Resources shared:
 
 Use `--save` flag to save to `data/exports/`.
 
+## Obsidian Bookmark Sync (Optional)
+
+> Only activate when user explicitly asks to sync bookmarks to Obsidian (e.g., "sync bookmarks", "capture bookmarks", "bookmark research", "save my bookmarks to obsidian").
+
+Fetches recent X bookmarks, analyzes article content, and saves as structured research notes in the Obsidian inbox. Requires OAuth + Obsidian vault path (`~/obsidian/nyk/inbox/`).
+
+### Pipeline
+
+**Step 1 — Fetch bookmarks:**
+```bash
+xint bookmarks --limit {count} --json --policy engagement {--since flag if provided} {--query flag if provided}
+```
+Parse JSON output. Each bookmark has: id, text, username, name, created_at, metrics, urls, tweet_url.
+
+**Step 2 — Classify:** For each bookmark, determine type:
+- **article**: Contains X article URL (`x.com/i/article/...`) or thread with 3+ linked tweets
+- **thread**: Multi-tweet thread (conversation_id, reply chains)
+- **standalone**: Single tweet with insight/opinion/announcement
+- **link**: Tweet primarily sharing an external URL
+
+**Step 3 — Analyze content:**
+- For **article**/**thread**: Use Agent tool (subagent_type: "general-purpose") to fetch + analyze full content — run analyses in parallel (one agent per article)
+- For **standalone**/**link**: Analyze directly from tweet text + WebFetch for external links
+
+**Step 4 — Deduplicate:** Before creating files, check for existing notes:
+```bash
+grep -rl "{tweet_id}" ~/obsidian/nyk/inbox/ 2>/dev/null
+```
+Skip bookmarks that already have notes.
+
+**Step 5 — Generate research notes** at `~/obsidian/nyk/inbox/research-{slug}.md`:
+```yaml
+---
+id: research-{slug}
+created: {today's date}
+type: research
+status: inbox
+tags: [{auto-detected tags}]
+source: x-bookmarks
+tweet_id: "{tweet_id}"
+description: {one-line summary}
+---
+```
+Content sections: **Signal** (author, engagement, tweet URL) → **Core Thesis** → **Key Findings** (bullets) → **Why It Resonated** (engagement analysis) → **Actionable Takeaways** (checklist) → **Related** (wikilinks). Apply 2-4 tags per note.
+
+**Step 6 — Summary report:** Output a table of processed bookmarks (author, topic, engagement, file), counts of new/skipped/total.
+
+### Tag Detection Rules
+
+| Content Pattern | Tags |
+|----------------|------|
+| AI agents, deployment, orchestration | `ai-agents`, `agent-deployment` |
+| Enterprise, SaaS, business | `enterprise`, `business-strategy` |
+| Trading, quant, markets, DeFi | `quantitative-finance`, `prediction-markets` |
+| Claude, LLM, prompting | `ai-ml-research`, `llm-engineering` |
+| Security, hacking, CTF | `security-governance` |
+| Design, UI/UX, frontend | `design`, `frontend` |
+| Startup, growth, marketing | `startup`, `marketing` |
+| Coding, engineering, architecture | `software-engineering` |
+
+### Sync Heuristics
+
+- Bookmark-to-like ratio >2:1 = reference material, >3:1 = textbook-grade
+- Articles with >1K bookmarks are almost always worth full analysis
+- Standalone tweets with <100 likes can still be high-signal if from domain experts
+- All notes go to `inbox/` — promotion to `knowledge/graph/` happens via knowledge-doctor pipeline
+- Use `[[wikilinks]]` for internal cross-references (never standard markdown links)
+
 ## Cost Management
 
 All API calls are tracked in `data/api-costs.json`. The budget system warns when approaching limits but does not block calls (passive).
@@ -503,7 +601,12 @@ All API calls are tracked in `data/api-costs.json`. The budget system warns when
 - Profile lookups: ~$0.005/lookup
 - Follower/following lookups: ~$0.01/page
 - Trends: ~$0.10/request
+- User search: ~$0.01/page
+- Reposts lookup: ~$0.01/page
 - Grok AI (sentiment/analyze/report): billed by xAI separately (not X API)
+  - grok-4-1-fast: $0.20/$0.50 per 1M tokens (default for analysis)
+  - grok-4: $3.00/$15.00 per 1M tokens (used for article/x-search)
+  - xAI tool invocations: max $5/1K calls (50% cheaper than 2025 rates)
 
 Default daily budget: $1.00 (adjustable via `costs budget set <N>`).
 
@@ -532,9 +635,11 @@ xint/
 │   ├── format.ts      (terminal, markdown, CSV, JSONL formatters)
 │   ├── grok.ts        (xAI Grok analysis integration)
 │   ├── oauth.ts       (OAuth 2.0 PKCE auth + token refresh)
+│   ├── reposts.ts     (repost/retweet lookup)
 │   ├── report.ts      (intelligence report generation)
 │   ├── sentiment.ts   (AI-powered sentiment analysis via Grok)
 │   ├── trends.ts      (trending topics — API + search fallback)
+│   ├── users.ts       (user search by keyword)
 │   └── watch.ts       (real-time monitoring with polling)
 ├── data/
 │   ├── api-costs.json  (cost tracking data)
@@ -584,6 +689,7 @@ The Package API provides agent memory package management:
 - `xint_search` with limit=15: ~3KB response
 - `xint_profile` with count=20: ~4KB response
 - `xint_article`: 1-10KB depending on article length
+- Bookmark sync pipeline: ~2-8KB per bookmark (depends on article analysis)
 - `xint_trends`: ~2KB response
 - Use `--fields` flag to reduce output to only needed fields
 
@@ -605,10 +711,15 @@ The Package API provides agent memory package management:
 When a tool fails, try the next option:
 
 1. `xint_search` (X API v2, fast, real-time)
-2. `xint_xsearch` (xAI Grok search, AI-enhanced, requires XAI_API_KEY)
+2. `xint_xsearch` (xAI Grok search via grok-4-1-fast, AI-enhanced, requires XAI_API_KEY)
 3. Cached results from previous searches (15min TTL)
 
 For article fetching:
 1. `xint_article` with tweet URL (extracts inline X Article)
-2. `xint_article` with article URL (web fetch)
+2. `xint_article` with article URL (web fetch via grok-4)
 3. `xint_search` for tweets about the topic
+
+For user discovery:
+1. `xint_users` (search by keyword, new `/2/users/search` endpoint)
+2. `xint_search` with `from:` operator for known usernames
+3. `xint_reposts` to find engaged users on specific tweets

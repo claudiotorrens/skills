@@ -3,11 +3,16 @@
   "slug": "xint",
   "displayName": "Xint",
   "latest": {
-    "version": "2026.2.25",
-    "publishedAt": 1772895769402,
-    "commit": "https://github.com/openclaw/skills/commit/fa258474bd8fb2be0904202df2ddda12102d40c6"
+    "version": "2026.2.26",
+    "publishedAt": 1773658269331,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2026.2.25",
+      "publishedAt": 1772895769402,
+      "commit": "https://github.com/openclaw/skills/commit/fa258474bd8fb2be0904202df2ddda12102d40c6"
+    },
     {
       "version": "2026.2.24",
       "publishedAt": 1771928995806,

@@ -66,6 +66,10 @@ Upgrade to Pro ($10.99) at https://aerobase.app/openclaw-travel-agent for 500 AP
 - Keep the plan practical: clear action list, no unsafe medical or dosing recommendations.
 - Offer alternatives when recovery burden is high (later departure, longer stay buffer, airport adjustments).
 
-## Premium note
+## Pro Superpowers
 
-Available with a valid Aerobase API key from the setup page.
+Upgrade to Pro to unlock enhanced recovery capabilities:
+- Calendar sync with body clock conflict detection at destination
+- Gmail import auto-extracts flights for recovery plan generation
+- Day-by-day itinerary planning with jetlag-phased scheduling
+- Download Pro skills at https://aerobase.app/openclaw-travel-agent

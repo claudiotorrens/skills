@@ -118,7 +118,7 @@ def _save_daily_spend(spend_data):
 # Trading helpers
 # =============================================================================
 
-def execute_trade(market_id, side, amount):
+def execute_trade(market_id, side, amount, signal_data=None):
     """Execute a buy trade via Simmer SDK with source tagging."""
     try:
         result = get_client().trade(
@@ -126,6 +126,7 @@ def execute_trade(market_id, side, amount):
             side=side,
             amount=amount,
             source=TRADE_SOURCE, skill_slug=SKILL_SLUG,
+            signal_data=signal_data,
         )
         return {
             "success": result.success,
@@ -362,10 +363,7 @@ def run_divergence_trades(markets, dry_run=True, quiet=False):
 
         ctx_market = context.get("market", {})
         fee_rate_bps = ctx_market.get("fee_rate_bps", 0)
-        if fee_rate_bps > 0:
-            log(f"  ⏭️  {question}... — fee {fee_rate_bps}bps, skipping")
-            skip_reasons.append("fee market")
-            continue
+        fee_pct = fee_rate_bps / 10000  # e.g. 1000bps = 10%
 
         # Check flip-flop safeguard
         discipline = context.get("discipline", {})
@@ -378,6 +376,14 @@ def run_divergence_trades(markets, dry_run=True, quiet=False):
         # Determine side and price
         side = "yes" if div > 0 else "no"
         edge = abs(div)
+
+        # Subtract fee from edge — only trade if edge exceeds fee
+        net_edge = edge - fee_pct
+        if net_edge < MIN_EDGE:
+            log(f"  ⏭️  {question}... — edge {edge:.1%} - fee {fee_pct:.1%} = net {net_edge:.1%} < min {MIN_EDGE:.1%}")
+            skip_reasons.append(f"net edge too low after {fee_rate_bps}bps fee")
+            continue
+        edge = net_edge  # Use fee-adjusted edge for Kelly sizing
         # Price we're buying at (external price for the side we're trading)
         if side == "yes":
             price = m.get("external_price_yes") or 0.5
@@ -404,7 +410,15 @@ def run_divergence_trades(markets, dry_run=True, quiet=False):
         # Execute trade
         log(f"  🎯 Trading {side.upper()} ${position_size:.2f} on {question}...")
         log(f"     Edge: {edge:.1%} | Price: ${price:.3f}")
-        result = execute_trade(market_id, side, position_size)
+        _signal_data = {
+            "edge": round(edge, 4),
+            "confidence": round(min(0.95, edge * 2 + 0.5), 2),
+            "signal_source": m.get("signal_source", "crowd"),
+            "ai_forecast": round(m.get("current_probability") or 0, 4),
+            "market_price": round(m.get("external_price_yes") or 0, 4),
+            "divergence_pct": round(abs(div) * 100, 2),
+        }
+        result = execute_trade(market_id, side, position_size, signal_data=_signal_data)
 
         if result and result.get("success"):
             trades_executed += 1

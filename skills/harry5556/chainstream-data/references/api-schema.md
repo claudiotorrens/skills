@@ -6,7 +6,6 @@
 |-------|-----------|----------|----------|-----------|-----|
 | Solana | `sol` | Yes | Yes | Yes | Yes |
 | BSC | `bsc` | Yes | Yes | Yes | Yes |
-| Base | `base` | Yes | Yes | Yes | Yes |
 | Ethereum | `eth` | Yes | Yes | Yes | Yes |
 | Polygon | `polygon` | — | Bridge only | — | — |
 | Arbitrum | `arbitrum` | — | Bridge only | — | — |

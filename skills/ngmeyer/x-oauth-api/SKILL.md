@@ -1,6 +1,6 @@
 ---
 name: x-oauth-api
-description: Post to X (Twitter) using the official OAuth 1.0a API. Free tier compatible.
+description: Post to X (Twitter) using the official OAuth 1.0a API. Use when asked to "post to X", "tweet this", "post on Twitter", create threads, delete tweets, or check account info. Free tier compatible. NOT for search, mentions, or media uploads (requires Basic+ tier).
 metadata:
   { "openclaw": { "requires": { "env": ["X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_TOKEN_SECRET"] } } }
 ---
@@ -69,21 +69,8 @@ Post a single tweet.
 - `--quote <tweet-id>` - Quote tweet
 - `--media <file>` - Attach image/video
 
-**Example:**
-```bash
-x post "Check this out" --media image.jpg
-```
-
 ### `x thread <tweet1> <tweet2> ...`
 Post a tweet thread.
-
-**Example:**
-```bash
-x thread \
-  "Thread about AI" \
-  "Here's what I learned" \
-  "Most important takeaway"
-```
 
 ### `x mentions [options]`
 Get recent mentions of your account.
@@ -92,8 +79,6 @@ Get recent mentions of your account.
 - `--limit <n>` - Number of mentions (default: 10, max: 100)
 - `--since <tweet-id>` - Only mentions after this ID
 - `--format json` - Output as JSON
-
-**Note:** Requires `X_USER_ID` env var OR will fetch it automatically (slower).
 
 ### `x search <query> [options]`
 Search recent tweets.
@@ -110,8 +95,6 @@ Show current account info (name, username, follower counts, user ID).
 
 ## API Rate Limits
 
-X API v2 has rate limits per endpoint:
-
 | Endpoint | Limit | Window |
 |----------|-------|--------|
 | POST /2/tweets | 200 | 15 min (Free tier) |
@@ -124,35 +107,6 @@ Rate limits vary by access tier. See [X API documentation](https://developer.twi
 
 OAuth 1.0a is handled transparently. Just provide your credentials via environment variables. The skill will sign all requests automatically.
 
-## Examples
-
-### Post with media
-```bash
-x post "Check out this screenshot" --media screenshot.png
-```
-
-### Reply to a tweet
-```bash
-x post "Great point!" --reply-to 1234567890123456789
-```
-
-### Create a 3-tweet thread
-```bash
-x thread \
-  "Just launched x-oauth-api skill" \
-  "It lets you post to X directly from your agent" \
-  "No proxies, direct OAuth 1.0a authentication"
-```
-
-### Search and reply
-```bash
-# Find interesting tweets
-x search "agent framework"
-
-# Reply to one
-x post "Have you tried this?" --reply-to 1234567890123456789
-```
-
 ## Troubleshooting
 
 **"Unauthorized" error**
@@ -163,17 +117,10 @@ x post "Have you tried this?" --reply-to 1234567890123456789
 **"Rate limit exceeded"**
 - Wait 15 minutes for limit to reset
 - Reduce request frequency
-- Check your tier limits at https://developer.twitter.com/en/portal/dashboard
 
 **"This endpoint requires a paid X API tier"**
 - Search and mentions require Basic+ tier on X API
 - Free tier only supports posting, deleting, and account lookup
-- Upgrade at https://developer.twitter.com/en/portal/products
-
-**Tweet not posting**
-- Check tweet is < 280 characters (or < 4000 with X Premium)
-- Verify no special formatting issues
-- Check X API status at https://api.twitterstat.us/
 
 ## Requirements
 
@@ -185,6 +132,9 @@ x post "Have you tried this?" --reply-to 1234567890123456789
 
 Free. X API is free for basic usage. Check your app's rate limits in X Developer Portal.
 
-## Support
-
-For X API issues, see: https://developer.twitter.com/en/docs/twitter-api
+## Gotchas
+- **Free tier only supports posting, deleting, and account lookup** — search, mentions, and media uploads require Basic+ tier ($100/month). Don't attempt these on free tier; you'll get a clear "requires paid tier" error.
+- **"Unauthorized" after credential rotation** — X API keys are invalidated when you regenerate them in the Developer Portal. All 4 env vars must be updated together (`X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`).
+- **Trailing newlines in env vars break auth** — If you copy/paste credentials and include a trailing `\n`, OAuth signing will fail silently with a 401. Always verify with `echo -n "$X_API_KEY" | xxd` to confirm no whitespace.
+- **Rate limit 429s are per-endpoint** — Hitting the limit on `POST /2/tweets` doesn't affect `GET /2/users`. Each endpoint has its own 15-minute window. Back off only the failing endpoint.
+- **App write permissions must be set before generating tokens** — If you generate access tokens before enabling "Read and Write" in the Developer Portal, the tokens will be read-only. Regenerate tokens after changing permissions.

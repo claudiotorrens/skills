@@ -9,7 +9,14 @@
   "scripts": {
     "test": "node bin/x.js --help"
   },
-  "keywords": ["x", "twitter", "api", "oauth", "post", "tweet"],
+  "keywords": [
+    "x",
+    "twitter",
+    "api",
+    "oauth",
+    "post",
+    "tweet"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
@@ -19,5 +26,9 @@
   },
   "engines": {
     "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ngmeyer/x-oauth-api"
   }
 }

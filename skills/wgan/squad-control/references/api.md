@@ -92,6 +92,93 @@ With an account-scoped key, tasks from different workspaces may appear in the sa
 
 ---
 
+## GET /api/wake/poll
+
+Long-poll for immediate dispatcher wake signals. This is the legacy fallback path when the wake relay is unavailable.
+
+Optional query params: `?timeoutSec=<n>` (default `60`, max `60`)
+
+**Response when a wake is queued:**
+```json
+{
+  "wake": {
+    "scopeType": "account",
+    "ownerId": "user_123",
+    "workspaceId": "ws_123",
+    "reason": "task_assigned",
+    "taskId": "task_123",
+    "createdAt": 1772750000000,
+    "updatedAt": 1772750000000
+  },
+  "timeoutSec": 60
+}
+```
+
+**Response on timeout (no wake):**
+```json
+{
+  "wake": null,
+  "timeoutSec": 60
+}
+```
+
+When `wake` is non-null, immediately run the normal polling flow (`poll-tasks.sh`). If that prints a `POLL_RESULT` envelope, immediately follow the normal pickup, review, and stuck-task recovery flow instead of waiting for the next cron cycle.
+
+---
+
+## GET /api/wake/status
+
+Read the current wake queue and latest listener presence for your wake scope. This is a debugging endpoint and does **not** consume the queued wake signal.
+
+**Response:**
+```json
+{
+  "scopeKey": "account:user_123",
+  "scopeType": "account",
+  "hasPendingWake": true,
+  "wake": {
+    "scopeType": "account",
+    "workspaceId": "ws_123",
+    "reason": "task_assigned",
+    "taskId": "task_123",
+    "createdAt": 1772750000000,
+    "updatedAt": 1772750000000
+  },
+  "listener": null
+}
+```
+
+`listener` remains `null` until a relay/session-backed listener registers presence.
+
+---
+
+## POST /api/wake/session
+
+Mint a short-lived relay session token for the reverse wake channel. This does **not** open the connection itself; it returns the token and relay URL that the wake listener should use for its outbound relay connection.
+
+Optional body:
+```json
+{
+  "instanceLabel": "vps-main"
+}
+```
+
+**Response:**
+```json
+{
+  "relayUrl": "wss://wake.squadcontrol.ai/v1/connect",
+  "token": "<jwt>",
+  "expiresAt": 1772750300000,
+  "scopeKey": "account:user_123",
+  "scopeType": "account",
+  "listenerId": "wl_123"
+}
+```
+
+The token is short-lived and scope-bound. After it expires, request a fresh session and reconnect.
+
+---
+
 ## POST /api/tasks/pickup
 
 Mark a task as in-progress. Call this before starting work.

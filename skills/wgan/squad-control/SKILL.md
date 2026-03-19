@@ -53,6 +53,11 @@ description: >
 
 Orchestrate AI agent tasks from Squad Control's kanban board.
 
+### Critical Rules
+- **Blocked-task dedup:** Before posting a blocked status update, check the thread for your most recent message. If your last message is already a blocked update AND no new messages have been posted since, do NOT post another blocked comment — exit and wait for next dispatch instead.
+- **Incremental thread fetching:** Use `?limit=N` when reading thread history to avoid loading the full thread. If you know the last message ID from a previous session, save it in `agentState` so the next dispatch only fetches new messages.
+- **Use agentState for continuity:** On pickup, check `task.agentState` for prior session context (files modified, steps completed, decisions made). Save state mid-task via `POST /api/tasks/save-state`.
+
 ## Quick Reference
 - **Setup:** `references/setup.md`
 - **Full API:** `references/api.md`
@@ -79,6 +84,13 @@ When a cron fires to check for tasks:
    - `pending` → follow **Pickup & Dispatch** below for each task
    - `review.tasks` → follow **Review Dispatch** below for each task
    - `stuck.tasks` → follow **Stuck Task Recovery** below for each task
+
+> ⚠️ **Isolated session fallback:** If `sessions_spawn` is not available (e.g. this is an isolated cron session), do NOT hallucinate completion. Instead, hand off to the main session:
+> ```bash
+> openclaw agent --agent main --channel telegram -m "SQUAD_CONTROL_DISPATCH: pending tasks need worker sessions spawned. Use the squad-control skill. POLL_RESULT:
+> <paste the full POLL_RESULT JSON here>"
+> ```
+> Then reply `HEARTBEAT_OK` and exit. The main session has `sessions_spawn` and will handle dispatch.
 
 Alternatively, call the APIs directly:
 - Pending: `curl -sL "${SC_API_URL}/api/tasks/pending" -H "x-api-key: ${SC_API_KEY}"`

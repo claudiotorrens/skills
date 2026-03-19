@@ -38,5 +38,5 @@
 Run:
 
 ```bash
-~/.openclaw/workspace/skills/squad-control/scripts/run-tests.sh
+~/.openclaw/skills/squad-control/scripts/run-tests.sh
 ```

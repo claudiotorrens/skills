@@ -3,11 +3,16 @@
   "slug": "faces",
   "displayName": "Faces",
   "latest": {
-    "version": "1.3.2",
-    "publishedAt": 1773086799838,
-    "commit": "https://github.com/openclaw/skills/commit/e7c48dc2c30380983329463c004c3638cdf13d64"
+    "version": "1.6.0",
+    "publishedAt": 1773762150024,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.3.2",
+      "publishedAt": 1773086799838,
+      "commit": "https://github.com/openclaw/skills/commit/e7c48dc2c30380983329463c004c3638cdf13d64"
+    },
     {
       "version": "1.3.0",
       "publishedAt": 1772549294001,

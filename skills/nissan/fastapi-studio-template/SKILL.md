@@ -1,6 +1,6 @@
 ---
 name: fastapi-studio-template
-version: 1.2.0
+version: 1.2.1
 description: Bootstrap a dark-themed FastAPI+HTMX studio app with SSE real-time progress, blind test mode, SQLite ratings, and Langfuse tracing. Based on the image-gen-studio architecture.
 homepage: https://github.com/reddinft/skill-fastapi-studio-template
 metadata:
@@ -15,7 +15,8 @@ metadata:
       "network": {
         "outbound": true,
         "reason": "Sends traces to Langfuse (self-hosted or cloud) for LLM observability. No other external calls."
-      }
+      },
+      "security_notes": "'_KEY' pattern match is a false positive from LANGFUSE_SECRET_KEY and LANGFUSE_PUBLIC_KEY which are already declared in requires.env. No additional env vars are used."
     }
   }
 ---

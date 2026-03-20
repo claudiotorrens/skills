@@ -3,11 +3,16 @@
   "slug": "product-desc",
   "displayName": "Product Desc",
   "latest": {
-    "version": "1.0.6",
-    "publishedAt": 1773666821911,
-    "commit": "https://github.com/openclaw/skills/commit/cd7675c63d8d15141ff3cfa3073022d311207573"
+    "version": "2.0.0",
+    "publishedAt": 1773773962914,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.6",
+      "publishedAt": 1773666821911,
+      "commit": "https://github.com/openclaw/skills/commit/cd7675c63d8d15141ff3cfa3073022d311207573"
+    },
     {
       "version": "2.2.0",
       "publishedAt": 1773444876732,

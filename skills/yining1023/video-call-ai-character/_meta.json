@@ -3,11 +3,16 @@
   "slug": "video-call-ai-character",
   "displayName": "Video Call AI Character",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773697159367,
-    "commit": "https://github.com/openclaw/skills/commit/e1193366fecc47e36b5f82a315361d652909da98"
+    "version": "1.0.8",
+    "publishedAt": 1773953496377,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773697159367,
+      "commit": "https://github.com/openclaw/skills/commit/e1193366fecc47e36b5f82a315361d652909da98"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773435426627,

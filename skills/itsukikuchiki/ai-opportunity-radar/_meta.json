@@ -3,11 +3,16 @@
   "slug": "ai-opportunity-radar",
   "displayName": "AI Opportunity Radar — Discover What In Your Life Should Be Automated",
   "latest": {
-    "version": "2.0.0",
-    "publishedAt": 1773557688697,
-    "commit": "https://github.com/openclaw/skills/commit/26cd6a507332c976cc9b3fd56fcf361627d377fa"
+    "version": "2.0.1",
+    "publishedAt": 1773706542604,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.0.0",
+      "publishedAt": 1773557688697,
+      "commit": "https://github.com/openclaw/skills/commit/26cd6a507332c976cc9b3fd56fcf361627d377fa"
+    },
     {
       "version": "1.1.2",
       "publishedAt": 1773278683393,

@@ -3,11 +3,16 @@
   "slug": "leave-doc",
   "displayName": "Leave Doc",
   "latest": {
-    "version": "2.3.4",
-    "publishedAt": 1773666347080,
-    "commit": "https://github.com/openclaw/skills/commit/dcf63b8dd083dc8b0eeb5cc6c939db9852716588"
+    "version": "2.0.0",
+    "publishedAt": 1773773785843,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.3.4",
+      "publishedAt": 1773666347080,
+      "commit": "https://github.com/openclaw/skills/commit/dcf63b8dd083dc8b0eeb5cc6c939db9852716588"
+    },
     {
       "version": "2.2.0",
       "publishedAt": 1773421462478,

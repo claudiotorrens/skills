@@ -3,9 +3,15 @@
   "slug": "shortapi-ai-image-generation",
   "displayName": "Al Image Generation",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773393449652,
-    "commit": "https://github.com/openclaw/skills/commit/95e9a37b43c0bae52727205a7eae01d865aed376"
+    "version": "1.0.3",
+    "publishedAt": 1773989672421,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773393449652,
+      "commit": "https://github.com/openclaw/skills/commit/95e9a37b43c0bae52727205a7eae01d865aed376"
+    }
+  ]
 }

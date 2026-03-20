@@ -1,11 +1,17 @@
 {
   "owner": "kisssam6886",
   "slug": "zonefoundry-local-sonos",
-  "displayName": "ZoneFoundry Local Sonos",
+  "displayName": "Zonefoundry Local Sonos",
   "latest": {
-    "version": "1.1.0",
-    "publishedAt": 1774007822028,
-    "commit": "https://github.com/openclaw/skills/commit/8e49648a0768c2cdc4e439f5fda5c296c72b48ff"
+    "version": "1.1.2",
+    "publishedAt": 1774015154008,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.1.0",
+      "publishedAt": 1774007822028,
+      "commit": "https://github.com/openclaw/skills/commit/8e49648a0768c2cdc4e439f5fda5c296c72b48ff"
+    }
+  ]
 }

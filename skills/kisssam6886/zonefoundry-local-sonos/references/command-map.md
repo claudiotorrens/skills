@@ -5,10 +5,15 @@ Prefer JSON output and stable machine-readable commands.
 ## Preflight
 
 ```bash
+zf update self --check --format json
+zf setup --format json
 zf doctor --format json
 zf discover --format json
 zf config get defaultRoom
-zf smapi services --format json
+zf service list --format json
+zf config get defaultService
+zf doctor service --service "QQ音乐" --query "郑秀文" --format json
+zf auth smapi complete --service "QQ音乐" --wait 2m --format json
 ```
 
 ## Direct control
@@ -23,6 +28,9 @@ zf execute --data '{"action":"volume.set","target":{"room":"客厅"},"request":{
 ## Playback
 
 ```bash
+zf play music "周杰伦" --format json
+zf play music "<query>" --enqueue --format json
+zf play music "<query>" --enqueue --limit <count> --format json
 zf ncm lucky --name "客厅" "郑秀文" --format json
 zf smapi search --name "客厅" --service "QQ音乐" --category tracks --open --index 1 --format json "周杰伦"
 ```
@@ -30,7 +38,7 @@ zf smapi search --name "客厅" --service "QQ音乐" --category tracks --open --
 ## Insert / announcement
 
 ```bash
-zf say "一分钟新闻" --name "客厅" --mode queue-insert --format json
+zf announce "<text>" --name "<room>" --mode queue-insert --format json
 ```
 
 ## Recovery

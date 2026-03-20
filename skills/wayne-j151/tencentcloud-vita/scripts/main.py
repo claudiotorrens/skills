@@ -3,12 +3,13 @@
 腾讯云 VITA 图像/视频理解 CLI
 
 支持：
-  - 单图片或多图片 URL 理解
+  - 单图片或多图片 URL / 本地图片理解
   - 单视频 URL 理解
   - 自定义 prompt 指令
   - 流式与非流式输出
 """
 
+import base64
 import json
 import os
 import sys
@@ -32,6 +33,13 @@ VITA_MODEL = "youtu-vita"
 
 SUPPORTED_IMAGE_FORMATS = {"jpg", "jpeg", "png", "svg", "webp"}
 SUPPORTED_VIDEO_FORMATS = {"mp4", "mov", "avi", "webm"}
+IMAGE_MIME_TYPES = {
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "png": "image/png",
+    "svg": "image/svg+xml",
+    "webp": "image/webp",
+}
 
 DEFAULT_PROMPT = "请描述这段媒体内容"
 PROMPT_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "prompt", "vita_prompt.txt")
@@ -98,6 +106,92 @@ def build_client(api_key):
     )
 
 
+def is_http_url(value):
+    return value.startswith(("http://", "https://"))
+
+
+def get_file_extension(path):
+    lower = path.lower().split("?", 1)[0]
+    return lower.rsplit(".", 1)[-1] if "." in lower else ""
+
+
+def encode_local_image_to_data_url(path):
+    resolved_path = os.path.abspath(os.path.expanduser(path))
+
+    if not os.path.isfile(resolved_path):
+        print(json.dumps({
+            "error": "LOCAL_IMAGE_NOT_FOUND",
+            "message": f"Local image file not found: {path}",
+            "guide": "Please provide an existing local image path or a public image URL.",
+        }, ensure_ascii=False, indent=2))
+        sys.exit(1)
+
+    ext = get_file_extension(resolved_path)
+    if ext not in SUPPORTED_IMAGE_FORMATS:
+        print(json.dumps({
+            "error": "UNSUPPORTED_LOCAL_IMAGE_FORMAT",
+            "message": (
+                f"Unsupported local image format: .{ext or 'unknown'}. "
+                "Supported formats: jpg, jpeg, png, svg, webp."
+            ),
+        }, ensure_ascii=False, indent=2))
+        sys.exit(1)
+
+    try:
+        with open(resolved_path, "rb") as f:
+            encoded = base64.b64encode(f.read()).decode("ascii")
+    except OSError as err:
+        print(json.dumps({
+            "error": "LOCAL_IMAGE_READ_ERROR",
+            "message": f"Failed to read local image file: {err}",
+        }, ensure_ascii=False, indent=2))
+        sys.exit(1)
+
+    return f"data:{IMAGE_MIME_TYPES[ext]};base64,{encoded}"
+
+
+def normalize_media_item(item):
+    media_type = item.get("type")
+    source = item.get("url") or item.get("path")
+
+    if media_type not in {"image", "video"}:
+        print(json.dumps({
+            "error": "INVALID_MEDIA_TYPE",
+            "message": f"Unsupported media type: {media_type}",
+            "guide": "Each media item must use type 'image' or 'video'.",
+        }, ensure_ascii=False, indent=2))
+        sys.exit(1)
+
+    if not source:
+        print(json.dumps({
+            "error": "MISSING_MEDIA_SOURCE",
+            "message": "Each media item must provide 'url' or 'path'.",
+        }, ensure_ascii=False, indent=2))
+        sys.exit(1)
+
+    if media_type == "image":
+        if is_http_url(source):
+            return {"type": "image", "url": source}
+        return {"type": "image", "url": encode_local_image_to_data_url(source)}
+
+    if is_http_url(source):
+        return {"type": "video", "url": source}
+
+    print(json.dumps({
+        "error": "LOCAL_VIDEO_NOT_SUPPORTED",
+        "message": "Local video paths are not supported directly by this script.",
+        "guide": (
+            "Please upload the local video with a separate COS/upload tool first, "
+            "then pass the resulting public or pre-signed URL to --video."
+        ),
+    }, ensure_ascii=False, indent=2))
+    sys.exit(1)
+
+
+def normalize_media_list(media_list):
+    return [normalize_media_item(item) for item in media_list]
+
+
 def guess_media_type(url):
     """Guess media type (image/video) from URL extension."""
     lower = url.lower().split("?")[0]
@@ -115,7 +209,7 @@ def build_content(media_inputs, prompt):
 
     media_inputs: list of dicts, each with keys:
         - "type": "image" or "video"
-        - "url": the media URL
+        - "url": the remote URL or image data URL
     prompt: str, the instruction text
     """
     content = []
@@ -171,6 +265,9 @@ Examples:
   # 图片理解
   python main.py --image "https://example.com/image.jpg" --prompt "描述这张图片"
 
+  # 本地图片理解（自动转为 base64 data URL）
+  python main.py --image "./image.png" --prompt "描述这张图片"
+
   # 多图片理解（时序分析）
   python main.py --image "https://example.com/1.jpg" --image "https://example.com/2.jpg" --prompt "分析这些图片的变化"
 
@@ -186,12 +283,12 @@ Examples:
     )
 
     parser.add_argument(
-        "--image", dest="images", metavar="URL", action="append",
-        help="Image URL (can be specified multiple times for multi-image input)",
+        "--image", dest="images", metavar="URL_OR_PATH", action="append",
+        help="Image URL or local image path (can be specified multiple times for multi-image input)",
     )
     parser.add_argument(
         "--video", dest="video", metavar="URL",
-        help="Video URL (only one video supported per request)",
+        help="Public video URL only (local video paths are not supported directly)",
     )
     parser.add_argument(
         "--prompt", default=None,
@@ -243,6 +340,7 @@ Examples:
             }, ensure_ascii=False, indent=2))
             sys.exit(1)
 
+        media_list = normalize_media_list(media_list)
         return media_list, prompt, stream, temperature, max_tokens
 
     # --- CLI mode ---
@@ -263,9 +361,10 @@ Examples:
     else:
         print(json.dumps({
             "error": "NO_MEDIA_INPUT",
-            "message": "Please provide at least one --image URL or a --video URL.",
+            "message": "Please provide at least one --image URL/path or a --video URL.",
             "usage": {
                 "image": 'python main.py --image "https://example.com/image.jpg" --prompt "描述图片"',
+                "local_image": 'python main.py --image "./image.png" --prompt "描述图片"',
                 "video": 'python main.py --video "https://example.com/video.mp4" --prompt "总结视频"',
                 "multi_image": 'python main.py --image "https://.../1.jpg" --image "https://.../2.jpg" --prompt "分析变化"',
                 "stdin": 'echo \'{"media":[{"type":"video","url":"https://..."}],"prompt":"..."}\' | python main.py --stdin',
@@ -275,6 +374,7 @@ Examples:
 
     prompt = resolve_prompt(args.prompt, args.prompt is not None)
 
+    media_list = normalize_media_list(media_list)
     return media_list, prompt, args.stream, args.temperature, args.max_tokens
 
 
@@ -340,7 +440,7 @@ def main():
         print(json.dumps({
             "error": "BAD_REQUEST",
             "message": str(err),
-            "guide": "Check media URL accessibility and format requirements.",
+            "guide": "Check media URL accessibility, local image format, and video URL requirements.",
         }, ensure_ascii=False, indent=2))
         sys.exit(1)
 

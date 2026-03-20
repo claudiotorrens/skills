@@ -1,18 +1,19 @@
 ---
 name: trent-openclaw-security
 description: Audit your OpenClaw deployment for security risks using Trent AppSec Advisor
-version: 3.3.3
+version: 4.0.6
 homepage: https://trent.ai
 user-invocable: true
 metadata:
   openclaw:
     requires:
-      bins:
-        - trent-openclaw-audit
-        - trent-openclaw-sysinfo
-        - trent-openclaw-package-skills
-        - trent-openclaw-upload-skills
-        - trent-openclaw-analyse-skills
+      env:
+        - TRENT_API_KEY
+    optionalEnv:
+      - TRENT_CHAT_API_URL
+      - TRENT_AGENT_API_URL
+      - OPENCLAW_WORKSPACE
+    primaryEnv: TRENT_API_KEY
 ---
 
 # Trent OpenClaw Security Audit
@@ -22,69 +23,80 @@ chained attack paths, and provides severity-rated findings with fixes.
 
 ## Setup
 
-If `trent-openclaw-audit` is not found, tell the user to run the installer:
-> Install with: `curl -fsSL https://raw.githubusercontent.com/trnt-ai/openclaw-security/main/install.sh | bash`
+All tools are bundled — no external installer needed.
+
+Set the `TRENT_API_KEY` environment variable. Get a key at https://app.trent.ai
 
 ## Instructions
 
-This audit runs in three phases. By default, `trent-openclaw-audit` runs all
-three phases. Use `--config-only` to run just Phase 1, or the individual
-CLI tools for more control.
+This audit runs in three phases. Run them in order.
 
-### Default: Full Audit (all 3 phases)
+### Phase 1 — Configuration Audit
 
-```bash
-trent-openclaw-audit
+Collect metadata and send to Trent for analysis:
+
+```python
+from openclaw_trent.openclaw_config.collector import collect_openclaw_metadata
+from openclaw_trent.lib.audit_prompt import build_audit_prompt
+from openclaw_trent.lib import trent_client
+
+metadata = collect_openclaw_metadata()
+message = build_audit_prompt(metadata)
+response = trent_client.chat(message=message)
 ```
 
-This runs configuration audit, skill upload, and deep skill analysis in a
-single command with automatic conversation continuity.
-
-### Step-by-step: Individual Phases
-
-#### Phase 1 — Configuration Audit (only)
-
-Run the audit CLI with `--config-only` to analyse just the configuration:
-
-```bash
-trent-openclaw-audit --config-only
-```
-
-Optional: specify a custom config path:
-
-```bash
-trent-openclaw-audit --path /path/to/openclaw/config
-```
-
-The command outputs findings to stdout. Parse the output and present it to
-the user. The last line contains `[TRENT_THREAD_ID:<id>]` — save this thread
-ID for Phase 3.
+Save `response["thread_id"]` for Phase 3.
 
 Present findings grouped by severity (see "Present results" below).
 
 Summarize: "Phase 1 complete. N findings from configuration analysis. Proceeding to upload skills for deeper analysis..."
 
-#### Phase 2 — Skill Upload
+Optional: specify a custom config path:
+
+```python
+from pathlib import Path
+metadata = collect_openclaw_metadata(openclaw_path=Path("/path/to/openclaw/config"))
+```
+
+### Phase 2 — Skill Upload
 
 **Data Disclosure — present this to the user before proceeding:**
 
-> This phase will send the following data to Trent for security analysis:
-> - **Skill source code** for each installed skill
-> - **Skill metadata** (name, version, dependencies)
-> - **Skill configuration parameters**
+> This phase packages and uploads skill code to Trent for deep security analysis.
 >
-> No credentials, environment variables, or non-skill workspace files are included.
+> **What is sent:**
+> - Skill source code (with detected secrets automatically redacted)
+> - Skill metadata (name, version, dependencies)
+>
+> **What is NOT sent:**
+> - Files with dangerous extensions (.env, .pem, .key, .db, .pyc) are excluded
+> - Known secret patterns (API keys, tokens, AWS keys, connection strings) are
+>   replaced with [REDACTED] before packaging
+> - Environment variables and non-skill workspace files are never included
+>
+> **Limitations:** Pattern-based redaction may miss custom or obfuscated secrets.
+> Best practice: do not hard-code secrets in skill files.
 
-**Wait for the user to confirm before running the upload command.**
+**Wait for the user to confirm before running the upload.**
 
-Run the upload CLI to package and upload installed skills:
+Package skills (redaction happens automatically during packaging):
 
-```bash
-trent-openclaw-upload-skills > /tmp/upload_summary.json
+```python
+from openclaw_trent.lib.package_skills import scan_workspace
+
+skills = scan_workspace()
 ```
 
-This scans the workspace, packages each skill as a `.skill` ZIP archive,
-uploads to Trent via S3, and outputs a JSON summary to stdout.
+Present what will be uploaded — for each skill show name, type, size, and
+whether secrets were redacted (`secrets_redacted` field).
+
+After user confirms, upload:
+
+```python
+from openclaw_trent.lib.upload_skills import upload_packaged_skills
+
+upload_summary = upload_packaged_skills(skills)
+```
 
 Present the upload summary:
 - How many skills were uploaded, skipped (unchanged), failed, or too large
@@ -94,24 +106,22 @@ If all uploads failed, report the errors and stop. Otherwise proceed.
 
 Summarize: "Phase 2 complete. N skills uploaded. Proceeding to deep skill analysis..."
 
-#### Phase 3 — Deep Skill Analysis
+### Phase 3 — Deep Skill Analysis
 
-Run the analysis CLI, passing the thread ID from Phase 1 and the upload
-summary from Phase 2:
+Analyse each uploaded skill using the thread ID from Phase 1:
 
-```bash
-trent-openclaw-analyse-skills --thread-id <THREAD_ID> --upload-summary /tmp/upload_summary.json
+```python
+from openclaw_trent.lib.prompts import build_per_skill_analysis_prompt
+from openclaw_trent.lib import trent_client
+
+thread_id = "<THREAD_ID from Phase 1>"
+for skill in upload_summary["skills"]:
+    if skill["status"] in ("uploaded", "skipped"):
+        prompt = build_per_skill_analysis_prompt(skill)
+        result = trent_client.chat(message=prompt, thread_id=thread_id)
 ```
 
-Or pipe from Phase 2 directly:
-
-```bash
-trent-openclaw-upload-skills | trent-openclaw-analyse-skills --thread-id <THREAD_ID> --upload-summary -
-```
-
-This launches one analysis request per skill **in parallel**, so results start
-appearing as soon as each skill is analysed — output order may differ from
-upload order. Each request uses the Phase 1 thread ID so the advisor has full
+Each request uses the Phase 1 thread ID so the advisor has full
 context from the configuration audit.
 
 Present the deep analysis results alongside the Phase 1 findings.
@@ -120,12 +130,15 @@ Present the deep analysis results alongside the Phase 1 findings.
 
 To view the system analysis data without running a full audit:
 
-```bash
-trent-openclaw-sysinfo
+```python
+from openclaw_trent.lib.system_analyzer import collect_system_analysis
+import json
+result = collect_system_analysis()
+print(json.dumps(result, indent=2))
 ```
 
-This outputs JSON with OS details, hardware type, user mode, channel status,
-and installed skills. Useful for debugging or verifying what data is sent.
+This returns channel configuration and installed skill names.
+Useful for debugging or verifying what data is sent.
 
 ### Present results
 

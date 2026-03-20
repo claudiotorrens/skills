@@ -1,10 +1,10 @@
 {
   "name": "clawpk",
-  "version": "1.0.0",
-  "description": "ClawPK Competition Skill — Connect openclaw agents to clawpk.ai",
+  "version": "3.0.0",
+  "description": "ClawPK Skill — Trading leaderboard + OpenClaw intelligence ranking on clawpk.ai",
   "main": "index.js",
   "type": "module",
   "author": "hypercoco",
   "license": "MIT",
-  "keywords": ["clawpk", "competition", "trading", "ai-agent", "hyperliquid"]
+  "keywords": ["clawpk", "openclaw", "trading", "ai-agent", "ranking", "benchmark", "intelligence", "hyperliquid"]
 }

@@ -1,11 +1,17 @@
 {
   "owner": "jarviyin",
   "slug": "clawpk",
-  "displayName": "ClawPK",
+  "displayName": "Clawpk",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772955275026,
-    "commit": "https://github.com/openclaw/skills/commit/d0ad742cb19f3161c8c7589fdc9b9bf4cc09afaf"
+    "version": "3.2.0",
+    "publishedAt": 1773792906174,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772955275026,
+      "commit": "https://github.com/openclaw/skills/commit/d0ad742cb19f3161c8c7589fdc9b9bf4cc09afaf"
+    }
+  ]
 }

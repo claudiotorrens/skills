@@ -3,11 +3,16 @@
   "slug": "calctool",
   "displayName": "Calctool",
   "latest": {
-    "version": "1.0.5",
-    "publishedAt": 1773673537407,
-    "commit": "https://github.com/openclaw/skills/commit/413a840ca177d92fc1f7fe00d85eb36940935dd5"
+    "version": "2.0.1",
+    "publishedAt": 1773830198390,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.5",
+      "publishedAt": 1773673537407,
+      "commit": "https://github.com/openclaw/skills/commit/413a840ca177d92fc1f7fe00d85eb36940935dd5"
+    },
     {
       "version": "1.0.1",
       "publishedAt": 1773575436211,

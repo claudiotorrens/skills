@@ -3,9 +3,15 @@
   "slug": "wechat-formatter",
   "displayName": "Wechat Formatter",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773498114861,
-    "commit": "https://github.com/openclaw/skills/commit/eed9f118504ea782c7f476dfb540d1a872d10842"
+    "version": "1.0.1",
+    "publishedAt": 1774021601168,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773498114861,
+      "commit": "https://github.com/openclaw/skills/commit/eed9f118504ea782c7f476dfb540d1a872d10842"
+    }
+  ]
 }

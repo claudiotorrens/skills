@@ -1,11 +1,17 @@
 {
   "owner": "jisuapi",
   "slug": "silver",
-  "displayName": "白银价格查询 - Silver Price Inquiry",
+  "displayName": "Silver Price Inquiry - 白银价格查询",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1772534347576,
-    "commit": "https://github.com/openclaw/skills/commit/79d3a1deaacaa3ce778bb01ff8099943cf42aa07"
+    "version": "1.0.2",
+    "publishedAt": 1773720337079,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1772534347576,
+      "commit": "https://github.com/openclaw/skills/commit/79d3a1deaacaa3ce778bb01ff8099943cf42aa07"
+    }
+  ]
 }

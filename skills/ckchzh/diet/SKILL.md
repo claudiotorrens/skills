@@ -1,7 +1,7 @@
 ---
 name: diet
-description: "Log meals, track calories and macros, record water intake, and generate weekly nutrition reports."
-version: "3.2.1"
+description: "Track food and nutrition. Use when logging meals, checking calories, tracking protein/carbs/fat, or generating diet reports."
+version: "3.4.0"
 author: BytesAgain
 homepage: https://bytesagain.com
 source: https://github.com/bytesagain/ai-skills

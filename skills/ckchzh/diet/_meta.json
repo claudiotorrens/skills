@@ -3,9 +3,15 @@
   "slug": "diet",
   "displayName": "Diet",
   "latest": {
-    "version": "3.2.1",
-    "publishedAt": 1773717656949,
-    "commit": "https://github.com/openclaw/skills/commit/40018db3d83761c5861804ba42a112bef5f7585e"
+    "version": "3.4.1",
+    "publishedAt": 1773774787097,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "3.2.1",
+      "publishedAt": 1773717656949,
+      "commit": "https://github.com/openclaw/skills/commit/40018db3d83761c5861804ba42a112bef5f7585e"
+    }
+  ]
 }

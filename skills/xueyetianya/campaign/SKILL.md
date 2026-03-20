@@ -2,9 +2,11 @@
 name: campaign
 version: "2.0.0"
 author: BytesAgain
+homepage: https://bytesagain.com
+source: https://github.com/bytesagain/ai-skills
 license: MIT-0
 tags: [campaign, tool, utility]
-description: "Campaign - command-line tool for everyday use"
+description: "Campaign - command-line tool for everyday use Use when you need campaign."
 ---
 
 # Campaign

@@ -3,11 +3,16 @@
   "slug": "short-drama-writer",
   "displayName": "Short Drama Writer",
   "latest": {
-    "version": "2.3.5",
-    "publishedAt": 1773667006227,
-    "commit": "https://github.com/openclaw/skills/commit/360b6e691d2f2e31bd35ca087da81120a55b0efe"
+    "version": "2.3.6",
+    "publishedAt": 1773773544396,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.3.5",
+      "publishedAt": 1773667006227,
+      "commit": "https://github.com/openclaw/skills/commit/360b6e691d2f2e31bd35ca087da81120a55b0efe"
+    },
     {
       "version": "2.3.0",
       "publishedAt": 1773447252065,

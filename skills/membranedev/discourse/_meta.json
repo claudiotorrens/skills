@@ -1,0 +1,11 @@
+{
+  "owner": "membranedev",
+  "slug": "discourse",
+  "displayName": "Discourse",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773529351760,
+    "commit": null
+  },
+  "history": []
+}

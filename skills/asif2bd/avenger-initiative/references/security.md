@@ -49,11 +49,11 @@ cd /path/to/vault && git add config/openclaw.json.enc && git commit -m "🔐 Key
 
 ## What Is NOT Backed Up
 
-- `~/.openclaw/.env` (excluded intentionally — usually just API overrides)
-- `~/.openclaw/credentials/avenger.key` (never goes to git)
+- `/root/.openclaw/.env` (excluded intentionally — usually just API overrides)
+- `/root/.openclaw/credentials/avenger.key` (never goes to git)
 - `node_modules/` directories
 - Large binary files, PDFs, images
-- `~/.openclaw/media/` (user-uploaded media)
+- `/root/.openclaw/media/` (user-uploaded media)
 
 ## Vault Repo Recommendations
 

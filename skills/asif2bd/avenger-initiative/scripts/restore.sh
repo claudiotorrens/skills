@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# AVENGER INITIATIVE — Restore Script v3.1
 # ============================================================
 # AVENGER INITIATIVE — Restore Script v2
 # Restores from any branch (daily/weekly/monthly/main)
@@ -44,9 +45,7 @@ if [ -z "$VAULT_DIR" ] || [ ! -d "$VAULT_DIR" ]; then
     VAULT_REPO=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['vault_repo'])")
     VAULT_DIR="/tmp/avenger-restore-$$"
     log "Cloning vault from $VAULT_REPO..."
-    GH_TOKEN=$(gh auth token)
-    REPO_URL=$(echo "$VAULT_REPO" | sed "s|https://|https://${GH_TOKEN}@|")
-    git clone --quiet "$REPO_URL" "$VAULT_DIR"
+    gh repo clone "$VAULT_REPO" "$VAULT_DIR" -- --quiet
     CLEANUP_VAULT=true
 fi
 

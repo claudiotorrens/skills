@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================
-# AVENGER INITIATIVE — Backup Script v3
+# AVENGER INITIATIVE — Backup Script v3.1
 #
 # Branch strategy:
 #   main                      → ALWAYS has the latest backup
@@ -57,9 +57,7 @@ encrypt_file() {
 
 # ---- Clone repo ------------------------------------------
 log "Cloning vault..."
-GH_TOKEN=$(gh auth token)
-REPO_URL=$(echo "$VAULT_REPO" | sed "s|https://|https://${GH_TOKEN}@|")
-git clone --quiet "$REPO_URL" "$VAULT_DIR"
+gh repo clone "$VAULT_REPO" "$VAULT_DIR" -- --quiet
 cd "$VAULT_DIR"
 git config user.email "avenger@openclaw.ai"
 git config user.name "Avenger Initiative"

@@ -1,8 +1,12 @@
 ---
 name: avenger-initiative
-version: 1.0.4
-description: Encrypted GitHub backup and restore for any OpenClaw agent system. Creates branch-per-night backups with smart retention (7 daily, 8 weekly, 12 monthly branches). Backs up openclaw.json (AES-256 encrypted), agent memories, SOUL/IDENTITY files, cron jobs, and custom skills to a private GitHub vault. Each backup auto-generates a human-friendly README.md inside the vault with purpose, full contents table, branch structure, step-by-step restore instructions, and Avenger agent commands. Triggers on phrases like "avenger backup", "backup system", "push to vault", "sync vault", "avenger restore", "restore from vault", "setup avenger", "avenger status", "avenger init", "configure backup", "set up backup". Also auto-runs after any critical config change.
+description: Encrypted GitHub backup and restore for any OpenClaw agent system. Creates branch-per-night backups with smart retention (7 daily, 8 weekly, 12 monthly branches). Backs up openclaw.json (AES-256 encrypted), agent memories, SOUL/IDENTITY files, cron jobs, and custom skills to a private GitHub vault. Triggers on phrases like "avenger backup", "backup system", "push to vault", "sync vault", "avenger restore", "restore from vault", "setup avenger", "avenger status", "avenger init", "configure backup", "set up backup". Also auto-runs after any critical config change.
+version: 1.0.5
+author: Matrix Zion (ProSkillsMD)
+homepage: https://missiondeck.ai
 license: MIT
+tags: [backup, restore, encryption, github, security, devops]
+openclaw: ">=2026.2"
 ---
 
 # 🛡️ Avenger Initiative

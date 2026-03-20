@@ -1,5 +1,6 @@
 ---
 name: ai_stack_builder
+version: 1.0.0
 description: >
   Build a personalized AI tool stack based on role, goals, and budget.
   Recommends specific tools for each category (writing, meetings, coding,

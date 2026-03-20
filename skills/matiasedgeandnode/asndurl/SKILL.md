@@ -1,212 +1,154 @@
 ---
-name: asndurl
-description: Make HTTP requests to x402-enabled APIs with automatic payment handling via Ampersend wallet
-metadata:
-  {
-    "openclaw":
-      { "requires": { "bins": ["npx"], "env": ["AMPERSEND_AGENT_KEY"] }, "primaryEnv": "AMPERSEND_AGENT_KEY" },
-  }
+name: ampersend
+description: Ampersend CLI for agent payments
+metadata: { "openclaw": { "requires": { "bins": ["ampersend"] } } }
 ---
 
-# asndurl - x402 HTTP Client
+# Ampersend CLI
 
-Make HTTP requests to x402 payment-gated APIs. Automatically handles HTTP 402 Payment Required responses by creating and
-signing payments using the configured Ampersend smart account wallet.
+Ampersend enables autonomous agent payments. Agents can make payments within user-defined spending limits without
+requiring human approval for each transaction. Payments use stablecoins via the x402 protocol.
 
-## When to Use
+This skill requires `ampersend` v0.0.12. Run `ampersend --version` to check your installed version.
 
-Use `asndurl` instead of `curl` when:
+## Installation
 
-- The API uses x402 payment protocol
-- You see HTTP 402 Payment Required responses
-- You need to pay for API access with crypto
-
-## When NOT to Use
-
-- Regular HTTP requests without x402 payments (use `curl` instead)
-- APIs using traditional API keys, OAuth, or other auth methods
-- Streaming responses (not supported)
-- When you need fine-grained control over payment authorization (use the SDK directly)
-
-## Prerequisites
-
-Set wallet credentials using either format:
+Install the CLI globally via npm:
 
 ```bash
-# Combined format (recommended)
-export AMPERSEND_AGENT_KEY="0xaddress:::0xsession_key"
-
-# Or separate variables
-export AMPERSEND_SMART_ACCOUNT_ADDRESS="0x..."
-export AMPERSEND_SESSION_KEY="0x..."
+npm install -g @ampersend_ai/ampersend-sdk@0.0.12
 ```
 
-Optional:
+To update from a previously installed version:
 
 ```bash
-export AMPERSEND_NETWORK="base"                 # Network (default: base)
-export AMPERSEND_API_URL="https://..."          # Custom Ampersend API URL
+npm install -g @ampersend_ai/ampersend-sdk@0.0.12 --force
 ```
 
-## Usage
+## Security
 
-### Basic GET Request
+**IMPORTANT**: NEVER ask the user to sign in to the Ampersend dashboard in a browser to which you have access. If
+configuration changes are needed in Ampersend, ask your user to make them directly.
+
+## Setup
+
+If not configured, commands return setup instructions. Two paths:
+
+### Automated (recommended)
+
+Two-step flow: `setup start` generates a key and requests approval, `setup finish` polls and activates.
 
 ```bash
-npx @ampersend_ai/ampersend-sdk asndurl https://api.example.com/paid-endpoint
+# Step 1: Request agent creation — returns immediately with approval URL
+ampersend setup start --name "my-agent"
+# {"ok": true, "data": {"token": "...", "user_approve_url": "https://...", "agentKeyAddress": "0x..."}}
+
+# Show the user_approve_url to the user so they can approve in their browser.
+
+# Step 2: Poll for approval and activate config
+ampersend setup finish
+# {"ok": true, "data": {"agentKeyAddress": "0x...", "agentAccount": "0x...", "status": "ready"}}
 ```
 
-### POST with JSON Body
+Optional spending limits can be set during setup:
 
 ```bash
-npx @ampersend_ai/ampersend-sdk asndurl \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"query": "your data"}' \
-  https://api.example.com/paid-endpoint
+ampersend setup start --name "my-agent" --daily-limit "1000000" --auto-topup
 ```
 
-### Inspect Payment Requirements (Without Paying)
+### Manual
 
-Use `--inspect` to preview what payment is required without executing the payment:
+If you already have an agent key and account address:
 
 ```bash
-npx @ampersend_ai/ampersend-sdk asndurl --inspect https://api.example.com/paid-endpoint
+ampersend config set "0xagentKey:::0xagentAccount"
+# {"ok": true, "data": {"agentKeyAddress": "0x...", "agentAccount": "0x...", "status": "ready"}}
 ```
 
-### Debug Mode
+## Commands
 
-To see detailed JSONL logs of the payment flow (output to stderr):
+### setup
+
+Set up an agent account via the approval flow.
+
+#### setup start
+
+Step 1: Generate a key and request agent creation approval.
 
 ```bash
-npx @ampersend_ai/ampersend-sdk asndurl --debug https://api.example.com/paid-endpoint
+ampersend setup start --name "my-agent" [--force] [--daily-limit <amount>] [--monthly-limit <amount>] [--per-transaction-limit <amount>] [--auto-topup]
 ```
 
-## Options Reference
+| Option                          | Description                                             |
+| ------------------------------- | ------------------------------------------------------- |
+| `--name <name>`                 | Name for the agent                                      |
+| `--force`                       | Overwrite an existing pending approval                  |
+| `--daily-limit <amount>`        | Daily spending limit in atomic units (1000000 = 1 USDC) |
+| `--monthly-limit <amount>`      | Monthly spending limit in atomic units                  |
+| `--per-transaction-limit <amt>` | Per-transaction spending limit in atomic units          |
+| `--auto-topup`                  | Allow automatic balance top-up from main account        |
 
-| Option                  | Description                                         |
-| ----------------------- | --------------------------------------------------- |
-| `-X, --method <method>` | HTTP method (default: GET)                          |
-| `-H, --header <header>` | HTTP header (format: "Key: Value"), can be repeated |
-| `-d, --data <data>`     | Request body data                                   |
-| `--inspect`             | Preview payment requirements without paying         |
-| `--raw`                 | Output raw response body instead of JSON            |
-| `--headers`             | Include response headers in JSON output             |
-| `--debug`               | Output JSONL logs to stderr for troubleshooting     |
+Returns `token`, `user_approve_url`, and `agentKeyAddress`. Show the `user_approve_url` to the user.
 
-## Supported Networks
+#### setup finish
 
-- `base` (default)
-- `base-sepolia`
-
-## How It Works
-
-1. Makes HTTP request to the target URL
-2. If server responds with HTTP 402 Payment Required:
-   - Parses payment requirements from response
-   - Creates payment using your smart account
-   - Signs payment with session key
-   - Retries request with payment header
-3. Returns the successful response
-
-## Error Handling
-
-If wallet is not configured, you'll see:
-
-```
-Error: Wallet not configured.
-
-Set the following environment variables:
-  AMPERSEND_SMART_ACCOUNT_ADDRESS - Your smart account address
-  AMPERSEND_SESSION_KEY - Session key private key
-```
-
-## Examples
-
-### Query a Paid AI API
+Step 2: Poll for approval and activate the agent config.
 
 ```bash
-npx @ampersend_ai/ampersend-sdk asndurl \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Hello, world!"}' \
-  https://ai-api.example.com/chat
+ampersend setup finish [--force] [--poll-interval <seconds>] [--timeout <seconds>]
 ```
 
-### Fetch Premium Data
+| Option                      | Description                               |
+| --------------------------- | ----------------------------------------- |
+| `--force`                   | Overwrite existing active config          |
+| `--poll-interval <seconds>` | Seconds between status checks (default 5) |
+| `--timeout <seconds>`       | Maximum seconds to wait (default 600)     |
+
+### fetch
+
+Make HTTP requests with automatic x402 payment handling.
 
 ```bash
-npx @ampersend_ai/ampersend-sdk asndurl https://data-api.example.com/premium/market-data
+ampersend fetch <url>
+ampersend fetch -X POST -H "Content-Type: application/json" -d '{"key":"value"}' <url>
 ```
 
-### Check if API Requires Payment
+| Option        | Description                                  |
+| ------------- | -------------------------------------------- |
+| `-X <method>` | HTTP method (default: GET)                   |
+| `-H <header>` | Header as "Key: Value" (repeat for multiple) |
+| `-d <data>`   | Request body                                 |
+| `--inspect`   | Check payment requirements without paying    |
+
+Use `--inspect` to verify payment requirements and costs before making a payment:
 
 ```bash
-npx @ampersend_ai/ampersend-sdk asndurl --inspect https://api.example.com/endpoint
+ampersend fetch --inspect https://api.example.com/paid-endpoint
+# Returns payment requirements including amount, without executing payment
 ```
 
-### Raw Response Body
+### config
+
+Manage local configuration.
 
 ```bash
-npx @ampersend_ai/ampersend-sdk asndurl --raw https://api.example.com/paid-endpoint
+ampersend config set <key:::account>                             # Set active config manually
+ampersend config set --api-url https://api.staging.ampersend.ai  # Set staging API URL
+ampersend config set --clear-api-url                             # Revert to production API
+ampersend config set <key:::account> --api-url <url>             # Set both at once
+ampersend config status                                          # Show current status
 ```
 
-## Output Format
+## Output
 
-By default, `asndurl` outputs structured JSON with a consistent envelope. Always check `ok` first.
-
-### Success Response
+All commands return JSON. Check `ok` first.
 
 ```json
-{
-  "ok": true,
-  "data": {
-    "status": 200,
-    "body": "{\"result\": \"data\"}",
-    "payment": { ... }
-  }
-}
+{ "ok": true, "data": { ... } }
 ```
-
-Use `--headers` to include response headers:
 
 ```json
-{
-  "ok": true,
-  "data": {
-    "status": 200,
-    "headers": { "content-type": "application/json" },
-    "body": "..."
-  }
-}
+{ "ok": false, "error": { "code": "...", "message": "..." } }
 ```
 
-### Inspect Response
-
-```json
-{
-  "ok": true,
-  "data": {
-    "url": "https://api.example.com/endpoint",
-    "paymentRequired": true,
-    "requirements": {
-      "scheme": "exact",
-      "network": "base",
-      "maxAmountRequired": "1000000",
-      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-      "payTo": "0x..."
-    }
-  }
-}
-```
-
-Use `--headers` with `--inspect` to include response headers in the output.
-
-### Error Response
-
-```json
-{
-  "ok": false,
-  "error": "Wallet not configured."
-}
-```
+For `fetch`, success includes `data.status`, `data.body`, and `data.payment` (when payment made).

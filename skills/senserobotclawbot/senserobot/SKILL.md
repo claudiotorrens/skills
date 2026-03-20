@@ -13,9 +13,9 @@ metadata: {"clawdbot":{"emoji":"🤖","requires":{"bins":["curl"],"env":[]},"pri
 
 **你必须严格遵守以下规则，不得违反：**
 
-1. **每次操作前必须先查看棋盘状态。** 在执行任何自由取子、清理棋盘等操作前，必须先调用"看当前棋盘状态"指令。
-2. **自由取子失败必须重试。** 棋盒自由取子时，如果取子不成功，请在当前位置随机偏移 0.1～0.8 步长再次取子，至多重复 3 次。
-3. **使用本 SKILL 提供的指令控制机器人。**   通过使用文档中定义的 HTTP API 组合，让机器人完成复杂任务。
+1. **取子失败必须重试。** 从棋盒取子时，如果取子不成功，请使用缓存中的下一个棋子位置进行重试。
+2. **使用本 SKILL 提供的指令控制机器人。**   通过使用文档中定义的 HTTP API 组合，让机器人完成复杂任务。
+3. **必须先吸子成功再落子。** 只有当 `skill-move-tcp` 执行 `action=1` 返回成功（`"result": "success"`）后，才允许执行 `action=2` 落子，否则会出现 `"result": "empty_put"`（未吸子却落子）。
 
 ## 🔒 连接与安全说明
 
@@ -49,21 +49,38 @@ metadata: {"clawdbot":{"emoji":"🤖","requires":{"bins":["curl"],"env":[]},"pri
 ### 流程一：取子并落子（最常见场景）
 
 ```bash
-# 1. 查看当前棋盘状态（必须先执行）
-curl --location 'http://192.168.199.10:60010/skill-look-board'
+# 1. 查找棋盒棋子
+curl --location 'http://192.168.199.10:60010/skill-detect-box'
 
-# 2. 从棋盒取子（使用CV能力精准取子）
-curl --location 'http://192.168.199.10:60010/skill-catch-box？color=0'
+# 2. 解析出目标棋子坐标后，移动并取子 (action=1)
+curl --location 'http://192.168.199.10:60010/skill-move-tcp?x=-3.1&y=1.5&action=1'
 
-# 3. 移动到目标位置并落子
+# 3. 只有吸子成功后，才移动到目标位置并落子 (action=2)
 curl --location 'http://192.168.199.10:60010/skill-move-tcp?x=6&y=6&action=2'
 ```
 
-### 流程二：棋盒自由取子（带重试）
+### 流程二：智能取子（CV检测 + 缓存重试）
 
-在某棋盒中随机位置取一个子：
-- 如果取子成功，执行后续操作
-- 如果取子不成功，在当前位置随机偏移 0.1～0.8 步长，再次取子，至多重复 3 次
+1. 调用 `skill-detect-box` 获取所有棋子坐标缓存。
+2. 遍历缓存中的坐标尝试取子。
+3. 如果所有缓存坐标都尝试失败：
+    - 语音提示用户"取子失败，请整理棋盒或放入新棋子"。
+    - 结束本次取子流程（不循环等待）。
+
+```bash
+# 1. 查找棋盒棋子
+curl --location 'http://192.168.199.10:60010/skill-detect-box'
+
+# 2. 尝试取第一个
+curl --location 'http://192.168.199.10:60010/skill-move-tcp?x=x1&y=y1&action=1'
+
+# 3. 失败则尝试取第二个
+curl --location 'http://192.168.199.10:60010/skill-move-tcp?x=x2&y=y2&action=1'
+
+# 4. 全部失败，提示用户并重试
+curl --location 'http://192.168.199.10:60010/skill-tts-chinese?content=取子失败，请整理棋盒或放入新棋子'
+# ... 结束
+```
 
 ### 流程三：表情控制
 
@@ -93,9 +110,47 @@ curl --location 'http://192.168.199.10:60010/skill-tts-chinese?content=你好'
 
 ### 流程五：清理棋盘
 
+把棋盘上的子收回棋盒。由于清理过程可能需要几分钟，此接口为异步调用，需要通过轮询该接口并判断返回的 `result` 字段来获取清理进度（`running`、`done` 或 `error`）。
+
 ```bash
-curl --location 'http://192.168.199.10:60010/skill-look-board'
+# 轮询调用，直到 result 变为 done 或 error
 curl --location 'http://192.168.199.10:60010/skill-clean-board'
+```
+
+### 流程六：查找棋盒棋子
+
+```bash
+# 返回包含棋子坐标数组的 JSON 对象，其中 color 1=黑, 2=白
+curl --location 'http://192.168.199.10:60010/skill-detect-box'
+```
+
+### 流程七：查找棋盘棋子
+
+```bash
+# 返回包含棋盘上棋子坐标数组的 JSON 对象，其中 color 1=黑, 2=白
+curl --location 'http://192.168.199.10:60010/skill-detect-board'
+```
+
+### 流程八：拍照
+
+```bash
+# id: 0=前置, 1=右边, 2=左边
+curl --location 'http://192.168.199.10:60010/skill-take-photo?id=0'
+```
+
+### 流程九：录音
+
+```bash
+# 开始录音
+curl --location 'http://192.168.199.10:60010/skill-record?code=0'
+# 结束录音
+curl --location 'http://192.168.199.10:60010/skill-record?code=1'
+```
+
+### 流程十：显示图片
+
+```bash
+curl --location 'http://192.168.199.10:60010/skill-show-image' --form 'image=@"/path/to/image.png"'
 ```
 
 ## 控制指令速查表
@@ -109,8 +164,13 @@ curl --location 'http://192.168.199.10:60010/skill-clean-board'
 | 语音播报 | GET | `http://192.168.199.10:60010/skill-tts-chinese?content=中文` |
 | 看棋盘状态 | GET | `http://192.168.199.10:60010/skill-look-board` |
 | 清理棋盘 | GET | `http://192.168.199.10:60010/skill-clean-board` |
-| 自由取子 | GET | `http://192.168.199.10:60010/skill-catch-box` |
+| 查找棋盒棋子 | GET | `http://192.168.199.10:60010/skill-detect-box` |
+| 查找棋盘棋子 | GET | `http://192.168.199.10:60010/skill-detect-board` |
 | 显示表情 | GET | `http://192.168.199.10:60010/skill-show-emotion?code=008` |
+| 拍照 | GET | `http://192.168.199.10:60010/skill-take-photo?id=0` |
+| 录音 | GET | `http://192.168.199.10:60010/skill-record?code=0` |
+| 停止录音 | GET | `http://192.168.199.10:60010/skill-record?code=1` |
+| 显示图片 | POST | `http://192.168.199.10:60010/skill-show-image` |
 
 ## 错误处理
 
@@ -122,6 +182,5 @@ curl --location 'http://192.168.199.10:60010/skill-clean-board'
 
 ## 关键注意事项
 
-- **操作前必须先查看棋盘状态**（调用 `skill-look-board`）
 - 棋盘坐标范围：x ∈ [0, 12]，y ∈ [0, 12]
-- 取子失败时自动重试，随机偏移 0.1～0.8  步长，最多 3 次
+- 取子失败时自动重试，使用缓存中的下一个位置重试

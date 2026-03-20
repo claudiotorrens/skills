@@ -3,9 +3,15 @@
   "slug": "youtube-subscription",
   "displayName": "YouTube Subscription",
   "latest": {
-    "version": "0.10.6-3",
-    "publishedAt": 1773335422017,
-    "commit": "https://github.com/openclaw/skills/commit/70391adad792e476f81fff94a8c89c3c12ce4cbf"
+    "version": "0.10.7-dev",
+    "publishedAt": 1773497442224,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.10.6-3",
+      "publishedAt": 1773335422017,
+      "commit": "https://github.com/openclaw/skills/commit/70391adad792e476f81fff94a8c89c3c12ce4cbf"
+    }
+  ]
 }

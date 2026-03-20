@@ -3,9 +3,15 @@
   "slug": "gws-gmail-reply",
   "displayName": "Gws Gmail Reply",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773393351224,
-    "commit": "https://github.com/openclaw/skills/commit/28ace40e98f66efabc473c75c4ef839cc731b940"
+    "version": "1.0.1",
+    "publishedAt": 1773789059765,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773393351224,
+      "commit": "https://github.com/openclaw/skills/commit/28ace40e98f66efabc473c75c4ef839cc731b940"
+    }
+  ]
 }

@@ -243,19 +243,6 @@ class LerweeAPI:
         params = {'hostids': hostids}
         return self._request('/monitor/host-delete', params)
 
-    def get_host_info(self, hostid: int) -> Dict[str, Any]:
-        """
-        获取监控对象详情
-
-        Args:
-            hostid: 对象ID
-
-        Returns:
-            监控对象详情
-        """
-        params = {'hostid': hostid}
-        return self._request('/monitor/host-info', params)
-
     def get_host_metrics(self, hostid: int, keyword: Optional[str] = None,
                          item_status: Optional[int] = None,
                          with_latest: Optional[int] = None) -> Dict[str, Any]:
@@ -537,7 +524,7 @@ class LerweeAPI:
         if clock_end:
             params['clock_end'] = clock_end
 
-        return self._request('/alarm/list', params)
+        return self._request('/alert/problem-list', params)
 
     def get_problem_list(self, page: int = 1, page_size: int = 20,
                          status: Optional[int] = None,
@@ -571,7 +558,7 @@ class LerweeAPI:
         if clock_end:
             params['clock_end'] = clock_end
 
-        return self._request('/problem/list', params)
+        return self._request('/alert/problem-list', params)
 
     # ==================== 事件平台 ====================
 
@@ -607,7 +594,7 @@ class LerweeAPI:
         if source:
             params['source'] = source
 
-        return self._request('/event/list', params)
+        return self._request('/aialert/list', params)
 
     def get_ai_alert_list(self, page: int = 1, page_size: int = 20,
                           clock_begin: Optional[int] = None,
@@ -694,7 +681,7 @@ class LerweeAPI:
             事件详情
         """
         params = {'eventid': eventid}
-        return self._request('/event/info', params)
+        return self._request('/aialert/info', params)
 
     def close_events(self, eventids: List[int]) -> Dict[str, Any]:
         """
@@ -707,7 +694,7 @@ class LerweeAPI:
             关闭结果
         """
         params = {'eventids': eventids}
-        return self._request('/event/close', params)
+        return self._request('/aialert/close', params)
 
     def update_alert_status(self, alert_id: int, status: int) -> Dict[str, Any]:
         """
@@ -743,7 +730,7 @@ class LerweeAPI:
             接收结果
         """
         params = {'events': events}
-        return self._request('/event/receive', params)
+        return self._request('/aialert/receive', params)
 
     def get_problem_report(self, page: int = 1, page_size: int = 20,
                            clock_begin: Optional[str] = None,
@@ -822,7 +809,7 @@ class LerweeAPI:
         params = {'eventid': eventid}
         if message:
             params['message'] = message
-        return self._request('/problem-ack', params)
+        return self._request('/alert/problem-ack', params)
 
     # ==================== 用户管理 ====================
 
@@ -850,7 +837,7 @@ class LerweeAPI:
         if status is not None:
             params['status'] = status
 
-        return self._request('/user/list', params)
+        return self._request('/auth/user-list', params)
 
     def create_user(self, username: str, realname: str, password: str,
                     email: Optional[str] = None, phone: Optional[str] = None,
@@ -887,7 +874,7 @@ class LerweeAPI:
         if group_ids:
             params['group_ids'] = group_ids
 
-        return self._request('/user/create', params)
+        return self._request('/auth/user-create', params)
 
     def update_user(self, userid: int, username: Optional[str] = None,
                     realname: Optional[str] = None, password: Optional[str] = None,
@@ -930,7 +917,7 @@ class LerweeAPI:
         if status is not None:
             params['status'] = status
 
-        return self._request('/user/update', params)
+        return self._request('/auth/user-update', params)
 
     def delete_users(self, userids: List[int]) -> Dict[str, Any]:
         """
@@ -943,7 +930,7 @@ class LerweeAPI:
             删除结果
         """
         params = {'userids': userids}
-        return self._request('/user/delete', params)
+        return self._request('/auth/user-delete', params)
 
     # ==================== 监控资源 ====================
 
@@ -967,7 +954,7 @@ class LerweeAPI:
         if resource_type:
             params['type'] = resource_type
 
-        return self._request('/monitor/resources', params)
+        return self._request('/monitor/host-list', params)
 
 
 # 示例用法

@@ -1,6 +1,28 @@
 ---
 name: m3u8-media-downloader
 description: Use @lzwme/m3u8-dl for media download and video info parsing. Use when the user mentions video/music download (m3u8/HLS/mp4/mp3 or 抖音/皮皮虾/微博视频), or 获取视频信息、解析视频链接, and a video/music URL is present.
+version: "1.9.0"
+author: "renxia (https://lzw.me)"
+license: "MIT"
+repository: "https://github.com/lzwme/m3u8-dl"
+metadata:
+  {
+    "openclaw":
+      {
+        "emoji": "🎞️",
+        "requires": { "bins": ["m3u8dl", "ffmpeg"] },
+        "install":
+          [
+            {
+              "id": "node",
+              "kind": "node",
+              "formula": "@lzwme/m3u8-dl@1.9.0",
+              "bins": ["m3u8dl"],
+              "label": "Install m3u8-downloader CLI (node)",
+            },
+          ],
+      },
+  }
 ---
 
 # m3u8-downloader
@@ -9,7 +31,7 @@ Download m3u8/mp4 video and mp3/music, support 抖音、皮皮虾、微博 shari
 
 Example:
 
-> 使用 m3u8-downloader skill 获取该视频详情：https://v.douyin.com/CW1iv0GeSJM/
+> 使用 m3u8-media-downloader 下载抖音视频/获取该视频详情：https://v.douyin.com/CW1iv0GeSJM/
 
 ## Main capabilities
 
@@ -20,9 +42,10 @@ Example:
 ## CLI
 
 ```bash
-npx @lzwme/m3u8-dl <urls...> [options]
-npx @lzwme/m3u8-dl info <url>        # 解析视频信息
-npx @lzwme/m3u8-dl server            # 启动 WebUI (http://localhost:6600)
+# 推荐方式：固定版本执行
+npx @lzwme/m3u8-dl@1.9.0 <urls...> [options]
+npx @lzwme/m3u8-dl@1.9.0 info <url>        # 解析视频信息
+npx @lzwme/m3u8-dl@1.9.0 server            # 启动 WebUI (http://localhost:6600)
 ```
 
 ### Key options
@@ -40,31 +63,42 @@ npx @lzwme/m3u8-dl server            # 启动 WebUI (http://localhost:6600)
 
 ```bash
 # Basic download
-npx @lzwme/m3u8-dl https://example.com/video.m3u8 -f "My Video" -S ./downloads
+npx @lzwme/m3u8-dl@1.9.0 https://example.com/video.m3u8 -f "My Video" -S ./downloads
 
 # 抖音/皮皮虾/微博 sharing link
 # parser and download video
-npx @lzwme/m3u8-dl "https://v.douyin.com/xxxxx/" --type parser
+npx @lzwme/m3u8-dl@1.9.0 "https://v.douyin.com/xxxxx/" --type parser
 # parser and print info
-npx @lzwme/m3u8-dl info "https://h5.pipix.com/xxxxx"
+npx @lzwme/m3u8-dl@1.9.0 info "https://h5.pipix.com/xxxxx"
 
 # With name: "name|url"
-npx @lzwme/m3u8-dl "Episode 1|https://example.com/ep1.m3u8"
+npx @lzwme/m3u8-dl@1.9.0 "Episode 1|https://example.com/ep1.m3u8"
 
 # Batch: file with one "filename$url" per line
-npx @lzwme/m3u8-dl series-list.txt -f "Series Name"
+npx @lzwme/m3u8-dl@1.9.0 series-list.txt -f "Series Name"
 
 # Extract m3u8 from web page
-npx @lzwme/m3u8-dl "https://example.com/play/123" --type web
+npx @lzwme/m3u8-dl@1.9.0 "https://example.com/play/123" --type web
 ```
 
 ## WebUI
 
 ```bash
-npx @lzwme/m3u8-dl server [-P <port>] [-t <token>]
-# Env: DS_PORT, DS_SECRET, DS_SAVE_DIR, DS_CACHE_DIR, DS_FFMPEG_PATH
+npx @lzwme/m3u8-dl@1.9.0 server [-P <port>] [-t <token>]
+# Optional env vars for customization: DS_PORT, DS_SECRET, DS_SAVE_DIR, DS_CACHE_DIR, DS_FFMPEG_PATH
 ```
 Open http://localhost:6600 to manage tasks in browser.
+
+## Security Considerations
+
+> ⚠️ **Important Security Notice**
+
+- **Version Pinning**: This skill uses pinned version `@1.9.0` to prevent execution of different code on each run
+- **Code Review**: Inspect the package via `npm view @lzwme/m3u8-dl@1.9.0` or [GitHub](https://github.com/lzwme/m3u8-dl) before execution
+- **Sandbox Environment**: Run download tasks in an isolated environment with restricted filesystem permissions
+- **ffmpeg Installation**: Ensure ffmpeg is installed from official or trusted sources only
+- **Sensitive Variables**: `DS_SECRET` is sensitive - configure carefully to protect WebUI access
+- **Legal Compliance**: Ensure downloads comply with local laws and source site terms of service
 
 ## Node API
 
@@ -87,8 +121,12 @@ await m3u8BatchDownload(['name1$url1', 'name2$url2'], { saveDir: './downloads' }
 
 | Scenario | CLI | Node API |
 |----------|-----|----------|
-| m3u8/mp4 URL | `npx @lzwme/m3u8-dl <url>` | `m3u8Download(url)` |
+| m3u8/mp4 URL | `npx @lzwme/m3u8-dl@1.9.0 <url>` | `m3u8Download(url)` |
 | 抖音/皮皮虾/微博 | `--type parser` or `info <url>` | `VideoParser.parse()` |
 | Web page with m3u8 | `--type web` | `getM3u8Urls()` |
 | Batch download | `"name\|url"` or file | `m3u8BatchDownload()` |
 | mp4 conversion | Requires ffmpeg | Set `ffmpegPath` |
+
+## LINKS
+
+- source: https://github.com/lzwme/m3u8-dl/tree/main/packages/ai-agent/skills/m3u8-media-downloader

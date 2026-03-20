@@ -3,11 +3,16 @@
   "slug": "community-manager-cn",
   "displayName": "Community Manager Cn",
   "latest": {
-    "version": "1.0.6",
-    "publishedAt": 1773665323907,
-    "commit": "https://github.com/openclaw/skills/commit/21f5d2cede379b45e356f33d0b95fa7e72be753c"
+    "version": "2.0.1",
+    "publishedAt": 1773772913003,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.6",
+      "publishedAt": 1773665323907,
+      "commit": "https://github.com/openclaw/skills/commit/21f5d2cede379b45e356f33d0b95fa7e72be753c"
+    },
     {
       "version": "2.3.0",
       "publishedAt": 1773446793853,

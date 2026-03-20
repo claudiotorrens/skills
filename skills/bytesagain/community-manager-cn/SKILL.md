@@ -4,6 +4,8 @@ name: Community Manager
 description: "📱 社群运营工具 — community.sh. Use when you need community manager cn capabilities. Triggers on: community manager cn."
   社群运营。社群搭建、活跃度提升、内容规划、用户增长、变现策略、危机处理。Community management toolkit. 社群、运营、私域。
 author: BytesAgain
+homepage: https://bytesagain.com
+source: https://github.com/bytesagain/ai-skills
 ---
 # Community Manager
 

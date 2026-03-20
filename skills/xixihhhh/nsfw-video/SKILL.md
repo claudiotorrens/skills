@@ -3,10 +3,12 @@ name: nsfw-video
 description: "Generate AI videos for mature creative projects using Wan 2.2 Spicy (LoRA-tuned for NSFW, top recommended), Wan 2.6, Seedance 1.5, Vidu Q3-Pro, and other models with relaxed content policies via Atlas Cloud API. Designed for adult (18+) artistic and professional use cases including artistic film, fashion video, choreography, and mature animation. Wan 2.2 Spicy is purpose-built for mature content with LoRA fine-tuning at just $0.03/s. Also includes Wan 2.6 (up to 15s 1080p, audio-guided), Seedance v1.5 Pro (native audio-visual), and Vidu Q3-Pro (anime support). Supports text-to-video, image-to-video, and video-to-video. Use this skill when the user explicitly requests NSFW or mature video generation for legitimate adult creative work."
 source: "https://github.com/AtlasCloudAI/nano-banana-2-skill"
 homepage: "https://github.com/AtlasCloudAI/nano-banana-2-skill"
-env_vars:
-  ATLASCLOUD_API_KEY:
-    description: "Atlas Cloud API key for accessing video generation models with relaxed content policies"
-    required: true
+metadata:
+  openclaw:
+    requires:
+      env:
+        - ATLASCLOUD_API_KEY
+    primaryEnv: ATLASCLOUD_API_KEY
 ---
 
 # NSFW Video Generation — Adult Creative AI Video Models
@@ -44,6 +46,46 @@ The API key is tied to your Atlas Cloud account and its pay-as-you-go balance. A
 - **Monitor usage**: Check Console → Usage regularly to track spending and detect anomalies.
 - **Control your balance**: Atlas Cloud uses pay-as-you-go billing — only recharge the amount you plan to use to limit potential exposure.
 - Atlas Cloud does not currently support scoped/limited keys — each key grants access to all models on your account. Use balance control as the primary safeguard.
+
+---
+
+## Script Usage
+
+This skill includes a Python script for video generation. Zero external dependencies required.
+
+### List available video models
+
+```bash
+python scripts/generate_video.py list-models
+```
+
+### Generate a video (text-to-video)
+
+```bash
+python scripts/generate_video.py generate \
+  --model "MODEL_ID" \
+  --prompt "Your prompt here" \
+  --output ./output \
+  duration=5 resolution=720p
+```
+
+### Generate a video (image-to-video)
+
+```bash
+python scripts/generate_video.py generate \
+  --model "MODEL_ID" \
+  --image "https://example.com/photo.jpg" \
+  --prompt "Animate this scene" \
+  --output ./output
+```
+
+### Upload a local file
+
+```bash
+python scripts/generate_video.py upload ./local-file.jpg
+```
+
+Run `python scripts/generate_video.py generate --help` for all options. Extra model params can be passed as key=value (e.g. `duration=10 shot_type=multi_camera`).
 
 ---
 
@@ -242,7 +284,7 @@ curl -s -X POST "https://api.atlascloud.ai/api/v1/model/generateVideo" \
 # Returns: { "code": 200, "data": { "id": "prediction-id" } }
 
 # Step 2: Poll — every 5 seconds until status is completed/succeeded/failed
-curl -s "https://api.atlascloud.ai/api/v1/model/result/{prediction-id}" \
+curl -s "https://api.atlascloud.ai/api/v1/model/prediction/{prediction-id}" \
   -H "Authorization: Bearer $ATLASCLOUD_API_KEY"
 # Returns: { "code": 200, "data": { "status": "completed", "outputs": ["https://...video-url..."] } }
 

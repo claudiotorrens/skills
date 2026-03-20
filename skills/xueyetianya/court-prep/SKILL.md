@@ -4,6 +4,8 @@ name: Court Prep Guide
 description: "Court Preparation Tool. Use when you need court prep capabilities. Triggers on: court prep."
   诉讼准备指南。流程指引、文书准备、证据整理、时间线、费用、小额诉讼。Court preparation guide. 诉讼、法院、起诉。
 author: BytesAgain
+homepage: https://bytesagain.com
+source: https://github.com/bytesagain/ai-skills
 ---
 # Court Prep Guide
 

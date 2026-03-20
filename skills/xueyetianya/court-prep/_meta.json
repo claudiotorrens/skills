@@ -3,11 +3,16 @@
   "slug": "court-prep",
   "displayName": "Court Prep",
   "latest": {
-    "version": "2.3.4",
-    "publishedAt": 1773665499771,
-    "commit": "https://github.com/openclaw/skills/commit/c397356727ee9cf1d9849d28809ae2409fa33b28"
+    "version": "2.3.5",
+    "publishedAt": 1773774015237,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.3.4",
+      "publishedAt": 1773665499771,
+      "commit": "https://github.com/openclaw/skills/commit/c397356727ee9cf1d9849d28809ae2409fa33b28"
+    },
     {
       "version": "2.3.0",
       "publishedAt": 1773448389361,

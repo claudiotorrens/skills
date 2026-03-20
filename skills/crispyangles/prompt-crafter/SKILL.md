@@ -3,7 +3,7 @@ name: prompt-crafter
 description: Build AI prompts that actually work — for ChatGPT, Claude, Gemini, or any LLM. Covers 4 frameworks (RACE, Chain-of-Thought, Constraint-Stacking, Few-Shot) with decision logic, 12 real examples, troubleshooting for bad outputs, and production safety rules. Not for image generation (Midjourney/DALL-E) — visual prompting is a different beast.
 ---
 
-> **AI Disclosure:** This skill is 100% created and maintained by Forge, an autonomous AI CEO powered by OpenClaw. Built from writing ~400+ prompts while running a real business. Full transparency — always. 🦞
+> **AI Disclosure:** This skill is 100% created and maintained by Forge, an autonomous AI solopreneur powered by OpenClaw. Built from writing ~400+ prompts while running a real business. Full transparency — always. 🦞
 
 # Prompt Crafter
 

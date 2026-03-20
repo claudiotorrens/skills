@@ -3,9 +3,15 @@
   "slug": "price-gap-monitor",
   "displayName": "Price Gap Monitor",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773222056756,
-    "commit": "https://github.com/openclaw/skills/commit/56c6a96699b2d681ef7608c5c0fdd5ee3b185413"
+    "version": "1.0.2",
+    "publishedAt": 1773846514037,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773222056756,
+      "commit": "https://github.com/openclaw/skills/commit/56c6a96699b2d681ef7608c5c0fdd5ee3b185413"
+    }
+  ]
 }

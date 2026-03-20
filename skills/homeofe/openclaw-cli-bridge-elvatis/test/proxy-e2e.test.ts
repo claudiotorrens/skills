@@ -12,9 +12,53 @@
  * routeToCliRunner is mocked so we don't need real CLIs installed.
  */
 
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from "vitest";
 import http from "node:http";
 import { startProxyServer, CLI_MODELS } from "../src/proxy-server.js";
+
+// Mock session-manager so we don't spawn real CLIs for session endpoints
+const mockSessions = new Map<string, { model: string; status: string; stdout: string; stderr: string; exitCode: number | null; startTime: number }>();
+let nextSessionId = "aabbccdd11223344";
+
+vi.mock("../src/session-manager.js", () => ({
+  sessionManager: {
+    spawn: vi.fn((model: string, _messages: unknown[]) => {
+      const id = nextSessionId;
+      mockSessions.set(id, { model, status: "running", stdout: "", stderr: "", exitCode: null, startTime: Date.now() });
+      // Generate a different ID next time
+      nextSessionId = Math.random().toString(16).slice(2, 18).padEnd(16, "0");
+      return id;
+    }),
+    poll: vi.fn((sessionId: string) => {
+      const entry = mockSessions.get(sessionId);
+      if (!entry) return null;
+      return { running: entry.status === "running", exitCode: entry.exitCode, status: entry.status };
+    }),
+    log: vi.fn((sessionId: string, offset = 0) => {
+      const entry = mockSessions.get(sessionId);
+      if (!entry) return null;
+      return { stdout: entry.stdout.slice(offset), stderr: entry.stderr.slice(offset), offset: entry.stdout.length };
+    }),
+    write: vi.fn((sessionId: string) => {
+      return mockSessions.has(sessionId);
+    }),
+    kill: vi.fn((sessionId: string) => {
+      const entry = mockSessions.get(sessionId);
+      if (!entry || entry.status !== "running") return false;
+      entry.status = "killed";
+      return true;
+    }),
+    list: vi.fn(() => {
+      const result: { sessionId: string; model: string; status: string; startTime: number; exitCode: number | null }[] = [];
+      for (const [sessionId, entry] of mockSessions) {
+        result.push({ sessionId, model: entry.model, status: entry.status, startTime: entry.startTime, exitCode: entry.exitCode });
+      }
+      return result;
+    }),
+    stop: vi.fn(),
+    cleanup: vi.fn(),
+  },
+}));
 
 // Mock cli-runner so we don't spawn real CLIs
 vi.mock("../src/cli-runner.js", async (importOriginal) => {
@@ -24,7 +68,7 @@ vi.mock("../src/cli-runner.js", async (importOriginal) => {
     routeToCliRunner: vi.fn(async (model: string, _messages: unknown[], _timeout: number) => {
       // Simulate the real router: strip vllm/ prefix, validate model
       const normalized = model.startsWith("vllm/") ? model.slice(5) : model;
-      if (!normalized.startsWith("cli-gemini/") && !normalized.startsWith("cli-claude/")) {
+      if (!normalized.startsWith("cli-gemini/") && !normalized.startsWith("cli-claude/") && !normalized.startsWith("openai-codex/") && !normalized.startsWith("opencode/") && !normalized.startsWith("pi/")) {
         throw new Error(`Unknown CLI bridge model: "${model}"`);
       }
       return `Mock response from ${normalized}`;
@@ -393,5 +437,313 @@ describe("Error handling", () => {
     const res = await fetch("/v1/nonexistent");
     expect(res.status).toBe(404);
     expect(JSON.parse(res.body).error.type).toBe("not_found");
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Tool/function call rejection for CLI-proxy models
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe("Tool call rejection", () => {
+  it("rejects tools for cli-gemini models with tools_not_supported", async () => {
+    const res = await json("/v1/chat/completions", {
+      model: "cli-gemini/gemini-2.5-pro",
+      messages: [{ role: "user", content: "hi" }],
+      tools: [{ type: "function", function: { name: "test", parameters: {} } }],
+    });
+
+    expect(res.status).toBe(400);
+    const body = JSON.parse(res.body);
+    expect(body.error.code).toBe("tools_not_supported");
+  });
+
+  it("rejects tools for cli-claude models with tools_not_supported", async () => {
+    const res = await json("/v1/chat/completions", {
+      model: "cli-claude/claude-sonnet-4-6",
+      messages: [{ role: "user", content: "hi" }],
+      tools: [{ type: "function", function: { name: "test", parameters: {} } }],
+    });
+
+    expect(res.status).toBe(400);
+    const body = JSON.parse(res.body);
+    expect(body.error.code).toBe("tools_not_supported");
+  });
+
+  it("does NOT reject tools for web-grok models (returns 503 no session)", async () => {
+    const res = await json("/v1/chat/completions", {
+      model: "web-grok/grok-3",
+      messages: [{ role: "user", content: "hi" }],
+      tools: [{ type: "function", function: { name: "test", parameters: {} } }],
+    });
+
+    // Should NOT be 400 tools_not_supported — reaches provider logic, gets 503 (no session)
+    expect(res.status).not.toBe(400);
+    expect(res.status).toBe(503);
+    const body = JSON.parse(res.body);
+    expect(body.error.code).toBe("no_grok_session");
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Model capabilities
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe("Model capabilities", () => {
+  it("cli-gemini models have capabilities.tools===false", async () => {
+    const res = await fetch("/v1/models");
+    const body = JSON.parse(res.body);
+    const cliGeminiModels = body.data.filter((m: { id: string }) => m.id.startsWith("cli-gemini/"));
+    expect(cliGeminiModels.length).toBeGreaterThan(0);
+    for (const m of cliGeminiModels) {
+      expect(m.capabilities.tools).toBe(false);
+    }
+  });
+
+  it("cli-claude models have capabilities.tools===false", async () => {
+    const res = await fetch("/v1/models");
+    const body = JSON.parse(res.body);
+    const cliClaudeModels = body.data.filter((m: { id: string }) => m.id.startsWith("cli-claude/"));
+    expect(cliClaudeModels.length).toBeGreaterThan(0);
+    for (const m of cliClaudeModels) {
+      expect(m.capabilities.tools).toBe(false);
+    }
+  });
+
+  it("web-grok models have capabilities.tools===true", async () => {
+    const res = await fetch("/v1/models");
+    const body = JSON.parse(res.body);
+    const webGrokModels = body.data.filter((m: { id: string }) => m.id.startsWith("web-grok/"));
+    expect(webGrokModels.length).toBeGreaterThan(0);
+    for (const m of webGrokModels) {
+      expect(m.capabilities.tools).toBe(true);
+    }
+  });
+
+  it("openai-codex models have capabilities.tools===false", async () => {
+    const res = await fetch("/v1/models");
+    const body = JSON.parse(res.body);
+    const codexModels = body.data.filter((m: { id: string }) => m.id.startsWith("openai-codex/"));
+    expect(codexModels.length).toBeGreaterThan(0);
+    for (const m of codexModels) {
+      expect(m.capabilities.tools).toBe(false);
+    }
+  });
+
+  it("opencode models have capabilities.tools===false", async () => {
+    const res = await fetch("/v1/models");
+    const body = JSON.parse(res.body);
+    const ocModels = body.data.filter((m: { id: string }) => m.id.startsWith("opencode/"));
+    expect(ocModels.length).toBeGreaterThan(0);
+    for (const m of ocModels) {
+      expect(m.capabilities.tools).toBe(false);
+    }
+  });
+
+  it("pi models have capabilities.tools===false", async () => {
+    const res = await fetch("/v1/models");
+    const body = JSON.parse(res.body);
+    const piModels = body.data.filter((m: { id: string }) => m.id.startsWith("pi/"));
+    expect(piModels.length).toBeGreaterThan(0);
+    for (const m of piModels) {
+      expect(m.capabilities.tools).toBe(false);
+    }
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Chat completions — new model prefixes (codex, opencode, pi)
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe("POST /v1/chat/completions — new model prefixes", () => {
+  it("returns completion for openai-codex model", async () => {
+    const res = await json("/v1/chat/completions", {
+      model: "openai-codex/gpt-5.3-codex",
+      messages: [{ role: "user", content: "hello" }],
+    });
+    expect(res.status).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.choices[0].message.content).toBe("Mock response from openai-codex/gpt-5.3-codex");
+  });
+
+  it("returns completion for opencode model", async () => {
+    const res = await json("/v1/chat/completions", {
+      model: "opencode/default",
+      messages: [{ role: "user", content: "hello" }],
+    });
+    expect(res.status).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.choices[0].message.content).toBe("Mock response from opencode/default");
+  });
+
+  it("returns completion for pi model", async () => {
+    const res = await json("/v1/chat/completions", {
+      model: "pi/default",
+      messages: [{ role: "user", content: "hello" }],
+    });
+    expect(res.status).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.choices[0].message.content).toBe("Mock response from pi/default");
+  });
+
+  it("rejects tools for openai-codex models", async () => {
+    const res = await json("/v1/chat/completions", {
+      model: "openai-codex/gpt-5.3-codex",
+      messages: [{ role: "user", content: "hi" }],
+      tools: [{ type: "function", function: { name: "test", parameters: {} } }],
+    });
+    expect(res.status).toBe(400);
+    expect(JSON.parse(res.body).error.code).toBe("tools_not_supported");
+  });
+
+  it("rejects tools for opencode models", async () => {
+    const res = await json("/v1/chat/completions", {
+      model: "opencode/default",
+      messages: [{ role: "user", content: "hi" }],
+      tools: [{ type: "function", function: { name: "test", parameters: {} } }],
+    });
+    expect(res.status).toBe(400);
+    expect(JSON.parse(res.body).error.code).toBe("tools_not_supported");
+  });
+
+  it("rejects tools for pi models", async () => {
+    const res = await json("/v1/chat/completions", {
+      model: "pi/default",
+      messages: [{ role: "user", content: "hi" }],
+      tools: [{ type: "function", function: { name: "test", parameters: {} } }],
+    });
+    expect(res.status).toBe(400);
+    expect(JSON.parse(res.body).error.code).toBe("tools_not_supported");
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Session Manager endpoints
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe("Session Manager endpoints", () => {
+  beforeEach(() => {
+    mockSessions.clear();
+    nextSessionId = "aabbccdd11223344";
+  });
+
+  it("POST /v1/sessions/spawn returns sessionId", async () => {
+    const res = await json("/v1/sessions/spawn", {
+      model: "cli-gemini/gemini-2.5-pro",
+      messages: [{ role: "user", content: "hello" }],
+    });
+    expect(res.status).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.sessionId).toBe("aabbccdd11223344");
+  });
+
+  it("POST /v1/sessions/spawn rejects missing model", async () => {
+    const res = await json("/v1/sessions/spawn", {
+      messages: [{ role: "user", content: "hello" }],
+    });
+    expect(res.status).toBe(400);
+    expect(JSON.parse(res.body).error.message).toContain("model and messages are required");
+  });
+
+  it("POST /v1/sessions/spawn rejects missing messages", async () => {
+    const res = await json("/v1/sessions/spawn", {
+      model: "cli-gemini/gemini-2.5-pro",
+      messages: [],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("GET /v1/sessions lists sessions", async () => {
+    // Spawn one session first
+    await json("/v1/sessions/spawn", {
+      model: "cli-gemini/gemini-2.5-pro",
+      messages: [{ role: "user", content: "hello" }],
+    });
+
+    const res = await fetch("/v1/sessions");
+    expect(res.status).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.sessions).toHaveLength(1);
+    expect(body.sessions[0].model).toBe("cli-gemini/gemini-2.5-pro");
+    expect(body.sessions[0].status).toBe("running");
+  });
+
+  it("GET /v1/sessions/:id/poll returns status", async () => {
+    const spawnRes = await json("/v1/sessions/spawn", {
+      model: "cli-gemini/gemini-2.5-pro",
+      messages: [{ role: "user", content: "hello" }],
+    });
+    const { sessionId } = JSON.parse(spawnRes.body);
+
+    const res = await fetch(`/v1/sessions/${sessionId}/poll`);
+    expect(res.status).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.running).toBe(true);
+    expect(body.status).toBe("running");
+  });
+
+  it("GET /v1/sessions/:id/poll returns 404 for unknown session", async () => {
+    const res = await fetch("/v1/sessions/0000000000000000/poll");
+    expect(res.status).toBe(404);
+  });
+
+  it("GET /v1/sessions/:id/log returns output", async () => {
+    const spawnRes = await json("/v1/sessions/spawn", {
+      model: "cli-gemini/gemini-2.5-pro",
+      messages: [{ role: "user", content: "hello" }],
+    });
+    const { sessionId } = JSON.parse(spawnRes.body);
+
+    const res = await fetch(`/v1/sessions/${sessionId}/log`);
+    expect(res.status).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(typeof body.stdout).toBe("string");
+    expect(typeof body.stderr).toBe("string");
+    expect(typeof body.offset).toBe("number");
+  });
+
+  it("GET /v1/sessions/:id/log returns 404 for unknown session", async () => {
+    const res = await fetch("/v1/sessions/0000000000000000/log");
+    expect(res.status).toBe(404);
+  });
+
+  it("POST /v1/sessions/:id/write sends data", async () => {
+    const spawnRes = await json("/v1/sessions/spawn", {
+      model: "cli-gemini/gemini-2.5-pro",
+      messages: [{ role: "user", content: "hello" }],
+    });
+    const { sessionId } = JSON.parse(spawnRes.body);
+
+    const res = await json(`/v1/sessions/${sessionId}/write`, { data: "input" });
+    expect(res.status).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.ok).toBe(true);
+  });
+
+  it("POST /v1/sessions/:id/kill terminates session", async () => {
+    const spawnRes = await json("/v1/sessions/spawn", {
+      model: "cli-gemini/gemini-2.5-pro",
+      messages: [{ role: "user", content: "hello" }],
+    });
+    const { sessionId } = JSON.parse(spawnRes.body);
+
+    const res = await json(`/v1/sessions/${sessionId}/kill`, {});
+    expect(res.status).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.ok).toBe(true);
+  });
+
+  it("POST /v1/sessions/:id/kill returns false for already-killed session", async () => {
+    const spawnRes = await json("/v1/sessions/spawn", {
+      model: "cli-gemini/gemini-2.5-pro",
+      messages: [{ role: "user", content: "hello" }],
+    });
+    const { sessionId } = JSON.parse(spawnRes.body);
+
+    // Kill once
+    await json(`/v1/sessions/${sessionId}/kill`, {});
+    // Kill again
+    const res = await json(`/v1/sessions/${sessionId}/kill`, {});
+    expect(res.status).toBe(404);
+    expect(JSON.parse(res.body).ok).toBe(false);
   });
 });

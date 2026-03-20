@@ -1,11 +1,17 @@
 {
   "owner": "vinxu",
   "slug": "castreader",
-  "displayName": "Castreader Openclaw Skill",
+  "displayName": "Castreader",
   "latest": {
-    "version": "2.1.1",
-    "publishedAt": 1773379761767,
-    "commit": "https://github.com/openclaw/skills/commit/784d8d70c6dee62f6e3be51f991f6b202b82eaed"
+    "version": "3.0.0",
+    "publishedAt": 1774030170926,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.1.1",
+      "publishedAt": 1773379761767,
+      "commit": "https://github.com/openclaw/skills/commit/784d8d70c6dee62f6e3be51f991f6b202b82eaed"
+    }
+  ]
 }

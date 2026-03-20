@@ -1,13 +1,18 @@
 {
   "owner": "jisuapi",
   "slug": "jisu-qrcode",
-  "displayName": "二维码生成识别 - QR Code Generation And Recognition",
+  "displayName": "QR Code Generation And Recognition - 二维码生成识别",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773641066537,
-    "commit": "https://github.com/openclaw/skills/commit/86bbb8b97c9c1e86e6c37652a627ae90a39fd138"
+    "version": "1.0.2",
+    "publishedAt": 1773721089765,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773641066537,
+      "commit": "https://github.com/openclaw/skills/commit/86bbb8b97c9c1e86e6c37652a627ae90a39fd138"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773395913561,

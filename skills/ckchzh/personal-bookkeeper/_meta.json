@@ -3,11 +3,16 @@
   "slug": "personal-bookkeeper",
   "displayName": "Personal Bookkeeper",
   "latest": {
-    "version": "2.4.6",
-    "publishedAt": 1773664011791,
-    "commit": "https://github.com/openclaw/skills/commit/b28d237f8c915b7b8bc7b5f6b9261c7210f47e7c"
+    "version": "2.0.1",
+    "publishedAt": 1773830912007,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.4.6",
+      "publishedAt": 1773664011791,
+      "commit": "https://github.com/openclaw/skills/commit/b28d237f8c915b7b8bc7b5f6b9261c7210f47e7c"
+    },
     {
       "version": "2.4.0",
       "publishedAt": 1773452292130,

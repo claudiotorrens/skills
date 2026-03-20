@@ -17,6 +17,35 @@ import requests
 VIN_RECOG_URL = "https://api.jisuapi.com/vinrecognition/recognize"
 
 
+def _normalize_local_path(user_path: str, field: str) -> Dict[str, Any]:
+    """
+    规范化并限制本地文件路径，只允许在当前工作目录及其子目录内读取。
+    禁止绝对路径和目录穿越（包含 ..），避免被恶意提示利用读取任意系统文件。
+    """
+    if not user_path:
+        return {
+            "error": "invalid_param",
+            "message": f"field '{field}' is empty",
+        }
+
+    if os.path.isabs(user_path):
+        return {
+            "error": "invalid_path",
+            "message": f"Absolute path is not allowed for '{field}'",
+        }
+
+    norm = os.path.normpath(user_path)
+    if norm.startswith("..") or norm == "..":
+        return {
+            "error": "invalid_path",
+            "message": f"Path traversal is not allowed for '{field}'",
+        }
+
+    base = os.getcwd()
+    full = os.path.join(base, norm)
+    return {"error": None, "path": full, "relative": norm}
+
+
 def _call_vin_api(appkey: str, pic_base64: str) -> Dict[str, Any]:
     params = {"appkey": appkey}
     data = {"pic": pic_base64}
@@ -58,12 +87,17 @@ def _get_pic_base64(req: Dict[str, Any]) -> Dict[str, Any]:
     if pic:
         return {"pic": str(pic), "error": None}
 
-    path = req.get("path") or req.get("image") or req.get("file")
-    if not path:
+    path_raw = req.get("path") or req.get("image") or req.get("file")
+    if not path_raw:
         return {"pic": None, "error": "Either 'pic' (base64) or 'path/image/file' is required"}
 
+    safe = _normalize_local_path(str(path_raw).strip(), "path")
+    if safe["error"]:
+        return {"pic": None, "error": safe["message"]}
+
+    path = safe["path"]
     if not os.path.isfile(path):
-        return {"pic": None, "error": f"File not found: {path}"}
+        return {"pic": None, "error": f"File not found: {safe['relative']}"}
 
     try:
         with open(path, "rb") as f:

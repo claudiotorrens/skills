@@ -1,13 +1,18 @@
 {
   "owner": "jisuapi",
   "slug": "vinrecognition",
-  "displayName": "VIN识别 - VIN Recognition OCR",
+  "displayName": "VIN Recognition OCR - VIN识别",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773632748869,
-    "commit": "https://github.com/openclaw/skills/commit/bb75e4c6ca2c2f4539d1b3471cae3762f190520f"
+    "version": "1.0.4",
+    "publishedAt": 1773731135986,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773632748869,
+      "commit": "https://github.com/openclaw/skills/commit/bb75e4c6ca2c2f4539d1b3471cae3762f190520f"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773400972294,

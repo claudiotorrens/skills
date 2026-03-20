@@ -3,11 +3,16 @@
   "slug": "browser-agent-bridge-cli",
   "displayName": "Browser Agent Bridge CLI",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773211975882,
-    "commit": "https://github.com/openclaw/skills/commit/b4e4b65c26c722ff643933a31a8c4cb3b6e932fb"
+    "version": "1.0.4",
+    "publishedAt": 1773979870019,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773211975882,
+      "commit": "https://github.com/openclaw/skills/commit/b4e4b65c26c722ff643933a31a8c4cb3b6e932fb"
+    },
     {
       "version": "1.0.1",
       "publishedAt": 1772792446154,

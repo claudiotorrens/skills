@@ -1,0 +1,11 @@
+{
+  "owner": "cocofhu",
+  "slug": "tencentcloud-management-tool",
+  "displayName": "Tencent Cloud Management Tool",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773919527917,
+    "commit": null
+  },
+  "history": []
+}

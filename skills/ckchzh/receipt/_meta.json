@@ -3,9 +3,15 @@
   "slug": "receipt",
   "displayName": "Receipt",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773664071194,
-    "commit": "https://github.com/openclaw/skills/commit/2d099204ebe2fc04d2bb22c8a5bf01a97779b5e3"
+    "version": "2.0.1",
+    "publishedAt": 1773830964479,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773664071194,
+      "commit": "https://github.com/openclaw/skills/commit/2d099204ebe2fc04d2bb22c8a5bf01a97779b5e3"
+    }
+  ]
 }

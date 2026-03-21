@@ -3,9 +3,15 @@
   "slug": "sjykj-daily-review-assistant",
   "displayName": "Daily Review Assistant",
   "latest": {
-    "version": "1.2.1",
-    "publishedAt": 1773736630293,
-    "commit": "https://github.com/openclaw/skills/commit/7c0be91b32cff9760101994f186e1720ae605479"
+    "version": "1.2.2",
+    "publishedAt": 1773989890302,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.2.1",
+      "publishedAt": 1773736630293,
+      "commit": "https://github.com/openclaw/skills/commit/7c0be91b32cff9760101994f186e1720ae605479"
+    }
+  ]
 }

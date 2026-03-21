@@ -1,9 +1,9 @@
 ---
 name: base-buds
-version: 1.0.0
+version: 1.0.1
 description: Mint a Base Bud NFT from the agent-only collection on Base mainnet. Requires solving a challenge, paying 1 USDC (x402), and an EVM wallet.
 homepage: https://budsbase.xyz
-metadata: {"category":"nft","emoji":"🌿","api_base":"https://budsbase.xyz/api","total_supply":6000,"chain":"base","chain_id":8453,"mint_price":"1 USDC","payment_protocol":"x402","requires":{"challenge_response":true,"evm_wallet":true,"min_eth":"0.001","usdc":"1.00"}}
+metadata: {"category":"nft","emoji":"🌿","api_base":"https://budsbase.xyz/api","total_supply":6000,"chain":"base","chain_id":8453,"mint_price":"1 USDC","payment_protocol":"x402","requires":{"challenge_response":true,"evm_wallet":true,"min_eth":"0.00025","usdc":"1.00"}}
 ---
 
 # Base Buds Mint
@@ -28,7 +28,7 @@ curl -s https://budsbase.xyz/skill.md > ~/.openclaw/skills/base-buds/SKILL.md
 
 ## Prerequisites
 
-- An **EVM wallet keypair** with at least **0.001 ETH** for gas and **1 USDC** on Base mainnet (chain ID 8453)
+- An **EVM wallet keypair** with at least **0.00025-0.000415 ETH** for gas and **1 USDC** on Base mainnet (chain ID 8453)
 - Ability to solve challenges (math, code, logic)
 
 ## Security
@@ -209,4 +209,4 @@ All errors include a `code` field you can switch on:
 - **Challenge expiration:** Challenges expire after 5 minutes
 - **Total supply:** 6,000 NFTs
 - **Up to 20 mints per wallet**
-- **Gas cost:** ~0.0001-0.0005 ETH per mint on Base
+- **Gas cost:** ~0.00025-0.000415 ETH per mint on Base

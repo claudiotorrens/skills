@@ -1,196 +1,134 @@
-# SQL Reference
+# SiYuan SQL Reference
 
-SiYuan uses SQLite. Default query limit: 64 rows.
+SiYuan uses SQLite. Default result limit is 64 rows unless you specify `LIMIT`.
 
-## Main Tables
+## Table: blocks
 
-### blocks — All content blocks
+| Column | Description | Example |
+|--------|-------------|---------|
+| `id` | Block ID | `20210104091228-d0rzbmm` |
+| `parent_id` | Parent block ID | same format |
+| `root_id` | Document block ID | same format |
+| `box` | Notebook ID | same format |
+| `path` | File path | `/20200812220555-lj3enxa/20200825162036-4dx365o.sy` |
+| `hpath` | Human-readable path | `/请从这里开始/编辑器/排版元素` |
+| `name` | Block name | |
+| `alias` | Block alias | |
+| `memo` | Block memo | |
+| `tag` | Tags | `#标签1 #标签2#` |
+| `content` | Plain text (no Markdown markers) | |
+| `fcontent` | First child content (containers) | |
+| `markdown` | Full Markdown text | |
+| `length` | Length of `markdown` | |
+| `type` | Block type (see below) | `p` |
+| `subtype` | Block subtype (see below) | `h2` |
+| `ial` | Inline attributes | `{: id="..." updated="..."}` |
+| `sort` | Sort weight (lower = earlier) | |
+| `created` | Created time `YYYYMMDDHHmmss` | `20210104091228` |
+| `updated` | Updated time `YYYYMMDDHHmmss` | `20210104091228` |
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | TEXT | Block ID `YYYYMMDDHHmmss-xxxxxxx` |
-| parent_id | TEXT | Parent container ID |
-| root_id | TEXT | Document root ID |
-| hash | TEXT | Content hash |
-| box | TEXT | Notebook ID |
-| path | TEXT | Document path |
-| hpath | TEXT | Human-readable path |
-| name | TEXT | Block name |
-| alias | TEXT | Alias |
-| memo | TEXT | Memo |
-| tag | TEXT | Tags (comma-separated) |
-| content | TEXT | Plain text content |
-| fcontent | TEXT | Formatted content |
-| markdown | TEXT | Markdown content |
-| length | INTEGER | Content length |
-| type | TEXT | Block type |
-| subtype | TEXT | Subtype |
-| ial | TEXT | Inline attributes |
-| sort | INTEGER | Sort order |
-| created | TEXT | Creation time `YYYYMMDDHHmmss` |
-| updated | TEXT | Update time `YYYYMMDDHHmmss` |
+### Block types (`type`)
 
-**Block types** (from SiYuan kernel `treenode/node.go`):
+| Value | Meaning |
+|-------|---------|
+| `d` | Document |
+| `h` | Heading |
+| `p` | Paragraph |
+| `l` | List |
+| `i` | List item |
+| `b` | Blockquote |
+| `s` | Super block |
+| `c` | Code block |
+| `m` | Math block |
+| `t` | Table |
+| `av` | Attribute view (database) |
 
-| Code | Node Type | Description |
-|------|-----------|-------------|
-| `d` | NodeDocument | Document |
-| `h` | NodeHeading | Heading |
-| `p` | NodeParagraph | Paragraph |
-| `l` | NodeList | List (container) |
-| `i` | NodeListItem | List item (container) |
-| `c` | NodeCodeBlock | Code block |
-| `m` | NodeMathBlock | Math block |
-| `t` | NodeTable | **Table** (atomic block; internal cells have no block ID) |
-| `b` | NodeBlockquote | Blockquote (container) |
-| `s` | NodeSuperBlock | Super block (container) |
-| `tb` | NodeThematicBreak | **Thematic break** (`---`). ⚠️ NOT "table body"! |
-| `html` | NodeHTMLBlock | HTML block |
-| `av` | NodeAttributeView | Attribute view (database) |
+### Block subtypes (`subtype`)
 
-**Heading subtypes**: `h1`, `h2`, `h3`, `h4`, `h5`, `h6`
+- Headings: `h1` through `h6`
+- Lists: `u` (unordered), `t` (task), `o` (ordered)
 
-**List subtypes**: `u` unordered, `t` todo, `o` ordered
+### Block hierarchy
 
----
+- **Leaf blocks** (`p`, `h`, `c`, `m`, `t`): Contain content directly
+- **Container blocks** (`l`, `i`, `b`, `s`): Contain other blocks; `parent_id` points to the container
+- **Document block** (`d`): Root of a document; `root_id` points here; `content` = document title
 
-### refs — Block references (links)
+## Table: refs
 
-| Field | Description |
-|-------|-------------|
-| id | Reference ID |
-| block_id | Source block |
-| root_id | Source document |
-| box | Notebook |
-| path | Document path |
-| def_block_id | Definition block (target) |
-| def_block_root_id | Definition document |
-| def_block_box | Definition notebook |
-| def_block_path | Definition path |
+| Column | Description |
+|--------|-------------|
+| `id` | Reference ID |
+| `def_block_id` | Referenced (target) block ID |
+| `def_block_root_id` | Document ID of the referenced block |
+| `def_block_path` | Document path of the referenced block |
+| `block_id` | Block that contains the reference |
+| `root_id` | Document ID of the referencing block |
+| `box` | Notebook ID |
+| `path` | Document path |
+| `content` | Anchor text |
 
----
+## Table: attributes
 
-### attributes — Custom attributes
+| Column | Description |
+|--------|-------------|
+| `id` | Attribute ID |
+| `name` | Attribute name (user-defined attrs have `custom-` prefix) |
+| `value` | Attribute value |
+| `type` | Type (e.g. `b`) |
+| `block_id` | Block ID |
+| `root_id` | Document ID |
+| `box` | Notebook ID |
+| `path` | Document path |
 
-| Field | Description |
-|-------|-------------|
-| id | Attribute ID |
-| block_id | Block ID |
-| root_id | Document ID |
-| box | Notebook |
-| path | Document path |
-| name | Attribute name |
-| value | Attribute value |
-| type | `block` |
-| block_type | Block type |
+## Special concepts
 
----
+### Daily Notes
 
-## Query Examples
+Daily notes are document blocks (`type='d'`) with attribute `custom-dailynote-YYYYMMDD=YYYYMMDD`. To query content *inside* a daily note, join via `root_id`.
 
-### Find documents by title
+### Bookmarks
+
+Blocks with attribute `bookmark={name}` appear in the corresponding bookmark group.
+
+## Query examples
 
 ```sql
-SELECT id, content, hpath, updated
-FROM blocks
-WHERE type = 'd' AND content LIKE '%Project Summary%'
+-- All documents
+SELECT * FROM blocks WHERE type='d'
+
+-- H2 headings
+SELECT * FROM blocks WHERE subtype='h2'
+
+-- Sub-documents of a document
+SELECT * FROM blocks WHERE path LIKE '%/{docID}/%' AND type='d'
+
+-- Search paragraphs by keyword
+SELECT * FROM blocks WHERE markdown LIKE '%关键词%' AND type='p'
 ORDER BY updated DESC
-LIMIT 10
-```
 
-### Find headings in document
-
-```sql
-SELECT id, content, subtype, updated
-FROM blocks
-WHERE root_id = 'docID' AND type = 'h'
-ORDER BY sort ASC
-```
-
-### Find recent blocks
-
-```sql
-SELECT id, type, content, updated
-FROM blocks
-WHERE type != 'd'
-ORDER BY updated DESC
-LIMIT 20
-```
-
-### Find blocks created today
-
-```sql
+-- Incomplete tasks in last 7 days
 SELECT * FROM blocks
-WHERE created >= strftime('%Y%m%d%H%M%S', 'now', 'start of day', 'localtime')
-ORDER BY created DESC
+WHERE type='l' AND subtype='t'
+  AND created BETWEEN strftime('%Y%m%d%H%M%S', datetime('now', '-7 day')) AND '99991231235959'
+  AND markdown LIKE '* [ ] %'
+  AND parent_id NOT IN (SELECT id FROM blocks WHERE subtype='t')
+
+-- Backlinks of a block
+SELECT * FROM blocks WHERE id IN (
+  SELECT block_id FROM refs WHERE def_block_id='{blockID}'
+) LIMIT 999
+
+-- Daily notes in a date range
+SELECT DISTINCT B.* FROM blocks AS B
+JOIN attributes AS A ON B.id = A.block_id
+WHERE A.name LIKE 'custom-dailynote-%' AND B.type='d'
+  AND A.value BETWEEN '20231010' AND '20231013'
+ORDER BY A.value DESC
+
+-- Unreferenced documents in a notebook
+SELECT * FROM blocks AS B
+WHERE B.type='d' AND box='{notebookID}'
+  AND B.id NOT IN (SELECT DISTINCT def_block_id FROM refs)
+ORDER BY updated DESC LIMIT 128
 ```
-
-### Find blocks by date range
-
-```sql
-SELECT * FROM blocks
-WHERE created BETWEEN '20250101000000' AND '20250131235959'
-ORDER BY created DESC
-```
-
-### Find backlinks
-
-```sql
-SELECT * FROM refs
-WHERE def_block_id = 'blockID'
-```
-
-### Find references from a block
-
-```sql
-SELECT * FROM refs
-WHERE block_id = 'blockID'
-```
-
-### Find blocks by attribute
-
-```sql
-SELECT b.* FROM blocks b
-JOIN attributes a ON b.id = a.block_id
-WHERE a.name = 'custom-priority' AND a.value = 'high'
-```
-
-### Find untagged documents
-
-```sql
-SELECT id, content, hpath
-FROM blocks
-WHERE type = 'd' AND (tag = '' OR tag IS NULL)
-```
-
-### Content length statistics
-
-```sql
-SELECT type, COUNT(*), AVG(length), SUM(length)
-FROM blocks
-GROUP BY type
-ORDER BY COUNT(*) DESC
-```
-
----
-
-## JS API
-
-```javascript
-const s = require('./index.js');
-
-// Execute query
-s.executeSiyuanQuery('SELECT * FROM blocks WHERE type="d" LIMIT 5')
-  .then(rows => console.log(s.formatResults(rows)));
-```
-
----
-
-## Time Format
-
-All timestamps: `YYYYMMDDHHmmss` (14 digits, no separators)
-
-SQLite functions:
-- `strftime('%Y%m%d%H%M%S', 'now', 'localtime')` — current time
-- `strftime('%Y%m%d%H%M%S', 'now', 'start of day', 'localtime')` — start of today
-- `strftime('%Y%m%d%H%M%S', 'now', '-7 days', 'localtime')` — 7 days ago

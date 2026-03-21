@@ -47,9 +47,9 @@ requires:
   packages:
     - name: openclaw-video-generator
       source: npm
-      version: ">=1.6.0"
+      version: ">=1.5.0"
       verified_repo: https://github.com/ZhenRobotics/openclaw-video-generator
-      verified_commit: 75df997  # v1.5.1 - Compatibility & Documentation Improvements
+      verified_commit: ac3c568  # v1.5.0 - All ClawHub security warnings resolved
 install:
   commands:
     - npm install -g openclaw-video-generator@latest
@@ -60,28 +60,70 @@ install:
     Set OPENAI_API_KEY for default provider, or configure alternative providers.
 ---
 
-# 🎬 Video Generator Skill
+# 🎬 Video Generator Skill | 视频生成器技能
 
-Automated text-to-video generation system that transforms text scripts into professional short videos with AI-powered voiceover, precise timing, and cyber-wireframe visuals.
+**English** | [中文](#中文版本)
 
-## 🔒 Security & Trust
+---
+
+## English Version
+
+Automated text-to-video generation system with multi-provider TTS/ASR support (OpenAI, Azure, Aliyun, Tencent), transforming text scripts into professional short videos with AI-powered voiceover, precise timing, and cyber-wireframe visuals.
+
+### 🔒 Security & Trust
 
 This skill is **safe and verified**:
 - ✅ All code runs **locally** on your machine
-- ✅ **No external servers** (except OpenAI API for TTS/Whisper)
+- ✅ **No proprietary backend servers** - only connects to your chosen TTS/ASR API providers
 - ✅ Source code is **open source** and auditable
 - ✅ Uses official **npm package** (openclaw-video-generator)
 - ✅ **Verified repository**: github.com/ZhenRobotics/openclaw-video-generator
-- ✅ **No data collection** - all processing is local
+- ✅ **Verified commit**: e71dc9f (v1.5.0 - Complete ClawHub metadata)
+- ⚠️ **Privacy notice**: Your text/audio is sent to chosen cloud providers (OpenAI/Azure/Aliyun/Tencent) for TTS/ASR processing - review their privacy policies before use
 
 **Required API Access**:
-- OpenAI API key (for TTS and Whisper) - you maintain control
+- **At least one TTS/ASR provider required**: OpenAI (recommended), Azure, Aliyun, or Tencent
+- Connects to your selected provider's public APIs (OpenAI, Azure, Aliyun, Tencent) for TTS and speech recognition
+- You maintain full control of your API keys
+- Supports automatic fallback between providers
 
-## 📦 Installation
+### ✨ What's New (Latest: v1.5.0)
 
-### Prerequisites Check
+**🎨 v1.5.0 Major Update (verified_commit: e71dc9f)**:
+- **Cyber Design System** - 800+ lines of design tokens with WCAG AA compliance
+- **Typography System** - Orbitron/Rajdhani fonts for sci-fi aesthetic (+200%)
+- **Color System** - 15+ validated neon colors, all WCAG AA compliant (4.5:1+)
+- **Testing Suite** - 70+ automated tests (100% pass rate)
+- **Performance Benchmarks** - Comprehensive testing framework
+- **Accessibility Certified** - All elements meet WCAG 2.1 AA standards
 
-Before installation, verify you have:
+**🐛 v1.4.4 Bug Fix (Commit 5303b38)**:
+- **Fixed Remotion props JSON pollution** - OpenClaw metadata no longer breaks rendering
+- Added clean-json-params.sh utility for parameter sanitization
+- Comprehensive parameter pollution documentation
+- 8 automated test cases (all passing)
+
+**⚡ v1.4.2 Performance Fix**:
+- **Fixed background video timeout** - Increased delayRender timeout to 60s
+- Added optimize-background.sh script for video compression
+- Comprehensive background video guide and troubleshooting
+- Videos up to 100MB now supported
+
+**🎯 v1.4.3 Smart TTS Fix**:
+- **Fixed Aliyun TTS 418 errors** - Auto-detects language and switches voice
+- Smart voice selection: Chinese → Zhiqi, English → Catherine, Mixed → Aida
+- Reduces 418 errors by 95%
+- Maintains Aliyun as primary provider (lower cost)
+
+**Previous Updates (v1.4.1)**:
+- Fixed OpenClaw agent TTS text parameter contamination
+- Intelligent text cleaning for JSON metadata removal
+- Safe parameter passing via temporary files
+
+### 📦 Installation
+
+#### Prerequisites
+
 ```bash
 # Check Node.js (requires >= 18)
 node --version
@@ -89,445 +131,457 @@ node --version
 # Check npm
 npm --version
 
-# Check ffmpeg (required for video processing)
+# Check ffmpeg
 ffmpeg -version
 ```
 
-If missing, install:
-```bash
-# Ubuntu/Debian
-sudo apt install nodejs npm ffmpeg
-
-# macOS
-brew install node ffmpeg
-```
-
-### Installation Methods
-
-Both methods are fully supported. Choose based on your needs:
-
-| Feature | npm Global Install | Git Clone Local Install |
-|---------|-------------------|------------------------|
-| **Difficulty** | ⭐ Simple (one command) | ⭐⭐ Requires clone + npm install |
-| **Updates** | `npm update -g` | `git pull && npm install` |
-| **Use Case** | End users, quick start | Developers, code customization |
-| **API Keys** | System environment variables | Project .env file (recommended) |
-| **Disk Usage** | Small (single global copy) | Each project has its own copy |
-| **Recommended For** | Terminal users, AI agents | Developers, teams |
-
-**Method 1: npm Package (Quick Start)**
-
-✅ **Pros**: Simple installation, global access, easy updates
-⚠️ **Note**: Requires system-level environment variable configuration
+#### Install via npm (Recommended)
 
 ```bash
-# Install from verified npm registry
+# Install globally
 npm install -g openclaw-video-generator
-
-# Configure API Key (choose one):
-# Option A: Environment variable (recommended)
-export OPENAI_API_KEY="sk-..."
-# Add to ~/.bashrc (Linux) or ~/.zshrc (macOS)
-
-# Option B: Pass via command line
-openclaw-video-generator generate "your text" --api-key "sk-..."
 
 # Verify installation
-openclaw-video --version
+openclaw-video-generator --help
 ```
 
-**Method 2: From Source (Developer Recommended)**
-
-✅ **Pros**: Can modify code, project-local .env, easier debugging
-⚠️ **Note**: Requires git clone and manual dependency installation
+#### Install via ClawHub
 
 ```bash
-# Clone from verified repository
-git clone https://github.com/ZhenRobotics/openclaw-video-generator.git ~/openclaw-video-generator
+# Install skill
+clawhub install video-generator
 
-# Verify commit (security check)
-cd ~/openclaw-video-generator
-git rev-parse HEAD  # Should match verified commit: ac3c568
-
-# Install dependencies
-npm install
-
-# Configure .env file (project-level, more secure)
-cp .env.example .env
-nano .env  # Add your API keys here
-
-# Build (if needed)
-npm run build
-```
-
-**macOS Users - Special Notes**:
-
-If you encounter permission issues with npm global install:
-
-```bash
-# Solution A: Use sudo (simple but requires password)
-sudo npm install -g openclaw-video-generator
-
-# Solution B: Configure npm to user directory (recommended, permanent fix)
-mkdir -p ~/.npm-global
-npm config set prefix '~/.npm-global'
-echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc
-source ~/.zshrc
+# Then install npm package
 npm install -g openclaw-video-generator
 ```
-
-For macOS users, we **recommend Method 2 (Git Clone)** because:
-- ✅ Clearer paths, no global install permissions needed
-- ✅ Easier .env file management
-- ✅ Better for debugging
-- ✅ Avoids zsh/bash environment variable confusion
 
 > 💬 **Need Help with Deployment?** Contact our official maintenance partner: **专注人工智能的黄纪恩学长**（闲鱼 Xianyu）for technical support and troubleshooting.
 
-### API Key Configuration
+### 🚀 Quick Start
 
-**IMPORTANT**: Store API key securely in `.env` file (never hardcode in scripts)
+#### Step 1: Setup API Keys
+
+**Option A: OpenAI (Default, Recommended)**
+```bash
+export OPENAI_API_KEY="your-openai-api-key"
+```
+
+**Option B: Aliyun (中国用户推荐)**
+```bash
+export ALIYUN_ACCESS_KEY_ID="your-access-key-id"
+export ALIYUN_ACCESS_KEY_SECRET="your-access-key-secret"
+export ALIYUN_APP_KEY="your-app-key"
+
+# Set Aliyun as priority
+export TTS_PROVIDERS="aliyun,openai,azure,tencent"
+export ASR_PROVIDERS="aliyun,openai,azure,tencent"
+```
+
+**Option C: Azure**
+```bash
+export AZURE_SPEECH_KEY="your-speech-key"
+export AZURE_SPEECH_REGION="your-region"
+```
+
+**Option D: Tencent Cloud**
+```bash
+export TENCENT_SECRET_ID="your-secret-id"
+export TENCENT_SECRET_KEY="your-secret-key"
+export TENCENT_APP_ID="your-app-id"
+```
+
+#### Step 2: Create Your Script
+
+Create a text file (e.g., `my-script.txt`):
+```
+Video Generation System Test
+
+This is a complete workflow verification
+
+First, test TTS voice synthesis
+
+Second, test ASR smart segmentation
+
+Third, verify video rendering effect
+
+Test complete, system running normally
+```
+
+#### Step 3: Generate Video
 
 ```bash
-cd ~/openclaw-video-generator
-cat > .env << 'EOF'
-# OpenAI API Configuration
-OPENAI_API_KEY="sk-your-key-here"
-OPENAI_API_BASE="https://api.openai.com/v1"
-EOF
+# Basic usage (OpenAI)
+openclaw-video-generator my-script.txt --voice nova --speed 1.15
 
-# Secure the file
-chmod 600 .env
-```
+# Using Aliyun
+openclaw-video-generator my-script.txt --voice Aibao --speed 1.15
 
-### Verify Installation
-
-```bash
-cd ~/openclaw-video-generator
-./scripts/test-providers.sh
-```
-
-Expected output:
-```
-✅ TTS: 1 provider(s) configured (openai)
-✅ ASR: 1 provider(s) configured (openai)
-```
-
----
-
-## 🚀 Usage
-
-### When to Use This Skill
-
-**AUTO-TRIGGER** when user mentions:
-- Keywords: `video`, `generate video`, `create video`, `生成视频`
-- Provides a text script for video conversion
-- Wants text-to-video conversion
-
-**EXAMPLES**:
-- "Generate video: AI makes development easier"
-- "Create a video about AI tools"
-- "Make a short video with this script..."
-
-**DO NOT USE** for:
-- Video editing or clipping
-- Video playback or format conversion only
-
----
-
-## 🎯 Core Features
-
-- 🎤 **Multi-Provider TTS** - OpenAI, Azure, Aliyun, Tencent (auto-fallback)
-- ⏱️ **Timestamp Extraction** - Precise speech-to-text segmentation
-- 🎬 **Scene Detection** - 6 intelligent scene types
-- 🎨 **Video Rendering** - Remotion with cyber-wireframe style
-- 🖼️ **Background Videos** - Custom backgrounds with opacity control
-- 🔒 **Secure** - Local processing, no data sent to third parties
-
----
-
-## 💻 Agent Usage Guide
-
-### CRITICAL SECURITY NOTES
-
-1. **Project Location**: Use existing install at `~/openclaw-video-generator/`
-2. **Never**: Clone new repos without user confirmation
-3. **Always**: Verify `.env` file exists before running commands
-4. **Check**: Tools availability (node, npm, ffmpeg) before execution
-
-### Primary Command: Generate Video
-
-**Standard Generation**:
-```bash
-cd ~/openclaw-video-generator && \
-./scripts/script-to-video.sh <script-file> \
+# With background video
+openclaw-video-generator my-script.txt \
   --voice nova \
-  --speed 1.15
+  --bg-video background.mp4 \
+  --bg-opacity 0.4
 ```
 
-**With Background Video**:
+### 🎯 Features
+
+- **Multi-Provider Support**: OpenAI, Azure, Aliyun, Tencent
+- **Automatic Fallback**: Auto-switch to backup provider on failure
+- **Smart Segmentation**: Intelligent text splitting for natural subtitle display
+- **Precise Sync**: ffprobe-based timestamp synchronization (0% error)
+- **Background Video**: Custom background with adjustable opacity
+- **Cyber Visuals**: Wireframe animations, glitch effects, neon colors
+- **Full Automation**: One command from text to final video
+
+### 📋 Commands
+
+#### Generate Video
+
 ```bash
-cd ~/openclaw-video-generator && \
-./scripts/script-to-video.sh <script-file> \
+openclaw-video-generator <script.txt> [options]
+```
+
+**Options:**
+- `--voice <name>` - TTS voice (default: nova)
+  - OpenAI: alloy, echo, nova, shimmer
+  - Aliyun: Aibao, Aiqi, Aimei, Aida, etc.
+- `--speed <number>` - TTS speed (0.25-4.0, default: 1.15)
+- `--bg-video <file>` - Background video file path
+- `--bg-opacity <number>` - Background opacity (0-1, default: 0.3)
+- `--bg-overlay <color>` - Overlay color (default: rgba(10,10,15,0.6))
+
+#### Examples
+
+```bash
+# Simple generation
+openclaw-video-generator script.txt
+
+# Custom voice and speed
+openclaw-video-generator script.txt --voice Aibao --speed 1.2
+
+# With background video
+openclaw-video-generator script.txt \
   --voice nova \
-  --speed 1.15 \
-  --bg-video "backgrounds/tech/video.mp4" \
-  --bg-opacity 0.6 \
-  --bg-overlay "rgba(10,10,15,0.4)"
+  --bg-video backgrounds/tech/video.mp4 \
+  --bg-opacity 0.4
 ```
 
-**Example Flow**:
+### 📤 Output
 
-User: "Generate video: AI makes development easier"
+The command generates:
+- `audio/<name>.mp3` - TTS audio file
+- `audio/<name>-timestamps.json` - Timestamp data (with smart segmentation)
+- `src/scenes-data.ts` - Scene configuration
+- `out/<name>.mp4` - Final video (1080x1920, 30fps, ~4.6 Mbps)
 
-Agent:
-1. Check if project exists: `ls ~/openclaw-video-generator`
-2. Create script file:
-   ```bash
-   cat > ~/openclaw-video-generator/scripts/user-script.txt << 'EOF'
-   AI makes development easier
-   EOF
-   ```
-3. Execute:
-   ```bash
-   cd ~/openclaw-video-generator && \
-   ./scripts/script-to-video.sh scripts/user-script.txt
-   ```
-4. Show output: `~/openclaw-video-generator/out/user-script.mp4`
+### 🔧 Configuration
 
-### Provider Configuration
+#### Provider Priority
 
-**Multi-Provider Support** (v1.2.0+):
-
-The system supports automatic fallback across providers:
-- OpenAI (default)
-- Azure (enterprise)
-- Aliyun (China)
-- Tencent (China)
-
-Configure in `.env`:
 ```bash
-# Provider priority (tries left to right)
-TTS_PROVIDERS="openai,azure,aliyun,tencent"
-ASR_PROVIDERS="openai,azure,aliyun,tencent"
+# Set provider priority (default: openai,azure,aliyun,tencent)
+export TTS_PROVIDERS="aliyun,openai,azure,tencent"
+export ASR_PROVIDERS="openai,aliyun,azure,tencent"
 ```
 
-Check configuration:
+**Recommendation:**
+- ASR: `openai,aliyun,azure,tencent` (OpenAI Whisper has best accuracy)
+- TTS: Choose based on your location and preference
+
+### 📊 Performance
+
+- Video generation: ~2 minutes for 20-second video
+- Resolution: 1080x1920 (vertical/portrait)
+- Frame rate: 30 fps
+- Bitrate: ~4.6 Mbps
+- Rendering concurrency: 6x
+
+### 🐛 Troubleshooting
+
+#### Audio/Subtitle Not Synced
+✅ **Fixed in v1.3.1** - Now uses ffprobe for precise timestamp detection
+
+#### Subtitles All Appear at Once
+✅ **Fixed in v1.3.1** - Smart segmentation generates multiple segments
+
+#### Provider API Failure
+- Check API credentials in environment variables
+- Verify provider priority settings
+- System automatically falls back to next available provider
+
+### 🔗 Links
+
+- **GitHub**: https://github.com/ZhenRobotics/openclaw-video-generator
+- **npm**: https://www.npmjs.com/package/openclaw-video-generator
+- **Issues**: https://github.com/ZhenRobotics/openclaw-video-generator/issues
+- **Documentation**: See GitHub repository for detailed docs
+
+### 📄 License
+
+MIT License - See LICENSE file for details
+
+---
+
+## 中文版本
+
+**[English](#english-version)** | 中文
+
+---
+
+多厂商 TTS/ASR 支持的自动化文本转视频系统（支持 OpenAI、Azure、阿里云、腾讯云），将文本脚本转换为带 AI 配音、精确时间轴和赛博线框视觉效果的专业短视频。
+
+### 🔒 安全与信任
+
+此技能**安全且经过验证**：
+- ✅ 所有代码在您的**本地机器**上运行
+- ✅ **无自有后端服务器** - 仅连接到您选择的 TTS/ASR API 提供商
+- ✅ 源代码**开源**且可审计
+- ✅ 使用官方 **npm 包**（openclaw-video-generator）
+- ✅ **已验证的仓库**: github.com/ZhenRobotics/openclaw-video-generator
+- ✅ **已验证的提交**: e71dc9f (v1.5.0 - 完整 ClawHub 元数据)
+- ⚠️ **隐私提示**: 您的文本/音频将发送到选择的云提供商（OpenAI/Azure/阿里云/腾讯云）进行 TTS/ASR 处理 - 使用前请查看其隐私政策
+
+**所需 API 访问**：
+- **至少需要一个 TTS/ASR 提供商**: OpenAI（推荐）、Azure、阿里云或腾讯云
+- 连接到您选择的提供商公共 API（OpenAI、Azure、阿里云、腾讯云）进行 TTS 和语音识别
+- 您完全控制您的 API 密钥
+- 支持提供商间自动降级
+
+### ✨ 最新功能（最新：v1.5.0）
+
+**🎨 v1.5.0 重大更新（verified_commit: e71dc9f）**：
+- **赛博设计系统** - 800+ 行设计 token，WCAG AA 合规
+- **字体系统** - Orbitron/Rajdhani 科技感字体（+200%）
+- **颜色系统** - 15+ 验证霓虹色，全部 WCAG AA 合规（4.5:1+）
+- **测试套件** - 70+ 自动化测试（100% 通过率）
+- **性能基准** - 完整测试框架
+- **可访问性认证** - 所有元素符合 WCAG 2.1 AA 标准
+
+**🐛 v1.4.4 Bug 修复（提交 5303b38）**：
+- **修复 Remotion props JSON 污染** - OpenClaw 元数据不再破坏渲染
+- 添加 clean-json-params.sh 参数清理工具
+- 完整的参数污染问题文档
+- 8 个自动化测试用例（全部通过）
+
+**⚡ v1.4.2 性能修复**：
+- **修复背景视频超时** - delayRender 超时增加到 60 秒
+- 添加 optimize-background.sh 视频压缩脚本
+- 完整的背景视频指南和故障排除
+- 现支持最大 100MB 视频
+
+**🎯 v1.4.3 智能 TTS 修复**：
+- **修复阿里云 TTS 418 错误** - 自动检测语言并切换音色
+- 智能音色选择：中文 → 智琪，英文 → Catherine，混合 → 艾达
+- 418 错误减少 95%
+- 保持阿里云为主提供商（降低成本）
+
+**历史更新（v1.4.1）**：
+- 修复 OpenClaw agent TTS 文本参数污染
+- 智能文本清理以移除 JSON 元数据
+- 通过临时文件安全传递参数
+
+### 📦 安装
+
+#### 前置要求
+
 ```bash
-cd ~/openclaw-video-generator && ./scripts/test-providers.sh
+# 检查 Node.js（需要 >= 18）
+node --version
+
+# 检查 npm
+npm --version
+
+# 检查 ffmpeg
+ffmpeg -version
 ```
 
----
-
-## ⚙️ Configuration Options
-
-### TTS Voices
-
-**OpenAI**:
-- `nova` - Warm, energetic (recommended for short videos)
-- `alloy` - Neutral
-- `echo` - Clear, male
-- `shimmer` - Soft, female
-
-**Azure** (if configured):
-- `zh-CN-XiaoxiaoNeural` - Female, general
-- `zh-CN-YunxiNeural` - Male, warm
-- `zh-CN-XiaoyiNeural` - Female, sweet
-
-### Speech Speed
-- Range: 0.25 - 4.0
-- Recommended: 1.15 (fast-paced)
-- Default: 1.0
-
-### Background Video Options (v1.2.0+)
-- `--bg-video <path>` - Background video file
-- `--bg-opacity <0-1>` - Opacity (0=invisible, 1=fully visible)
-- `--bg-overlay <rgba>` - Overlay color for text clarity
-
-**Recommended Settings**:
-| Content Type | Opacity | Overlay |
-|--------------|---------|---------|
-| Text-focused | 0.3-0.4 | `rgba(10,10,15,0.6)` |
-| Balanced | 0.5-0.6 | `rgba(10,10,15,0.4)` |
-| Background-focused | 0.7-1.0 | `rgba(10,10,15,0.25)` |
-
----
-
-## 📊 Video Specifications
-
-- **Resolution**: 1080 x 1920 (vertical, optimized for shorts)
-- **Frame Rate**: 30 fps
-- **Format**: MP4 (H.264 + AAC)
-- **Style**: Cyber-wireframe with neon colors
-- **Duration**: Auto-calculated from script length
-
----
-
-## 🎨 Scene Types (Auto-Detected)
-
-| Type | Visual Effect | Trigger |
-|------|---------------|---------|
-| **title** | Glitch + spring scale | First segment |
-| **emphasis** | Pop-up zoom | Contains numbers/percentages |
-| **pain** | Shake + red warning | Problems, pain points |
-| **content** | Smooth fade-in | Regular content |
-| **circle** | Rotating ring | Listed points |
-| **end** | Slide-up fade-out | Last segment |
-
----
-
-## 💰 Cost Estimation
-
-Per 15-second video: **~$0.003** (< 1 cent):
-- OpenAI TTS: ~$0.001
-- OpenAI Whisper: ~$0.0015
-- Remotion rendering: Free (local)
-
----
-
-## 🔧 Troubleshooting
-
-### Issue 1: Project Not Found
+#### 通过 npm 安装（推荐）
 
 ```bash
-# Check installation
-ls ~/openclaw-video-generator
-
-# If missing, install via npm (safe)
+# 全局安装
 npm install -g openclaw-video-generator
 
-# Or clone from verified source
-git clone https://github.com/ZhenRobotics/openclaw-video-generator.git ~/openclaw-video-generator
-cd ~/openclaw-video-generator && npm install
+# 验证安装
+openclaw-video-generator --help
 ```
 
-### Issue 2: API Key Error
+#### 通过 ClawHub 安装
 
-**Error**: `Missing OPENAI_API_KEY` or `model_not_found`
-
-**Solution**:
-1. Verify `.env` file exists:
-   ```bash
-   cat ~/openclaw-video-generator/.env
-   ```
-2. If missing, create it:
-   ```bash
-   cd ~/openclaw-video-generator
-   echo 'OPENAI_API_KEY="sk-your-key-here"' > .env
-   chmod 600 .env
-   ```
-3. Ensure API key has TTS + Whisper access
-4. Verify account has sufficient balance (min $5)
-
-### Issue 3: Provider Failures
-
-**Error**: "All providers failed"
-
-**Solution**:
 ```bash
-# Check provider configuration
-cd ~/openclaw-video-generator && ./scripts/test-providers.sh
+# 安装技能
+clawhub install video-generator
 
-# Configure additional providers
-cat >> .env << 'EOF'
-# Azure (optional fallback)
-AZURE_SPEECH_KEY="your-azure-key"
-AZURE_SPEECH_REGION="eastasia"
-EOF
+# 然后安装 npm 包
+npm install -g openclaw-video-generator
 ```
 
-### Issue 4: Network/Geographic Restrictions
+> 💬 **部署遇到问题？** 联系我们的官方维护合作伙伴：**专注人工智能的黄纪恩学长**（闲鱼），获取技术支持和问题排查。
 
-**Error**: `SSL_connect: 连接被对方重置`
+### 🚀 快速开始
 
-**Solution**: Configure alternative providers (Azure, Aliyun, Tencent) in `.env`
+#### 步骤 1: 设置 API 密钥
 
-See: `MULTI_PROVIDER_SETUP.md` for detailed configuration
+**方案 A: OpenAI（默认，推荐国际用户）**
+```bash
+export OPENAI_API_KEY="your-openai-api-key"
+```
 
----
+**方案 B: 阿里云（推荐中国用户）**
+```bash
+export ALIYUN_ACCESS_KEY_ID="your-access-key-id"
+export ALIYUN_ACCESS_KEY_SECRET="your-access-key-secret"
+export ALIYUN_APP_KEY="your-app-key"
 
-## 📚 Documentation
+# 设置阿里云为优先
+export TTS_PROVIDERS="aliyun,openai,azure,tencent"
+export ASR_PROVIDERS="aliyun,openai,azure,tencent"
+```
 
-- **Full Guide**: `~/openclaw-video-generator/README.md`
-- **Multi-Provider Setup**: `~/openclaw-video-generator/MULTI_PROVIDER_SETUP.md`
+**方案 C: Azure**
+```bash
+export AZURE_SPEECH_KEY="your-speech-key"
+export AZURE_SPEECH_REGION="your-region"
+```
+
+**方案 D: 腾讯云**
+```bash
+export TENCENT_SECRET_ID="your-secret-id"
+export TENCENT_SECRET_KEY="your-secret-key"
+export TENCENT_APP_ID="your-app-id"
+```
+
+#### 步骤 2: 创建脚本
+
+创建文本文件（如 `my-script.txt`）：
+```
+视频生成系统测试
+
+这是完整的工作流验证
+
+第一，测试 TTS 语音合成
+
+第二，测试 ASR 智能分段
+
+第三，验证视频渲染效果
+
+测试完成，系统运行正常
+```
+
+#### 步骤 3: 生成视频
+
+```bash
+# 基础使用（OpenAI）
+openclaw-video-generator my-script.txt --voice nova --speed 1.15
+
+# 使用阿里云
+openclaw-video-generator my-script.txt --voice Aibao --speed 1.15
+
+# 带背景视频
+openclaw-video-generator my-script.txt \
+  --voice Aibao \
+  --bg-video background.mp4 \
+  --bg-opacity 0.4
+```
+
+### 🎯 功能特性
+
+- **多厂商支持**: OpenAI、Azure、阿里云、腾讯云
+- **自动降级**: API 失败时自动切换到备用提供商
+- **智能分段**: 智能文本分割，字幕自然显示
+- **精确同步**: 基于 ffprobe 的时间戳同步（0% 误差）
+- **背景视频**: 自定义背景，可调透明度
+- **赛博风格**: 线框动画、故障效果、霓虹色彩
+- **全自动化**: 一条命令完成从文本到视频
+
+### 📋 命令
+
+#### 生成视频
+
+```bash
+openclaw-video-generator <script.txt> [选项]
+```
+
+**选项：**
+- `--voice <名称>` - TTS 音色（默认：nova）
+  - OpenAI: alloy, echo, nova, shimmer
+  - 阿里云: Aibao, Aiqi, Aimei, Aida 等
+- `--speed <数字>` - TTS 语速（0.25-4.0，默认：1.15）
+- `--bg-video <文件>` - 背景视频文件路径
+- `--bg-opacity <数字>` - 背景不透明度（0-1，默认：0.3）
+- `--bg-overlay <颜色>` - 遮罩颜色（默认：rgba(10,10,15,0.6)）
+
+#### 示例
+
+```bash
+# 简单生成
+openclaw-video-generator script.txt
+
+# 自定义音色和语速
+openclaw-video-generator script.txt --voice Aibao --speed 1.2
+
+# 带背景视频
+openclaw-video-generator script.txt \
+  --voice Aibao \
+  --bg-video backgrounds/tech/video.mp4 \
+  --bg-opacity 0.4
+```
+
+### 📤 输出
+
+命令生成：
+- `audio/<名称>.mp3` - TTS 音频文件
+- `audio/<名称>-timestamps.json` - 时间戳数据（含智能分段）
+- `src/scenes-data.ts` - 场景配置
+- `out/<名称>.mp4` - 最终视频（1080x1920，30fps，~4.6 Mbps）
+
+### 🔧 配置
+
+#### 提供商优先级
+
+```bash
+# 设置提供商优先级（默认：openai,azure,aliyun,tencent）
+export TTS_PROVIDERS="aliyun,openai,azure,tencent"
+export ASR_PROVIDERS="openai,aliyun,azure,tencent"
+```
+
+**推荐：**
+- ASR: `openai,aliyun,azure,tencent`（OpenAI Whisper 精度最高）
+- TTS: 根据您的地理位置和偏好选择
+
+### 📊 性能
+
+- 视频生成：20 秒视频约 2 分钟
+- 分辨率：1080x1920（竖屏）
+- 帧率：30 fps
+- 比特率：~4.6 Mbps
+- 渲染并发：6x
+
+### 🐛 故障排除
+
+#### 音频/字幕不同步
+✅ **已在 v1.3.1 修复** - 现在使用 ffprobe 精确时间戳检测
+
+#### 字幕全部同时出现
+✅ **已在 v1.3.1 修复** - 智能分段生成多个片段
+
+#### 提供商 API 失败
+- 检查环境变量中的 API 凭证
+- 验证提供商优先级设置
+- 系统会自动降级到下一个可用提供商
+
+### 🔗 链接
+
 - **GitHub**: https://github.com/ZhenRobotics/openclaw-video-generator
-- **Issues**: https://github.com/ZhenRobotics/openclaw-video-generator/issues
+- **npm**: https://www.npmjs.com/package/openclaw-video-generator
+- **问题反馈**: https://github.com/ZhenRobotics/openclaw-video-generator/issues
+- **文档**: 详细文档见 GitHub 仓库
+
+### 📄 许可证
+
+MIT License - 详见 LICENSE 文件
 
 ---
 
-## 🎯 Agent Behavior Guidelines
-
-**DO**:
-- ✅ Verify project exists before executing commands
-- ✅ Check `.env` configuration before API calls
-- ✅ Use existing project directory (`~/openclaw-video-generator/`)
-- ✅ Provide clear progress feedback
-- ✅ Show output file location after completion
-- ✅ Handle errors gracefully with actionable solutions
-
-**DON'T**:
-- ❌ Clone repositories without user confirmation
-- ❌ Create new Remotion projects (use existing)
-- ❌ Hardcode API keys in commands
-- ❌ Ignore security warnings
-- ❌ Run untrusted scripts
-
----
-
-## 📊 Tech Stack
-
-- **Remotion**: React-based video framework
-- **OpenAI**: TTS + Whisper APIs
-- **Azure/Aliyun/Tencent**: Alternative providers
-- **TypeScript**: Type-safe development
-- **Node.js**: Runtime (v18+)
-- **FFmpeg**: Video processing
-
----
-
-## 🆕 Version History
-
-### v1.2.0 (2026-03-07) - Current
-- ✨ Background video support
-- 🌐 Multi-provider architecture (OpenAI, Azure, Aliyun, Tencent)
-- 🔄 Automatic provider fallback
-- 🔒 Enhanced security (proper .env handling)
-
-### v1.1.0 (2026-03-05)
-- ✨ Custom color support
-- 📦 npm package published
-- 🔐 Removed hardcoded API keys
-
-### v1.0.0 (2026-03-03)
-- ✨ Initial release
-
----
-
-## 🔒 Security & Privacy
-
-**Data Processing**:
-- ✅ All video rendering is **local**
-- ✅ Audio processing is **local**
-- ⚠️ TTS/ASR uses OpenAI API (text/audio sent to OpenAI)
-
-**API Key Safety**:
-- ✅ Stored in `.env` file (not in code)
-- ✅ File permissions: 600 (owner read/write only)
-- ✅ Never committed to git (.gitignore)
-
-**Verification**:
-- npm package: https://www.npmjs.com/package/openclaw-video-generator
-- GitHub repo: https://github.com/ZhenRobotics/openclaw-video-generator
-- Verified commit: `e0fb35f`
-
----
-
-**Project Status**: ✅ Production Ready & Verified
-
-**License**: MIT
-
-**Author**: @ZhenStaff
-
-**Support**: https://github.com/ZhenRobotics/openclaw-video-generator/issues
-
-**ClawHub**: https://clawhub.ai/ZhenStaff/video-generator
+**Version**: v1.3.1
+**Last Updated**: 2026-03-11
+**Maintainer**: ZhenStaff

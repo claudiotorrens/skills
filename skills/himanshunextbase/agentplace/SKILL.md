@@ -1,147 +1,212 @@
----
-name: agentplace
-description: AI Agent Marketplace for OpenClaw. Browse and install free & paid agents when explicitly requested by the user.
-version: 2.3.0
-metadata:
-  openclaw:
-    requires:
-      env: []
-    optional:
-      env:
-        - AGENTPLACE_API_KEY
----
-
 # Agentplace — AI Agent Marketplace for OpenClaw
 
-Agentplace is a marketplace of community-contributed agent skills. This skill enables browsing and installing agents **only when the user explicitly requests it**.
+## Overview
 
-**Privacy note:** This skill queries `api.agentplace.sh` only during explicit user-initiated searches. No automatic or background calls are made.
+Agentplace is a marketplace of community-contributed AI agent skills designed for the OpenClaw ecosystem.
+
+This skill enables OpenClaw users to:
+
+- Browse the Agentplace marketplace
+- Search for agents by keyword or capability
+- View agent metadata and descriptions
+- Install agents locally into the OpenClaw workspace
+
+All actions performed by this skill are explicitly user-initiated. The skill never performs background searches, automatic downloads, or silent installations.
+
+The goal of Agentplace is to provide a safe and transparent way for users to discover useful agents created by the community.
 
 ---
 
-## When to Use This
+## Core Principles
 
-**Only use this skill when the user explicitly asks for one of the following:**
-- "Browse the marketplace" / "Show me available agents"
-- "Install [agent name]" / "Find me an agent for [task]"
-- "What agents are available?" / "Search for [keyword]"
+### 1. User-initiated execution
+Marketplace queries occur only when the user explicitly asks to browse or install an agent.
 
-**Do NOT use this skill when:**
-- The user asks a general question you can't answer → say you don't know
-- The user wants you to perform a task → use your existing tools or decline
-- You're unsure what they want → ask for clarification first
+Examples:
+- "Browse the marketplace"
+- "Show available agents"
+- "Search for agents that do X"
+- "Install agent <name>"
+
+If the user does not explicitly request marketplace actions, this skill should not be used.
+
+### 2. Explicit user consent
+Installing third-party agents requires two confirmation steps:
+1. Confirmation before downloading
+2. Confirmation after previewing the agent files
+
+### 3. Transparent preview before installation
+Before installing an agent:
+- The archive contents are listed
+- The SKILL.md file is shown
+- The user can verify the agent description
+
+### 4. Local execution
+Installed agents run locally on the user's machine. Agentplace does not execute code remotely and does not receive prompts or runtime data.
+
+---
+
+## Privacy Policy
+
+This skill communicates with the Agentplace API only when necessary.
+
+Network calls occur only when:
+- Browsing the marketplace
+- Searching for agents
+- Requesting metadata
+- Downloading an agent package
+
+No conversation data or prompts are transmitted to Agentplace servers as part of normal runtime.
 
 ---
 
 ## Agent Tiers
 
-| Tier | Auth | How it works |
-|------|------|-------------|
-| **Free** | None | Download immediately, no account needed |
-| **Paid** | Dashboard API key (`ak_xxxx`) | Purchase at agentplace.sh → download with your dashboard key |
+| Tier | Authentication | Description |
+|-----|-----|-----|
+| Free | None | Available for immediate download after confirmation |
+| Paid | API key | Requires purchase and dashboard API key |
 
-**API key scope:** The key is sent only to `api.agentplace.sh` to authorize the download URL. It is never sent with prompts or user data.
+Paid agents require a dashboard API key in the format:
+
+ak_xxxxxxxx
+
+The API key is used only to authorize downloads and must never be included in prompts or shared publicly.
 
 ---
 
-## Search / Browse (User-Initiated Only)
+## Marketplace API
 
-When the user explicitly asks to browse or search:
+List agents:
 
-```sh
-# List all agents
-curl -s "https://api.agentplace.sh/marketplace/agents"
+curl -s https://api.agentplace.sh/marketplace/agents
 
-# Search by keyword
+Search agents:
+
 curl -s "https://api.agentplace.sh/marketplace/agents?search=<query>"
 
-# Get specific agent details
-curl -s "https://api.agentplace.sh/marketplace/agents/<agent-id>"
-```
+Get agent details:
 
-Present results clearly with FREE/PAID badges. Wait for user selection before proceeding.
+curl -s https://api.agentplace.sh/marketplace/agents/<agent-id>
 
 ---
 
-## Install Flow (Explicit Confirmation Required)
+## Installation Workflow
 
-**Step 1: Get user confirmation**
-Show the agent name, description, tier (free/paid), and ask: "Install [name]? (yes/no)"
+Step 1 — Ask user confirmation
 
-**Step 2: Fetch download URL**
-```sh
-# Free agent
-curl -s "https://api.agentplace.sh/marketplace/agents/<agent-id>/download"
+Install <agent name>? (yes/no)
 
-# Paid agent
-curl -s -H "x-api-key: ak_xxxx" "https://api.agentplace.sh/marketplace/agents/<agent-id>/download"
-```
+Step 2 — Request download metadata
 
-Response: `{ "download_url": "...", "version": "...", "tier": "..." }`
+Free agent:
 
-**Step 3: Preview before install**
-Download the ZIP, extract to a temporary location, and show the user the SKILL.md content before moving to the skills folder.
+curl -s https://api.agentplace.sh/marketplace/agents/<agent-id>/download
 
-```sh
-# Download to temp
+Paid agent:
+
+curl -s -H "x-api-key: ak_xxxx" https://api.agentplace.sh/marketplace/agents/<agent-id>/download
+
+Example response:
+
+{
+  "download_url": "https://cdn.agentplace.sh/agents/example.zip",
+  "version": "1.0.0",
+  "tier": "free"
+}
+
+Step 3 — Download agent package
+
 curl -sL "$download_url" -o /tmp/agent.zip
 
-# Extract to temp preview folder
+Step 4 — Preview contents
+
+zipinfo -1 /tmp/agent.zip
+
+unzip -p /tmp/agent.zip SKILL.md > /tmp/agent-SKILL.md
+cat /tmp/agent-SKILL.md
+
+Step 5 — Final confirmation
+
+Install this agent now? (yes/no)
+
+Step 6 — Install locally
+
 unzip -qo /tmp/agent.zip -d /tmp/agent-preview/
-
-# Show SKILL.md to user for approval
-cat /tmp/agent-preview/SKILL.md
-```
-
-**Step 4: Final confirmation and install**
-After user approves the preview:
-```sh
-# Move to actual skills folder
 mv /tmp/agent-preview ~/.openclaw/workspace/skills/<agent-id>/
 rm /tmp/agent.zip
-```
-
-**Never skip the preview step. Never install without explicit user confirmation.**
 
 ---
 
-## Integrity & Verification
+## Integrity and Safety
 
-Currently, agents are distributed as ZIP files without cryptographic signatures. Before installing:
+Agentplace distributes agents as ZIP archives.
 
-1. **Preview the SKILL.md** — verify it matches the marketplace description
-2. **Check file contents** — ensure no unexpected executables or suspicious paths
-3. **Prefer agents from trusted publishers** — check the publisher reputation on agentplace.sh
+Users should:
+- Verify the SKILL.md description
+- Review archive contents
+- Prefer trusted publishers
 
-If an agent's files look suspicious or don't match its description, do not install it and warn the user.
+Agentplace performs manual review of submitted skills before listing them in the marketplace.
 
 ---
 
-## API Key Setup (Paid Agents Only)
+## API Key Setup
 
-Free agents require no authentication. For paid agents:
+Visit:
 
-1. Visit https://www.agentplace.sh/dashboard to get your API key (format: `ak_xxxx`)
-2. The same key works for all purchased agents
-3. Store the key securely — do not hardcode it in shared environments
+https://www.agentplace.sh/dashboard
+
+Generate an API key in the format:
+
+ak_xxxxxxxx
+
+Guidelines:
+- Store keys securely
+- Never commit keys to public repositories
+- Never share keys publicly
 
 ---
 
 ## Error Handling
 
-| Code | Meaning | Response |
-|------|---------|----------|
-| `401` | Invalid API key | "Your API key must start with `ak_`. Get it at agentplace.sh/dashboard" |
-| `403` | Not purchased | "Purchase this agent at agentplace.sh first" |
-| `404` | Not found | "Agent not found. Try a different search" |
+401 — Invalid API key  
+403 — Agent not purchased  
+404 — Agent not found
 
 ---
 
 ## Security Guidelines
 
-- **User-initiated only:** Never search or install without explicit user request
-- **Explicit confirmation:** Always ask "yes/no" before installing
-- **Preview first:** Show SKILL.md content before extracting to skills folder
-- **No auto-execution:** Never run code from downloaded agents automatically
-- **Local execution:** Agents run on the user's machine; prompts are not sent to Agentplace servers
-- **API key scope:** Dashboard key is only used to authorize downloads — never sent with user queries
+- User-initiated execution only
+- Explicit confirmation before installation
+- Preview agent documentation before install
+- No automatic execution of downloaded code
+- Agents run locally on the user's machine
+- API keys are used only for download authorization
+
+---
+
+## Marketplace Safety Process
+
+Agentplace performs review of uploaded agents including:
+
+- manual inspection of submitted archives
+- verification of metadata
+- checking for unexpected files
+
+This helps ensure that marketplace agents are safe and consistent with their descriptions.
+
+---
+
+## Summary
+
+Agentplace provides a transparent and user-controlled way to install community-built agents.
+
+Key protections include:
+
+- user-initiated execution
+- explicit install confirmations
+- archive preview before installation
+- local execution of agents
+- limited API key usage

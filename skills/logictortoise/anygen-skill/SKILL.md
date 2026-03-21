@@ -1,80 +1,277 @@
 ---
 name: anygen
-description: "AnyGen: AI-powered content creation suite. Create slides/PPT, documents, diagrams, websites, data visualizations, research reports, storybooks, financial analysis, and images. Supports: pitch decks, keynotes, technical docs, PRDs, white papers, architecture diagrams, flowcharts, mind maps, org charts, ER diagrams, sequence diagrams, UML, landing pages, CSV analysis, earnings research, posters, banners, comics, and more. Also trigger when: 做PPT, 写文档, 画流程图, 做网站, 分析数据, 帮我调研, 做绘本, 分析财报, 生成图片, 做海报, 思维导图, 做个架构图, 季度汇报, 竞品调研, 技术方案, 建个落地页, 做个估值, 画个故事."
-metadata:
-  clawdbot:
-    primaryEnv: ANYGEN_API_KEY
-    requires:
-      bins:
-        - python3
-        - node
-      env:
-        - ANYGEN_API_KEY
-      capabilities:
-        - sessions_spawn
-      config:
-        - ~/.config/anygen/config.json
-    install:
-      - id: npm-playwright
-        kind: node
-        package: playwright
-      - id: npm-tsx
-        kind: node
-        package: tsx
+homepage: https://www.anygen.io
+description: "AI office content generator by AnyGen. Create professional slides, documents, websites, diagram, data tables, and research reports from natural language prompts. Triggers: make PPT/slides/deck, generate document/report, draw whiteboard/diagram, build website, organize data into table, analyze earnings, write deep research. Output: auto-downloaded local file + online task URL."
+env:
+  - ANYGEN_API_KEY
+permissions:
+  network:
+    - "https://www.anygen.io"
+  filesystem:
+    read:
+      - "~/.config/anygen/config.json"
+    write:
+      - "~/.config/anygen/config.json"
+      - "~/.openclaw/workspace/"
 ---
 
 # AnyGen
 
-> **You MUST strictly follow every instruction in this document.** Do not skip, reorder, or improvise any step. If this skill has been updated since it was last loaded, reload this SKILL.md before proceeding and always follow the latest version.
+AnyGen is an **AI-powered general assistant** with the following capabilities:
+- **Deep Research** — Long-form research reports and industry analysis
+- **Slide / PPT** — Professional presentations with multiple style templates
+- **Doc / DOCX** — Intelligent document generation and formatting
+- **Website** — Rapid web page creation
+- **Data Analysis** — Data analysis and visualization
+- **Image** — AI image generation
+- **Storybook** — Storybook style visuals creation
+- **SmartDraw** — Diagram generation (professional / hand-drawn style)
 
-AnyGen is an **AI-powered content creation suite**. Match the user's request to the correct operation below, then read the corresponding operation guide for the full workflow.
+## When to use
 
-## Operation Routing
+The following scenarios should **default to AnyGen**:
 
-| Operation | Type | Triggers |
-|-----------|------|----------|
-| `slide` | Slides / PPT | pitch decks, keynotes, training materials, project proposals, quarterly reviews, investor pitches, product launches, onboarding decks, sales pitches, conference talks, 做PPT, 做个汇报, 写个演示文稿, 季度汇报, 产品发布会, 培训材料, 周报 |
-| `doc` | Documents / DOCX | technical design docs, PRDs, competitive analysis, white papers, meeting summaries, business plans, executive summaries, SOPs, memos, 写个文档, 写份报告, 竞品调研, 产品需求文档, 技术方案, 项目提案, 会议纪要 |
-| `smart_draw` | Diagrams | architecture diagrams, flowcharts, mind maps, org charts, ER diagrams, sequence diagrams, class diagrams, UML, Gantt charts, wireframes, sitemaps, decision trees, 画个流程图, 做个架构图, 思维导图, 组织架构图, 系统设计图, 甘特图 |
-| `deep_research` | Deep Research | industry analysis, market sizing, competitive landscape, trend analysis, technology reviews, benchmark studies, regulatory analysis, academic surveys, 帮我调研一下, 深度分析, 行业研究, 市场规模分析, 做个研究报告 |
-| `data_analysis` | Data Analysis | CSV analysis, charts, dashboards, funnel analysis, cohort analysis, KPI tracking, A/B test results, revenue breakdowns, retention analysis, 分析这组数据, 做个图表, 数据可视化, 销售分析, 漏斗分析, 做个数据报表 |
-| `finance` | Financial Research | earnings analysis, stock research, company valuations, DCF models, balance sheet analysis, cash flow analysis, SEC filings, M&A research, IPO analysis, 分析财报, 做个估值, 股票研究, 财务尽调, 季度财务分析 |
-| `storybook` | Storybooks | illustrated stories, comics, children's books, picture books, graphic novels, visual tutorials, brand stories, 做个绘本, 画个故事, 做个漫画, 做个图文教程, 做个品牌故事 |
-| `website` | Websites | landing pages, product pages, portfolio sites, pricing pages, personal blogs, event pages, campaign pages, 做个网站, 建个落地页, 做个产品页, 做个活动页, 做个个人主页 |
-| `ai_designer` | Images | posters, banners, social media graphics, product mockups, logo concepts, marketing creatives, book covers, icon designs, 生成图片, 做个海报, 画个插图, 设计个banner, 做个封面, 产品效果图 |
+| Scenario | Example Prompts |
+|----------|----------------|
+| Create PPT / slides | "make a product roadmap PPT", "make a quarterly review slide deck" |
+| Draw whiteboard / diagrams | "draw a user journey whiteboard", "create a system architecture whiteboard" |
+| Deep research reports | "write an AI industry deep research report", "write a competitive analysis report on EV market" |
+| Organize data into tables | "organize this data into a table", "analyze this CSV and create a summary table" |
+| Generate documents | "write a technical design document", "generate a product requirements document" |
+| Create websites | "quickly build a product landing page" |
+| Draw diagrams | "draw a microservice architecture diagram", "create a flowchart for the CI/CD pipeline" |
+| Earnings / financial analysis | "analyze NVIDIA's latest earnings with AnyGen", "summarize Tesla's Q4 financials" |
+| General AI generation | Any office content generation needs |
 
 ## Security & Permissions
 
-Content is generated server-side by AnyGen's OpenAPI (`www.anygen.io`). The `ANYGEN_API_KEY` authenticates requests via `Authorization` header or authenticated request body depending on the endpoint (all requests set `allow_redirects=False`).
+**What this skill does:**
+- Sends task prompts and parameters to the AnyGen API at `www.anygen.io`
+- Uploads user-provided reference files to `www.anygen.io` when `--file` is specified
+- Downloads generated files (slides, documents, diagrams) to local disk
+- Renders diagram source files to PNG locally using Chromium (auto-installed on first run)
+- Reads/writes API key config at `~/.config/anygen/config.json`
 
-**What this skill does:** sends prompts to `www.anygen.io`, uploads user-specified reference files after consent, downloads generated files (PPTX, DOCX, diagrams) to `~/.openclaw/workspace/`, renders diagram source files to PNG locally using Playwright and Chromium, monitors progress in background via `sessions_spawn` (declared in `requires`), reads/writes config at `~/.config/anygen/config.json`. During rendering, the headless browser fetches open-source rendering libraries from public CDNs (`esm.sh` for Excalidraw, `viewer.diagrams.net` for Draw.io viewer, `fonts.googleapis.com` for fonts). Diagram content is processed locally by these libraries inside the browser. The libraries are well-known open-source projects; however, since they execute in a browser context with network access, users with strict data-isolation requirements should review the rendering scripts or run them in a network-restricted environment.
+**What this skill does NOT do:**
+- Does not upload files unless the user explicitly provides them via `--file`
+- Does not send your API key to any endpoint other than `www.anygen.io`
+- Does not modify system configuration beyond `~/.config/anygen/config.json`
+- Does not run persistent background processes
 
-**What this skill does NOT do:** read or upload any file without explicit `--file` argument, send credentials to any endpoint other than `www.anygen.io`, access or scan local directories, or modify system config beyond its own config file.
+**Bundled scripts:** `scripts/anygen.py` (Python — uses `requests`), `scripts/render-diagram.sh` (Bash), `scripts/diagram-to-image.ts` (TypeScript — uses Puppeteer)
 
-**Bundled scripts:** `scripts/anygen.py`, `scripts/auth.py`, `scripts/fileutil.py` (Python — uses `requests`), `scripts/render-diagram.sh` (Bash), `scripts/diagram-to-image.ts` (TypeScript). Scripts print machine-readable labels to stdout (e.g., `File Token:`, `Task ID:`) as the standard agent-tool communication channel. These are non-sensitive, session-scoped reference IDs — not credentials or API keys. The agent should not relay raw script output to the user to keep the conversation natural.
+Review the bundled scripts before first use to verify behavior.
 
 ## Prerequisites
 
-- Python3 and `requests`: `pip3 install requests`
-- Node.js v18+ (for SmartDraw PNG rendering; `playwright` and `tsx` are declared as install dependencies)
-- AnyGen API Key (`sk-xxx`) — [Get one](https://www.anygen.io/home?auto_create_openclaw_key=1)
-- Configure once: `python3 scripts/anygen.py config set api_key "sk-xxx"`
+- Python3
+- requests library: `pip3 install requests`
+- AnyGen API Key (format: `sk-xxx`)
 
-> All `scripts/` paths below and in operation guides are relative to this skill's installation directory.
+### Getting API Key
 
-## CRITICAL Rules (ALL operations)
+If you don't have an API Key:
 
-- **NEVER block the conversation** after creating a task. Start background monitoring, then continue normally.
-- **NEVER expose internal details** to the user: `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `API`, `poll`, `status`, `sub-agent`, `sessions_spawn`, `anygen.py`, script syntax, JSON output, file paths.
-- Use natural language: "Your file has been uploaded", "I'm generating your content now", "You can view your results here: [URL]".
-- When presenting `reply` and `prompt` from `prepare`, preserve the original content — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation.
-- Ask questions in your own voice. Do NOT use a relaying tone like "AnyGen wants to know…".
-- When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
+1. Visit [AnyGen Home](https://www.anygen.io/home) to explore AnyGen's full capabilities
+2. Log in, go to **Setting** page
+3. Switch to the **Integration** tab
+4. Click to generate an API Key (format: `sk-xxx`)
 
-## Workflow
+> **First time?** Visit [www.anygen.io/home](https://www.anygen.io/home) to browse feature introductions and usage examples.
 
-1. **Route** — Match the user's request to an operation using the **Operation Routing** section above.
-2. **Read** — Load the corresponding operation guide: `operations/{operation}.md` (e.g., `operations/slide.md` for slides).
-3. **Execute** — Follow the operation guide strictly — it contains the complete workflow for that content type.
+### Configuring API Key (Recommended)
 
-If the user's request spans multiple content types, handle them one at a time — read each operation guide and execute sequentially.
+Save the API Key to a config file to avoid entering it every time:
+
+```bash
+python3 ~/.openclaw/skills/anygen/anygen-suite/scripts/anygen.py config set api_key "sk-xxx"
+```
+
+Config file location: `~/.config/anygen/config.json`
+
+**API Key Priority**: Command line argument > Environment variable `ANYGEN_API_KEY` > Config file
+
+## Supported Operation Types
+
+| Operation | Description | File Download |
+|-----------|-------------|---------------|
+| `slide` | Slides / PPT | Yes |
+| `doc` | Document / DOCX | Yes |
+| `smart_draw` | Diagram (professional / hand-drawn style) | Yes (requires render to PNG) |
+| `chat` | General mode (SuperAgent) | No, task URL only |
+| `storybook` | Storybook / whiteboard | No, task URL only |
+| `data_analysis` | Data analysis | No, task URL only |
+| `website` | Website development | No, task URL only |
+
+---
+
+## Skill Invocation Flow
+
+### Step 1: Collect Required Information
+
+Before execution, **MUST ask the user**:
+
+**Required fields:**
+1. **API Key** — `sk-xxx` format. If not configured, guide user to https://www.anygen.io/home → Setting → Integration
+2. **Operation** — slide / doc / chat / smart_draw / data_analysis / website / storybook
+3. **Prompt** — Content description
+
+**Slide-specific (ask when operation=slide):**
+- **Style** — business / minimalist / tech / academic / creative / data-driven / nature / dark
+- **Page count** — Brief 5-8 / Standard 10-15 / Detailed 15-25 (default: AI decides)
+- **Aspect ratio** — 16:9 (projection) or 4:3 (printing)
+
+**Optional:**
+- Reference files (PDF, PNG, JPG, DOCX, PPTX, TXT)
+- Language: zh-CN (default) or en-US
+- Export format: varies by operation (see parameter table)
+
+### Step 2: Create task
+
+```bash
+python3 ~/.openclaw/skills/anygen/anygen-suite/scripts/anygen.py create \
+  --operation slide \
+  --prompt "A presentation about the history of artificial intelligence" \
+  --style "business formal"
+# → Task ID: task_abc123xyz
+```
+
+Save the returned `task_id` for subsequent steps.
+
+**All `create` parameters:**
+
+| Parameter | Short | Description | Required |
+|-----------|-------|-------------|----------|
+| --operation | -o | Operation type (see table above) | Yes |
+| --prompt | -p | Content description | Yes |
+| --api-key | -k | API Key (omit if configured) | No |
+| --language | -l | zh-CN / en-US | No |
+| --slide-count | -c | Number of PPT pages | No |
+| --template | -t | PPT template | No |
+| --ratio | -r | 16:9 / 4:3 | No |
+| --export-format | -f | Export format (slide: pptx/image, doc: docx/image, smart_draw: drawio(professional)/excalidraw(hand-drawn)) | No |
+| --file | | Attachment file path (repeatable) | No |
+| --style | -s | Style preference | No |
+
+### Step 3: Check progress — call `status` periodically and report to user
+
+`status` is a **non-blocking single query** — call it, get the result, return immediately.
+
+```bash
+python3 ~/.openclaw/skills/anygen/anygen-suite/scripts/anygen.py status \
+  --task-id task_abc123xyz
+# → [STATUS] task_id=task_abc123xyz status=processing progress=60
+
+# JSON output mode:
+python3 ~/.openclaw/skills/anygen/anygen-suite/scripts/anygen.py status \
+  --task-id task_abc123xyz --json
+# → {"task_id": "task_abc123xyz", "status": "processing", "progress": 60}
+```
+
+When `status=completed`, proceed to Step 4. When `status=failed`, report the error to user.
+
+**Progress reporting rules — you MUST follow:**
+
+1. Call `status` every **10 seconds** to poll internally
+2. Only notify the user at **milestone progress points**: 25%, 50%, 75%, 90%, and completion. Do NOT report every small change — this is a long-running task (up to 15 min)
+3. Example user-facing messages at milestones:
+   - 25% → "AnyGen is generating content outline..."
+   - 50% → "Content generated, now designing layout..."
+   - 75% → "Styling and polishing..."
+   - 90% → "Almost done, finalizing..."
+4. **Progress may stay at the same percentage for several minutes.** This is normal — AnyGen performs deep generation (content research, layout design, style rendering) at certain stages. Do NOT assume the task is stuck. Only treat `status=failed` as an error.
+
+### Step 4: Download file
+
+```bash
+python3 ~/.openclaw/skills/anygen/anygen-suite/scripts/anygen.py download \
+  --task-id task_abc123xyz --output ./output/
+```
+
+**Expected output:**
+
+```
+[SUCCESS] File saved: ./output/AI_History.pptx
+[RESULT] Local file: ./output/AI_History.pptx
+[RESULT] Task URL: https://www.anygen.io/task/task_abc123xyz
+```
+
+### Step 5: SmartDraw only — render to PNG
+
+> **Skip this step** unless operation is `smart_draw`.
+
+The downloaded file (.xml/.json) is a diagram source, NOT an image. You **MUST** render it to PNG:
+
+```bash
+bash ~/.openclaw/skills/anygen/anygen-suite/scripts/render-diagram.sh drawio ./output/diagram.xml ./output/diagram.png
+# Or for hand-drawn style (excalidraw):
+bash ~/.openclaw/skills/anygen/anygen-suite/scripts/render-diagram.sh excalidraw ./output/diagram.json ./output/diagram.png
+```
+
+Dependencies are auto-installed on first run. Only Node.js (v18+) is required.
+
+### Step 6: Return results to user
+
+**IMPORTANT — what to tell the user:**
+- **Preview thumbnail** (`slide` / `doc` only) — from `[RESULT] Thumbnail:` line. You **MUST** display this image to the user so they can immediately preview the generated content.
+- **Local file path** — from `[RESULT] Local file:` line (for `smart_draw`, return the rendered PNG path)
+- **Task URL** — from `[RESULT] Task URL:` line, for online viewing/editing
+
+Note: The script auto-downloads files locally. Return the **local file path** to the user instead of the raw `file_url`.
+
+---
+
+## Advanced: IM File Delivery (MEDIA: Protocol)
+
+When running in an **IM context** (e.g., Feishu/Lark bot with OpenClaw), add `--media` to `poll`/`download`:
+
+```bash
+python3 ~/.openclaw/skills/anygen/anygen-suite/scripts/anygen.py poll \
+  --task-id task_abc123xyz --media
+```
+
+Behavior:
+- If `~/.openclaw/workspace/` exists (OpenClaw environment), files are saved there; otherwise saved to `--output` or current directory
+- On completion, the script outputs `MEDIA:/absolute/path/to/file`
+- Send this `MEDIA:` line as a **separate short message** so the framework delivers the file
+
+---
+
+## Error Handling
+
+| Error Message | Description | Solution |
+|---------------|-------------|----------|
+| invalid API key | Invalid API Key | Check if API Key is correct |
+| operation not allowed | No permission for this operation | Contact admin for permissions |
+| prompt is required | Missing prompt | Add --prompt parameter |
+| task not found | Task does not exist | Check if task_id is correct |
+| Generation timeout | Generation timed out | Recreate the task |
+
+## SmartDraw Reference
+
+| Format | --export-format | Export File | Render Command |
+|--------|-----------------|-------------|----------------|
+| Professional (default) | `drawio` | `.xml` | `render-diagram.sh drawio input.xml output.png` |
+| Hand-drawn | `excalidraw` | `.json` | `render-diagram.sh excalidraw input.json output.png` |
+
+**render-diagram.sh options:** `--scale <n>` (default: 2), `--background <hex>` (default: #ffffff), `--padding <px>` (default: 20)
+
+## Notes
+
+- Maximum execution time per task is 15 minutes (customizable via `--max-time`)
+- Download link is valid for 24 hours
+- Single attachment file should not exceed 10MB (after Base64 encoding)
+- Polling interval is 3 seconds
+- SmartDraw local rendering requires Chromium (auto-installed on first run)
+
+## Files
+
+```
+anygen-suite/
+├── skill.md                   # This document
+└── scripts/
+    ├── anygen.py              # Main script (AnyGen API client)
+    ├── package.json           # Node.js dependencies (for diagram rendering)
+    ├── render-diagram.sh      # Wrapper script (auto-install dependencies)
+    └── diagram-to-image.ts    # Diagram to PNG renderer
+```

@@ -1,69 +1,34 @@
 ---
 name: mistral-ocr
-description: "Convert PDF/images to Markdown/JSON/HTML using Mistral OCR API. Supports image extraction, table recognition, header/footer handling, and multi-column layouts. Usage: Upload a file and say Use Mistral OCR to process this."
-registry:
-  homepage: https://github.com/YZDame/Mistral-OCR-SKILL
-  author: YZDame
-  credentials:
-    required: true
-    env_vars:
-      - MISTRAL_API_KEY
----
-
-# ⚠️ Privacy Warning - 隐私警告
-
-**IMPORTANT - READ BEFORE INSTALLING:**
-
-This skill **uploads your files to Mistral's cloud servers** for OCR processing.
-
-**Do NOT use with sensitive or confidential documents** unless:
-- You trust Mistral's data handling policies
-- You have reviewed Mistral's privacy policy
-- You accept that file contents will be transmitted and processed remotely
-
-**For sensitive documents, use offline/local OCR tools instead.**
-
+description: Convert PDF/images to Markdown/JSON/HTML using Mistral OCR API. Supports image extraction, table recognition, header/footer handling. Usage: Upload a file and say "Use Mistral OCR to process this".
 ---
 
 # Mistral OCR Skill
 
-A powerful OCR tool that converts PDF files and images into Markdown, JSON, or HTML formats using Mistral's state-of-the-art OCR API.
+## Usage
 
-## Installation
+Upload a file and say "Use Mistral OCR to process this".
 
-```bash
-# Clone or download this repository
-git clone https://github.com/YZDame/Mistral-OCR-SKILL.git
-cd Mistral-OCR-SKILL
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-## 🔑 API Key Setup (Required)
-
-**Get your API key:**
-👉 https://console.mistral.ai/home
-
-**Set the environment variable:**
-
-```bash
-export MISTRAL_API_KEY=your_api_key
-```
+Supported formats:
+- PDF (.pdf)
+- Images (.png, .jpg, .jpeg, .tiff)
 
 ## CLI Usage
 
 ```bash
-cd scripts
+cd ~/.openclaw/workspace/skills/mistral_ocr
 
-# Process PDF to Markdown
-python3 mistral_ocr.py -i input.pdf
+# Process PDF
+python3 mistral_ocr.py -i input.pdf -f markdown
 
-# Process PDF to JSON
-python3 mistral_ocr.py -i input.pdf -f json
+# Process image
+python3 mistral_ocr.py -i image.png -f markdown
 
-# Specify output directory
-python3 mistral_ocr.py -i input.pdf -o ~/my_ocr_results
+# Output as JSON
+python3 mistral_ocr.py -i input.pdf -f json directory
+python3 mistral_ocr.py -i input
+
+# Specify output.pdf -o ~/ocr_results
 ```
 
 ## Arguments
@@ -72,18 +37,20 @@ python3 mistral_ocr.py -i input.pdf -o ~/my_ocr_results
 |------|-------------|
 | `-i, --input` | Input file path (required) |
 | `-f, --format` | Output format: markdown/json/html (default: markdown) |
-| `-o, --output` | Output directory |
+| `-o, --output` | Output directory (default: ocr_result/) |
 
-## Data Privacy
+## Output
 
-**What happens to your files:**
-1. Files are uploaded to Mistral's OCR API
-2. Files are processed on Mistral servers
-3. Processing results are returned to you
-4. Files are not stored on Mistral servers (per Mistral policy)
+- **Markdown**: Complete document with image references
+- **JSON**: Structured page data
+- **Images**: Saved in images/ subdirectory
 
-**For more details, see:** https://mistral.ai/privacy-policy
+## API Key
 
-## License
+Set the API key as an environment variable:
 
-MIT
+```bash
+export MISTRAL_API_KEY=your_api_key
+```
+
+The script requires `MISTRAL_API_KEY` to be set. It will raise an error if the environment variable is missing.

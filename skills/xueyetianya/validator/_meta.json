@@ -3,9 +3,15 @@
   "slug": "validator",
   "displayName": "Validator",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773674125194,
-    "commit": "https://github.com/openclaw/skills/commit/2517a1f5850923005084100ca0c089309f50dd05"
+    "version": "3.0.1",
+    "publishedAt": 1773914049443,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773674125194,
+      "commit": "https://github.com/openclaw/skills/commit/2517a1f5850923005084100ca0c089309f50dd05"
+    }
+  ]
 }

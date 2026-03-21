@@ -1,314 +1,269 @@
 #!/usr/bin/env bash
-# Validator — utility tool
+# validator — Input validator
 # Powered by BytesAgain | bytesagain.com | hello@bytesagain.com
 set -euo pipefail
+VERSION="3.0.1"
 
-DATA_DIR="${HOME}/.local/share/validator"
-mkdir -p "$DATA_DIR"
+BOLD='\033[1m'; GREEN='\033[0;32m'; RED='\033[0;31m'; RESET='\033[0m'
+pass() { echo -e "  ${GREEN}✓ VALID${RESET} $1"; }
+fail() { echo -e "  ${RED}✗ INVALID${RESET} $1"; }
 
-_log() { echo "$(date '+%m-%d %H:%M') $1: $2" >> "$DATA_DIR/history.log"; }
-_version() { echo "validator v2.0.0"; }
-
-_help() {
-    echo "Validator v2.0.0 — utility toolkit"
-    echo ""
-    echo "Usage: validator <command> [args]"
-    echo ""
-    echo "Commands:"
-    echo "  run                Run"
-    echo "  check              Check"
-    echo "  convert            Convert"
-    echo "  analyze            Analyze"
-    echo "  generate           Generate"
-    echo "  preview            Preview"
-    echo "  batch              Batch"
-    echo "  compare            Compare"
-    echo "  export             Export"
-    echo "  config             Config"
-    echo "  status             Status"
-    echo "  report             Report"
-    echo "  stats              Summary statistics"
-    echo "  export <fmt>       Export (json|csv|txt)"
-    echo "  search <term>      Search entries"
-    echo "  recent             Recent activity"
-    echo "  status             Health check"
-    echo "  help               Show this help"
-    echo "  version            Show version"
-    echo ""
-    echo "Data: $DATA_DIR"
+cmd_email() {
+    local addr="${1:?Usage: validator email <address>}"
+    if echo "$addr" | grep -qE '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'; then
+        pass "$addr"
+    else
+        fail "$addr — must be user@domain.tld"
+        return 1
+    fi
 }
 
-_stats() {
-    echo "=== Validator Stats ==="
-    local total=0
-    for f in "$DATA_DIR"/*.log; do
-        [ -f "$f" ] || continue
-        local name=$(basename "$f" .log)
-        local c=$(wc -l < "$f")
-        total=$((total + c))
-        echo "  $name: $c entries"
-    done
-    echo "  ---"
-    echo "  Total: $total entries"
-    echo "  Data size: $(du -sh "$DATA_DIR" 2>/dev/null | cut -f1)"
+cmd_url() {
+    local url="${1:?Usage: validator url <url>}"
+    if echo "$url" | grep -qE '^https?://[a-zA-Z0-9.-]+(\.[a-zA-Z]{2,})(:[0-9]+)?(/.*)?$'; then
+        pass "$url"
+        if command -v curl >/dev/null 2>&1; then
+            local code
+            code=$(curl -sL -o /dev/null -w '%{http_code}' --max-time 5 "$url" 2>/dev/null || echo "000")
+            echo "  HTTP status: $code"
+        fi
+    else
+        fail "$url — must start with http:// or https://"
+        return 1
+    fi
 }
 
-_export() {
-    local fmt="${1:-json}"
-    local out="$DATA_DIR/export.$fmt"
-    case "$fmt" in
-        json)
-            echo "[" > "$out"
-            local first=1
-            for f in "$DATA_DIR"/*.log; do
-                [ -f "$f" ] || continue
-                local name=$(basename "$f" .log)
-                while IFS='|' read -r ts val; do
-                    [ $first -eq 1 ] && first=0 || echo "," >> "$out"
-                    printf '  {"type":"%s","time":"%s","value":"%s"}' "$name" "$ts" "$val" >> "$out"
-                done < "$f"
-            done
-            echo "\n]" >> "$out"
-            ;;
-        csv)
-            echo "type,time,value" > "$out"
-            for f in "$DATA_DIR"/*.log; do
-                [ -f "$f" ] || continue
-                local name=$(basename "$f" .log)
-                while IFS='|' read -r ts val; do echo "$name,$ts,$val" >> "$out"; done < "$f"
-            done
-            ;;
-        txt)
-            echo "=== Validator Export ===" > "$out"
-            for f in "$DATA_DIR"/*.log; do
-                [ -f "$f" ] || continue
-                echo "--- $(basename "$f" .log) ---" >> "$out"
-                cat "$f" >> "$out"
-            done
-            ;;
-        *) echo "Formats: json, csv, txt"; return 1 ;;
-    esac
-    echo "Exported to $out ($(wc -c < "$out") bytes)"
+cmd_ip() {
+    local addr="${1:?Usage: validator ip <address>}"
+    # IPv4
+    if echo "$addr" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+        local valid=true
+        IFS='.' read -ra octets <<< "$addr"
+        for o in "${octets[@]}"; do
+            if [ "$o" -gt 255 ] 2>/dev/null; then valid=false; fi
+        done
+        if $valid; then
+            pass "$addr (IPv4)"
+            # Check type
+            case "$addr" in
+                10.*|172.1[6-9].*|172.2[0-9].*|172.3[0-1].*|192.168.*) echo "  Type: Private" ;;
+                127.*) echo "  Type: Loopback" ;;
+                0.*) echo "  Type: Reserved" ;;
+                *) echo "  Type: Public" ;;
+            esac
+        else
+            fail "$addr — octets must be 0-255"
+            return 1
+        fi
+    # IPv6
+    elif echo "$addr" | grep -qE '^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$'; then
+        pass "$addr (IPv6)"
+    else
+        fail "$addr — not a valid IPv4 or IPv6 address"
+        return 1
+    fi
 }
 
-_status() {
-    echo "=== Validator Status ==="
-    echo "  Version: v2.0.0"
-    echo "  Data dir: $DATA_DIR"
-    echo "  Entries: $(cat "$DATA_DIR"/*.log 2>/dev/null | wc -l) total"
-    echo "  Disk: $(du -sh "$DATA_DIR" 2>/dev/null | cut -f1)"
-    echo "  Last: $(tail -1 "$DATA_DIR/history.log" 2>/dev/null || echo never)"
-    echo "  Status: OK"
+cmd_phone() {
+    local num="${1:?Usage: validator phone <number>}"
+    local clean
+    clean=$(echo "$num" | tr -d ' ()-.')
+    if echo "$clean" | grep -qE '^\+?[0-9]{7,15}$'; then
+        pass "$num (digits: ${#clean})"
+    else
+        fail "$num — 7-15 digits expected"
+        return 1
+    fi
 }
 
-_search() {
-    local term="${1:?Usage: validator search <term>}"
-    echo "Searching for: $term"
-    for f in "$DATA_DIR"/*.log; do
-        [ -f "$f" ] || continue
-        local m=$(grep -i "$term" "$f" 2>/dev/null || true)
-        if [ -n "$m" ]; then
-            echo "  --- $(basename "$f" .log) ---"
-            echo "$m" | sed 's/^/    /'
-        fi
-    done
+cmd_date() {
+    local str="${1:?Usage: validator date <date-string>}"
+    if date -d "$str" >/dev/null 2>&1; then
+        local parsed
+        parsed=$(date -d "$str" '+%Y-%m-%d %H:%M:%S')
+        pass "$str → $parsed"
+    else
+        fail "$str — cannot parse as date"
+        return 1
+    fi
 }
 
-_recent() {
-    echo "=== Recent Activity ==="
-    tail -20 "$DATA_DIR/history.log" 2>/dev/null | sed 's/^/  /' || echo "  No activity yet."
+cmd_json() {
+    local file="${1:?Usage: validator json <file>}"
+    [ ! -f "$file" ] && { fail "File not found: $file"; return 1; }
+    if python3 -c "import json; json.load(open('$file'))" 2>/dev/null; then
+        local size
+        size=$(wc -c < "$file")
+        pass "$file (${size} bytes, valid JSON)"
+    else
+        fail "$file"
+        python3 -c "
+import json
+try:
+    json.load(open('$file'))
+except json.JSONDecodeError as e:
+    print('  Error: line {}, col {}: {}'.format(e.lineno, e.colno, e.msg))
+" 2>/dev/null
+        return 1
+    fi
 }
 
-case "${1:-help}" in
-    run)
-        shift
-        if [ $# -eq 0 ]; then
-            echo "Recent run entries:"
-            tail -20 "$DATA_DIR/run.log" 2>/dev/null || echo "  No entries yet. Use: validator run <input>"
-        else
-            local input="$*"
-            local ts=$(date '+%Y-%m-%d %H:%M')
-            echo "$ts|$input" >> "$DATA_DIR/run.log"
-            local total=$(wc -l < "$DATA_DIR/run.log")
-            echo "  [Validator] run: $input"
-            echo "  Saved. Total run entries: $total"
-            _log "run" "$input"
+cmd_yaml() {
+    local file="${1:?Usage: validator yaml <file>}"
+    [ ! -f "$file" ] && { fail "File not found: $file"; return 1; }
+    if python3 -c "
+import sys
+try:
+    import yaml
+    yaml.safe_load(open('$file'))
+    sys.exit(0)
+except ImportError:
+    # Fallback: basic syntax check
+    with open('$file') as f:
+        for i, line in enumerate(f, 1):
+            if '\t' in line:
+                print('  Warning: tab character on line {}'.format(i))
+    sys.exit(0)
+except yaml.YAMLError as e:
+    print('  Error: {}'.format(e))
+    sys.exit(1)
+" 2>/dev/null; then
+        pass "$file (valid YAML)"
+    else
+        fail "$file"
+        return 1
+    fi
+}
+
+cmd_csv() {
+    local file="${1:?Usage: validator csv <file>}"
+    [ ! -f "$file" ] && { fail "File not found: $file"; return 1; }
+    FILE="$file" python3 << 'PYEOF'
+import csv, os, sys
+f = os.environ["FILE"]
+errors = []
+cols = None
+with open(f) as fh:
+    reader = csv.reader(fh)
+    for i, row in enumerate(reader, 1):
+        if cols is None:
+            cols = len(row)
+        elif len(row) != cols:
+            errors.append("Line {}: {} columns (expected {})".format(i, len(row), cols))
+        if i > 10000:
+            break
+
+if errors:
+    print("  \033[0;31m\u2717 INVALID\033[0m {} ({} errors)".format(f, len(errors)))
+    for e in errors[:5]:
+        print("  " + e)
+    sys.exit(1)
+else:
+    print("  \033[0;32m\u2713 VALID\033[0m {} ({} rows, {} columns)".format(f, i, cols or 0))
+PYEOF
+}
+
+cmd_domain() {
+    local name="${1:?Usage: validator domain <domain>}"
+    if echo "$name" | grep -qE '^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$'; then
+        pass "$name (format OK)"
+        if command -v dig >/dev/null 2>&1; then
+            local ip
+            ip=$(dig +short "$name" A 2>/dev/null | head -1)
+            if [ -n "$ip" ]; then
+                echo "  DNS: $ip"
+            else
+                echo "  DNS: No A record found"
+            fi
         fi
-        ;;
-    check)
-        shift
-        if [ $# -eq 0 ]; then
-            echo "Recent check entries:"
-            tail -20 "$DATA_DIR/check.log" 2>/dev/null || echo "  No entries yet. Use: validator check <input>"
-        else
-            local input="$*"
-            local ts=$(date '+%Y-%m-%d %H:%M')
-            echo "$ts|$input" >> "$DATA_DIR/check.log"
-            local total=$(wc -l < "$DATA_DIR/check.log")
-            echo "  [Validator] check: $input"
-            echo "  Saved. Total check entries: $total"
-            _log "check" "$input"
-        fi
-        ;;
-    convert)
-        shift
-        if [ $# -eq 0 ]; then
-            echo "Recent convert entries:"
-            tail -20 "$DATA_DIR/convert.log" 2>/dev/null || echo "  No entries yet. Use: validator convert <input>"
-        else
-            local input="$*"
-            local ts=$(date '+%Y-%m-%d %H:%M')
-            echo "$ts|$input" >> "$DATA_DIR/convert.log"
-            local total=$(wc -l < "$DATA_DIR/convert.log")
-            echo "  [Validator] convert: $input"
-            echo "  Saved. Total convert entries: $total"
-            _log "convert" "$input"
-        fi
-        ;;
-    analyze)
-        shift
-        if [ $# -eq 0 ]; then
-            echo "Recent analyze entries:"
-            tail -20 "$DATA_DIR/analyze.log" 2>/dev/null || echo "  No entries yet. Use: validator analyze <input>"
-        else
-            local input="$*"
-            local ts=$(date '+%Y-%m-%d %H:%M')
-            echo "$ts|$input" >> "$DATA_DIR/analyze.log"
-            local total=$(wc -l < "$DATA_DIR/analyze.log")
-            echo "  [Validator] analyze: $input"
-            echo "  Saved. Total analyze entries: $total"
-            _log "analyze" "$input"
-        fi
-        ;;
-    generate)
-        shift
-        if [ $# -eq 0 ]; then
-            echo "Recent generate entries:"
-            tail -20 "$DATA_DIR/generate.log" 2>/dev/null || echo "  No entries yet. Use: validator generate <input>"
-        else
-            local input="$*"
-            local ts=$(date '+%Y-%m-%d %H:%M')
-            echo "$ts|$input" >> "$DATA_DIR/generate.log"
-            local total=$(wc -l < "$DATA_DIR/generate.log")
-            echo "  [Validator] generate: $input"
-            echo "  Saved. Total generate entries: $total"
-            _log "generate" "$input"
-        fi
-        ;;
-    preview)
-        shift
-        if [ $# -eq 0 ]; then
-            echo "Recent preview entries:"
-            tail -20 "$DATA_DIR/preview.log" 2>/dev/null || echo "  No entries yet. Use: validator preview <input>"
-        else
-            local input="$*"
-            local ts=$(date '+%Y-%m-%d %H:%M')
-            echo "$ts|$input" >> "$DATA_DIR/preview.log"
-            local total=$(wc -l < "$DATA_DIR/preview.log")
-            echo "  [Validator] preview: $input"
-            echo "  Saved. Total preview entries: $total"
-            _log "preview" "$input"
-        fi
-        ;;
-    batch)
-        shift
-        if [ $# -eq 0 ]; then
-            echo "Recent batch entries:"
-            tail -20 "$DATA_DIR/batch.log" 2>/dev/null || echo "  No entries yet. Use: validator batch <input>"
-        else
-            local input="$*"
-            local ts=$(date '+%Y-%m-%d %H:%M')
-            echo "$ts|$input" >> "$DATA_DIR/batch.log"
-            local total=$(wc -l < "$DATA_DIR/batch.log")
-            echo "  [Validator] batch: $input"
-            echo "  Saved. Total batch entries: $total"
-            _log "batch" "$input"
-        fi
-        ;;
-    compare)
-        shift
-        if [ $# -eq 0 ]; then
-            echo "Recent compare entries:"
-            tail -20 "$DATA_DIR/compare.log" 2>/dev/null || echo "  No entries yet. Use: validator compare <input>"
-        else
-            local input="$*"
-            local ts=$(date '+%Y-%m-%d %H:%M')
-            echo "$ts|$input" >> "$DATA_DIR/compare.log"
-            local total=$(wc -l < "$DATA_DIR/compare.log")
-            echo "  [Validator] compare: $input"
-            echo "  Saved. Total compare entries: $total"
-            _log "compare" "$input"
-        fi
-        ;;
-    export)
-        shift
-        if [ $# -eq 0 ]; then
-            echo "Recent export entries:"
-            tail -20 "$DATA_DIR/export.log" 2>/dev/null || echo "  No entries yet. Use: validator export <input>"
-        else
-            local input="$*"
-            local ts=$(date '+%Y-%m-%d %H:%M')
-            echo "$ts|$input" >> "$DATA_DIR/export.log"
-            local total=$(wc -l < "$DATA_DIR/export.log")
-            echo "  [Validator] export: $input"
-            echo "  Saved. Total export entries: $total"
-            _log "export" "$input"
-        fi
-        ;;
-    config)
-        shift
-        if [ $# -eq 0 ]; then
-            echo "Recent config entries:"
-            tail -20 "$DATA_DIR/config.log" 2>/dev/null || echo "  No entries yet. Use: validator config <input>"
-        else
-            local input="$*"
-            local ts=$(date '+%Y-%m-%d %H:%M')
-            echo "$ts|$input" >> "$DATA_DIR/config.log"
-            local total=$(wc -l < "$DATA_DIR/config.log")
-            echo "  [Validator] config: $input"
-            echo "  Saved. Total config entries: $total"
-            _log "config" "$input"
-        fi
-        ;;
-    status)
-        shift
-        if [ $# -eq 0 ]; then
-            echo "Recent status entries:"
-            tail -20 "$DATA_DIR/status.log" 2>/dev/null || echo "  No entries yet. Use: validator status <input>"
-        else
-            local input="$*"
-            local ts=$(date '+%Y-%m-%d %H:%M')
-            echo "$ts|$input" >> "$DATA_DIR/status.log"
-            local total=$(wc -l < "$DATA_DIR/status.log")
-            echo "  [Validator] status: $input"
-            echo "  Saved. Total status entries: $total"
-            _log "status" "$input"
-        fi
-        ;;
-    report)
-        shift
-        if [ $# -eq 0 ]; then
-            echo "Recent report entries:"
-            tail -20 "$DATA_DIR/report.log" 2>/dev/null || echo "  No entries yet. Use: validator report <input>"
-        else
-            local input="$*"
-            local ts=$(date '+%Y-%m-%d %H:%M')
-            echo "$ts|$input" >> "$DATA_DIR/report.log"
-            local total=$(wc -l < "$DATA_DIR/report.log")
-            echo "  [Validator] report: $input"
-            echo "  Saved. Total report entries: $total"
-            _log "report" "$input"
-        fi
-        ;;
-    stats) _stats ;;
-    export) shift; _export "$@" ;;
-    search) shift; _search "$@" ;;
-    recent) _recent ;;
-    status) _status ;;
-    help|--help|-h) _help ;;
-    version|--version|-v) _version ;;
-    *)
-        echo "Unknown: $1 — run 'validator help'"
-        exit 1
-        ;;
+    else
+        fail "$name — invalid domain format"
+        return 1
+    fi
+}
+
+cmd_credit_card() {
+    local num="${1:?Usage: validator credit-card <number>}"
+    local clean
+    clean=$(echo "$num" | tr -d ' -')
+    NUM="$clean" python3 << 'PYEOF'
+import os, sys
+num = os.environ["NUM"]
+if not num.isdigit() or len(num) < 13 or len(num) > 19:
+    print("  \033[0;31m\u2717 INVALID\033[0m — must be 13-19 digits")
+    sys.exit(1)
+
+# Luhn algorithm
+digits = [int(d) for d in num]
+digits.reverse()
+total = 0
+for i, d in enumerate(digits):
+    if i % 2 == 1:
+        d *= 2
+        if d > 9:
+            d -= 9
+    total += d
+
+if total % 10 == 0:
+    # Detect card type
+    card_type = "Unknown"
+    if num[0] == '4':
+        card_type = "Visa"
+    elif num[:2] in ('51','52','53','54','55'):
+        card_type = "MasterCard"
+    elif num[:2] in ('34','37'):
+        card_type = "Amex"
+    elif num[:4] == '6011' or num[:2] == '65':
+        card_type = "Discover"
+    elif num[:2] == '35':
+        card_type = "JCB"
+    print("  \033[0;32m\u2713 VALID\033[0m Luhn check passed ({})".format(card_type))
+else:
+    print("  \033[0;31m\u2717 INVALID\033[0m Luhn check failed")
+    sys.exit(1)
+PYEOF
+}
+
+show_help() {
+    cat << EOF
+validator v$VERSION — Input validator
+
+Usage: validator <command> <input>
+
+Formats:
+  email <address>         Validate email format
+  url <url>               Validate URL (+ HTTP check if curl available)
+  ip <address>            Validate IPv4/IPv6 address
+  phone <number>          Validate phone number (7-15 digits)
+  date <string>           Validate and parse date string
+  domain <name>           Validate domain (+ DNS lookup if dig available)
+  credit-card <number>    Luhn algorithm check + card type detection
+
+Files:
+  json <file>             Validate JSON syntax
+  yaml <file>             Validate YAML syntax
+  csv <file>              Validate CSV structure (column consistency)
+
+  help                    Show this help
+  version                 Show version
+
+Requires: python3 (for json/csv/credit-card). Optional: curl, dig
+EOF
+}
+
+[ $# -eq 0 ] && { show_help; exit 0; }
+case "$1" in
+    email)       shift; cmd_email "$@" ;;
+    url)         shift; cmd_url "$@" ;;
+    ip)          shift; cmd_ip "$@" ;;
+    phone)       shift; cmd_phone "$@" ;;
+    date)        shift; cmd_date "$@" ;;
+    json)        shift; cmd_json "$@" ;;
+    yaml)        shift; cmd_yaml "$@" ;;
+    csv)         shift; cmd_csv "$@" ;;
+    domain)      shift; cmd_domain "$@" ;;
+    credit-card) shift; cmd_credit_card "$@" ;;
+    help|-h)     show_help ;;
+    version|-v)  echo "validator v$VERSION"; echo "Powered by BytesAgain | bytesagain.com | hello@bytesagain.com" ;;
+    *)           echo "Unknown: $1"; show_help; exit 1 ;;
 esac

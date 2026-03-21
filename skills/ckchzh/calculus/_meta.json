@@ -3,9 +3,15 @@
   "slug": "calculus",
   "displayName": "Calculus",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773673545017,
-    "commit": "https://github.com/openclaw/skills/commit/39342da5e0d31fded6792a2efa6dbfc59856599b"
+    "version": "2.0.1",
+    "publishedAt": 1773830203460,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773673545017,
+      "commit": "https://github.com/openclaw/skills/commit/39342da5e0d31fded6792a2efa6dbfc59856599b"
+    }
+  ]
 }

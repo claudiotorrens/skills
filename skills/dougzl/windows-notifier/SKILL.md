@@ -1,89 +1,39 @@
+---
+name: windows-notifier
+description: Send native Windows desktop notifications for local reminders, alerts, and background-attention events. Use when the user wants a Windows popup, a local toast notification, or when reminder/alert messages should prefer local desktop notification instead of only chat delivery.
+---
+
 # Windows Notifier
 
-Use local Windows desktop notifications via `node-notifier`.
+Send a local **Windows desktop toast notification** on this machine.
 
-Activate when the user asks to:
-- send a Windows notification
-- show a desktop toast / local popup
-- test whether native Windows notifications work
-- send a local reminder through `node-notifier`
+This skill is a Windows-focused alias/wrapper around the shared desktop notification flow so agents can trigger a popup consistently when the user asks for a Windows reminder or when a reminder/alert should not rely only on chat visibility.
 
-Do **not** use this skill for:
-- replying in chat only
-- browser/web notifications inside Control UI
-- cross-device messaging
+## Use this skill for
 
-## What this skill does
+- Local reminder popups
+- Timer / study / schedule alerts
+- Attention-needed notifications when chat may be in the background
+- Windows-specific notification tests
 
-This skill sends a **local Windows notification** on the current machine by calling the existing notifier script:
-
-- Script: `C:\Users\dongz\.openclaw\workspace\tools\study-notifier\notify.js`
-- Runtime: Node.js
-- Library: `node-notifier`
-
-## Before sending
-
-1. Confirm the request is for a **local Windows notification**.
-2. If the user gave text, use it directly.
-3. If they did not give a title, pick a short practical title.
-4. Keep the message concise. Windows toast text should be short.
-
-## Command template
+## Command
 
 Run this from PowerShell with `exec`:
 
 ```powershell
-node "C:\Users\dongz\.openclaw\workspace\tools\study-notifier\notify.js" --title "<TITLE>" --message "<MESSAGE>" --timeout 10
+node "$env:USERPROFILE\.openclaw\workspace\skills\windows-notifier\scripts\send-notification.js" --title "<TITLE>" --message "<MESSAGE>" --timeout 10
 ```
 
-Optional flags supported by the script:
+Optional flags:
 
 - `--wait true|false`
 - `--timeout <seconds>`
-
-## Expected output
-
-Success usually prints:
-
-```text
-NOTIFY_SENT
-```
-
-It may also print fields like:
-
-- `RESPONSE:timeout`
-- `METADATA:{...}`
-
-That does **not** necessarily mean failure. It often just means the notification timed out naturally.
-
-## Troubleshooting
-
-If the user does not see a popup:
-
-1. Check whether it appeared in Windows Notification Center.
-2. If yes, the notifier likely worked and Windows suppressed the toast banner.
-3. Likely causes:
-   - Focus Assist / Do Not Disturb
-   - app notification permissions
-   - Windows banner style settings
-   - another app or shell state affecting display
-
-## Examples
-
-### Send a quick test
-
-```powershell
-node "C:\Users\dongz\.openclaw\workspace\tools\study-notifier\notify.js" --title "OpenClaw Test" --message "This is a Windows notification test." --timeout 10
-```
-
-### Study reminder
-
-```powershell
-node "C:\Users\dongz\.openclaw\workspace\tools\study-notifier\notify.js" --title "软考学习提醒" --message "现在开始今天的学习时段。" --timeout 10
-```
+- `--sound true|false` (default: `true`)
 
 ## Notes
 
-- This skill relies on the existing `tools/study-notifier` folder already being installed.
-- If dependencies are missing, install them in that folder with `npm install`.
-- This skill is for **local machine notifications only**.
+- Keep the title short and the message concise.
+- Prefer this over chat-only reminders when the request is for a local popup.
+- If a reminder or alert may be missed because OpenClaw is running in the background, prefer triggering this notifier in addition to or instead of chat delivery, depending on user intent.
+- Uses `node-notifier` for the popup appearance and behavior.
+- On first run after install, the script auto-installs dependencies in this skill directory if needed, so users do not need to run npm manually.

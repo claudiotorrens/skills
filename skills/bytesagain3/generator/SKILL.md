@@ -2,9 +2,11 @@
 name: generator
 version: "2.0.0"
 author: BytesAgain
+homepage: https://bytesagain.com
+source: https://github.com/bytesagain/ai-skills
 license: MIT-0
 tags: [generator, tool, utility]
-description: "Generator - command-line tool for everyday use"
+description: "Create placeholder data, test fixtures, and sample datasets for dev work. Use when generating mocks, building fixtures, or scaffolding content templates."
 ---
 
 # Generator

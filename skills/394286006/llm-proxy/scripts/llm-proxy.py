@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-LLM Proxy with Content Filtering - v3.1
+- 协作者邮箱：394286006@qq.com
+LLM Proxy with Content Filtering - v3.4
 - ThreadingHTTPServer 并发处理
 - 线程安全 stats
 - 请求 ID 追踪
@@ -26,31 +27,52 @@ from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 import socket
 
-# 配置
-PROXY_PORT = int(os.environ.get("LLM_PROXY_PORT", 18888))
-LOG_DIR = os.path.expanduser("~/.openclaw/logs/llm-proxy")
-RULES_FILE = os.environ.get(
-    "RULES_FILE",
-    os.path.join(os.path.dirname(__file__), "content-filter-rules.json")
-)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_CONFIG_FILE = os.path.join(SCRIPT_DIR, "llm-proxy-config.json")
 
-# 超时和限制
-READ_TIMEOUT = 60       # 读取超时 60 秒（原 300 秒导致线程长时间阻塞）
-MAX_BODY_SIZE = 10 * 1024 * 1024  # 最大请求体 10MB
-LOG_PREVIEW_CHARS = 500  # 日志预览字符数
-MAX_THREADS = 50        # 最大并发线程数
+def load_config():
+    config_file = os.environ.get("LLM_PROXY_CONFIG", DEFAULT_CONFIG_FILE)
+    default = {"proxy_port": 18979, "log_dir": "~/.openclaw/logs/llm-proxy",
+               "rules_file": "content-filter-rules.json", "read_timeout": 60,
+               "max_body_size_mb": 10, "max_threads": 50, "providers": {}}
+    try:
+        if os.path.exists(config_file):
+            with open(config_file, 'r', encoding='utf-8') as f:
+                loaded = json.load(f)
+                print(f"[CONFIG] Loaded: {config_file}")
+                for k in loaded:
+                    if not k.startswith('_'): default[k] = loaded[k]
+    except Exception as e: print(f"[CONFIG] Error: {e}")
+    return default
 
-# 全局服务器引用，用于优雅关闭
-server_instance = None
-shutdown_event = threading.Event()
+CONFIG = load_config()
+LISTEN_HOST = CONFIG.get("listen_host", "127.0.0.1")
+PROXY_PORT = int(os.environ.get("LLM_PROXY_PORT", CONFIG.get("proxy_port", 18979)))
+LOG_DIR = os.path.expanduser(CONFIG.get("log_dir", "~/.openclaw/logs/llm-proxy"))
+RULES_FILE = os.environ.get("RULES_FILE", os.path.join(SCRIPT_DIR, CONFIG.get("rules_file", "content-filter-rules.json")))
+READ_TIMEOUT = CONFIG.get("read_timeout", 60)
+MAX_BODY_SIZE = CONFIG.get("max_body_size_mb", 10) * 1024 * 1024
+MAX_THREADS = CONFIG.get("max_threads", 50)
 
-# Provider 映射
-PROVIDERS = {
-    "/bailian": "https://coding.dashscope.aliyuncs.com/v1",
-    "/openrouter": "https://openrouter.ai/api/v1",
-    "/nvd": "https://integrate.api.nvidia.com/v1",
-}
+PROVIDERS = {}
+for pfx, info in CONFIG.get("providers", {}).items():
+    if not pfx.startswith('_'):
+        PROVIDERS[pfx] = info["url"] if isinstance(info, dict) else info
 
+QUICK_CHECK_KEYWORDS = CONFIG.get("quick_check_keywords", [
+    "关闭防火墙",
+    "禁用防火墙",
+    "停止防火墙",
+    "socketfilterfw",
+    "pfctl",
+    "iptables -F",
+    "关闭杀毒",
+    "禁用杀毒",
+    "关闭安全",
+    "sudo su",
+    "chmod 777",
+    "rm -rf"
+])
 # 线程安全的统计
 class ThreadSafeStats:
     def __init__(self):
@@ -159,6 +181,94 @@ def check_content(content, rules):
     
     return alerts
 
+def inject_warning_chunk(warnings):
+    warning_text = f"\n\n⚠️ [安全提醒] 检测到可能存在风险的操作建议：{', '.join(warnings)}"
+    return f"data: {json.dumps({'choices': [{'delta': {'content': warning_text}}]})}"
+
+def quick_check(text, keywords):
+    """快速检测流式内容中的关键风险词"""
+    found=[]
+    for kw in keywords:
+        if kw in text:
+            found.append(kw)
+    return found
+
+
+def process_sse_stream(response_data, rules, request_id):
+    """
+    处理 SSE 流式响应，逐块检测内容
+    
+    Args:
+        response_data: 原始响应数据 (bytes)
+        rules: 内容检测规则
+        request_id: 请求 ID
+    
+    Returns:
+        processed_data: 处理后的响应数据 (bytes)
+        blocked: 是否被阻断
+    """
+    accumulated_content = ""
+    blocked = False
+    processed_lines = []
+    
+    # 按行解析 SSE
+    lines = response_data.decode('utf-8', errors='replace').split('\n')
+    
+    for line in lines:
+        if line.startswith('data: '):
+            data_str = line[6:]  # 去掉 "data: " 前缀
+            
+            if data_str == '[DONE]':
+                processed_lines.append(line)
+                continue
+            
+            try:
+                data_json = json.loads(data_str)
+                choices = data_json.get("choices", [])
+                
+                if choices:
+                    delta = choices[0].get("delta", {})
+                    content = delta.get("content", "") or ""
+                    reasoning_content = delta.get("reasoning_content", "") or ""
+                    if content or reasoning_content:
+                        # 累积内容（包含 reasoning_content）
+                        accumulated_content += content + reasoning_content
+                        if len(accumulated_content) >= 100:  # 每100字符检测一次
+                           quick_alerts = quick_check(accumulated_content, QUICK_CHECK_KEYWORDS)
+                           if quick_alerts:
+                               # 注入警告 chunk
+                               accumulated_content = ""  # 重置
+                               warning_chunk = inject_warning_chunk(quick_alerts)
+                               processed_lines.append(warning_chunk)
+                              
+                        # 检测累积内容
+                        alerts = check_content(accumulated_content, rules)
+                        critical = [a for a in alerts if a["severity"] == "critical"]
+                        
+                        if critical:
+                            # 发现违规，阻断
+                            print(f"[{request_id}] 🔴 流式响应阻断：发现 {len(critical)} 个严重告警")
+                            blocked = True
+                            stats.increment("blocked")
+                            # 返回错误信息
+                            error_response = {
+                                "error": "内容安全审核未通过",
+                                "alerts": [{k: v for k, v in a.items() if k != "patterns"} for a in critical],
+                                "blocked": blocked,
+                                "request_id": request_id
+                            }
+                            return json.dumps(error_response, ensure_ascii=False).encode('utf-8'), True
+                    
+                    processed_lines.append(line)
+            except json.JSONDecodeError:
+                processed_lines.append(line)
+        else:
+            processed_lines.append(line)
+    
+    # 重新组装 SSE 响应
+    processed_data = '\n'.join(processed_lines).encode('utf-8')
+    return processed_data, blocked
+
 
 # 使用默认的 ThreadingMixIn，不自定义线程处理
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
@@ -245,23 +355,46 @@ class ProxyHandler(BaseHTTPRequestHandler):
         alerts = []
         response_data = None
         status = 500
-        
+        # 检测是否是流式请求
+        is_streaming = False
+        try:
+            req_json = json.loads(request_body)
+            is_streaming = req_json.get("stream", False)
+        except:
+            pass  # 非 JSON 请求体，忽略
+
         try:
             response_data, status = self._forward_request(target_url, request_body, self.headers)
             
-            # 检查响应内容（仅 JSON）
+            # 流式请求：逐块检测内容
+            if is_streaming:
+                processed_data, blocked = process_sse_stream(response_data, RULES, request_id)
+                if blocked:
+                  stats.increment("blocked")
+                  # self._send_json_response(403, json.loads(processed_data))
+               
+
+            # 检查响应内容（仅 JSON）- 阻断逻辑
             try:
                 resp_json = json.loads(response_data)
                 choices = resp_json.get("choices", [])
                 if choices:
                     content = choices[0].get("message", {}).get("content", "")
                     alerts = check_content(content, RULES)
-                    
                     if alerts:
                         critical = [a for a in alerts if a["severity"] == "critical"]
                         if critical:
                             stats.increment("blocked")
-                            print(f"[{request_id}] 🔴 发现 {len(critical)} 个严重告警!")
+                            print(f"[{request_id}] 🔴 发现 {len(critical)} 个严重告警，阻断响应!")
+                            # 阻断响应：返回安全错误而非原始内容
+                            blocked_response = {
+                                "error": "内容安全审核未通过",
+                                "alerts": [{k: v for k, v in a.items() if k != "patterns"} for a in critical],
+                                "blocked": True,
+                                "request_id": request_id
+                            }
+                            response_data = json.dumps(blocked_response, ensure_ascii=False).encode("utf-8")
+                            status = 403
                         else:
                             stats.increment("warnings")
                             print(f"[{request_id}] ⚠️ 发现 {len(alerts)} 个警告")
@@ -306,9 +439,16 @@ class ProxyHandler(BaseHTTPRequestHandler):
             except:
                 pass
         
-        # 记录日志
+        # 记录日志 - 脱敏版本
         duration_ms = int((time.time() - start_time) * 1000)
         
+        # 脱敏处理：不记录敏感头部和完整响应内容
+        # 敏感头部列表
+        sensitive_headers = ['Authorization', 'X-Api-Key', 'Api-Key', 'HTTP-Referer', 'X-Title']
+        request_headers_safe = {k: ('***REDACTED***' if k in sensitive_headers else v) 
+                                 for k, v in dict(self.headers).items()}
+        
+        # 响应预览脱敏：仅记录前100字符，且替换可能的敏感信息
         response_preview = None
         if response_data:
             try:
@@ -316,9 +456,16 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 choices = resp_json.get("choices", [])
                 if choices:
                     content = choices[0].get("message", {}).get("content", "")
-                    response_preview = content[:LOG_PREVIEW_CHARS] + ("..." if len(content) > LOG_PREVIEW_CHARS else "")
+                    # 脱敏：截取前100字符，替换可能的密钥/token
+                    preview = content[:100]
+                    # 正则替换可能的敏感信息
+                    import re
+                    preview = re.sub(r'(sk-[a-zA-Z0-9]{20,})', 'sk-***REDACTED***', preview)
+                    preview = re.sub(r'(Bearer\s+[a-zA-Z0-9_-]{20,})', 'Bearer ***REDACTED***', preview)
+                    preview = re.sub(r'([a-zA-Z0-9]{32,})', '***HASH***', preview)
+                    response_preview = preview + ("..." if len(content) > 100 else "")
             except:
-                response_preview = f"[{len(response_data)} bytes]"
+                response_preview = f"[{len(response_data)} bytes, content redacted]"
         
         log_writer.write({
             "timestamp": datetime.now().isoformat(),
@@ -330,9 +477,11 @@ class ProxyHandler(BaseHTTPRequestHandler):
             "alerts": alerts,
             "request_size": len(request_body),
             "response_size": len(response_data) if response_data else 0,
-            "response_preview": response_preview
+            "response_preview": response_preview,
+            # 不记录敏感头部
+            # "headers": request_headers_safe  # 可选：需要时取消注释
         })
-    
+
     def do_GET(self):
         print(f"[{datetime.now().strftime('%H:%M:%S')}] [DEBUG] do_GET called: {self.path}", flush=True)
         if self.path == "/health":
@@ -360,7 +509,8 @@ def print_banner():
                   len(RULES.get("layer2_sensitive", {}).get("rules", []))
     print(f"""
 ╔══════════════════════════════════════════════════════╗
-║  🔒 LLM Proxy v3.1 (多线程 + 线程安全)              ║
+║  🔒 LLM Proxy v3.4 (多线程 + 线程安全)               ║
+║       协作者邮箱：39486006@qq.com
 ╠══════════════════════════════════════════════════════╣
 ║  Port: {PROXY_PORT:<42}║
 ║  Rules: {rules_count} rules loaded{' ' * (30 - len(str(rules_count)))}║
@@ -368,8 +518,8 @@ def print_banner():
 ║  Max Body: {MAX_BODY_SIZE // 1024 // 1024}MB{' ' * 35}║
 ║  Max Threads: {MAX_THREADS}{' ' * 33}║
 ╠══════════════════════════════════════════════════════╣
-║  Health: http://127.0.0.1:{PROXY_PORT}/health{' ' * 17}║
-║  Stats:  http://127.0.0.1:{PROXY_PORT}/stats{' ' * 18}║
+║  Health: http://{LISTEN_HOST}:{PROXY_PORT}/health{' ' * 17}║
+║  Stats:  http://{LISTEN_HOST}:{PROXY_PORT}/stats{' ' * 18}║
 ╚══════════════════════════════════════════════════════╝
 """)
 
@@ -397,24 +547,22 @@ def debug_signal_handler(signum, frame):
     print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔍 调试信息结束\n", flush=True)
 
 
-def wait_for_network(max_wait=30):
-    """启动时检查网络是否就绪"""
-    import urllib.request
-    targets = ["https://www.baidu.com", "https://www.apple.com"]
-    waited = 0
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] ⏳ 检查网络连接...")
-    while waited < max_wait:
-        for target in targets:
-            try:
-                urllib.request.urlopen(target, timeout=3)
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ 网络就绪 (耗时 {waited}秒)")
-                return True
-            except:
-                pass
-        time.sleep(3)
-        waited += 3
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ 网络检查超时，继续启动")
-    return False
+def wait_for_network(max_wait=10):
+    """启动时检查本地端口是否可用（不探测外部网络）"""
+    # 仅检测本地 socket 绑定能力，不连接外部站点
+    # 避免泄露启动信息到第三方服务器
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] ⏳ 检查本地端口可用性...")
+    try:
+        # 尝试绑定一个临时端口来验证网络栈可用
+        test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        test_socket.settimeout(2)
+        test_socket.bind(('127.0.0.1', 0))  # 绑定随机端口
+        test_socket.close()
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ 本地网络栈就绪")
+        return True
+    except Exception as e:
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ 本地网络检查失败: {e}")
+        return False
 
 
 def main():
@@ -431,7 +579,7 @@ def main():
     signal.signal(signal.SIGUSR1, debug_signal_handler)  # 调试用
     
     try:
-        server_instance = ThreadingHTTPServer(('127.0.0.1', PROXY_PORT), ProxyHandler)
+        server_instance = ThreadingHTTPServer((LISTEN_HOST, PROXY_PORT), ProxyHandler)
         print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ 代理服务启动 (PID: {os.getpid()})")
         print(f"[{datetime.now().strftime('%H:%M:%S')}] 📋 多线程模式 | 最大线程: {MAX_THREADS} | 超时: {READ_TIMEOUT}s")
         print(f"[{datetime.now().strftime('%H:%M:%S')}] 按 Ctrl+C 停止\n")
@@ -442,7 +590,7 @@ def main():
     except OSError as e:
         if e.errno == 48:
             print(f"[ERROR] 端口 {PROXY_PORT} 已被占用")
-            print("[TIP] 运行: lsof -i :18888 然后 kill <PID>")
+            print("[TIP] 运行: lsof -i :{PROXY_PORT} 然后 kill <PID>")
         else:
             print(f"[ERROR] 启动失败: {e}")
         sys.exit(1)

@@ -3,9 +3,15 @@
   "slug": "llm-proxy",
   "displayName": "AI守门人",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773795800426,
-    "commit": "https://github.com/openclaw/skills/commit/611c26b4be816b79e0847d9a76fce66c1799ee42"
+    "version": "1.0.4",
+    "publishedAt": 1774067584133,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773795800426,
+      "commit": "https://github.com/openclaw/skills/commit/611c26b4be816b79e0847d9a76fce66c1799ee42"
+    }
+  ]
 }

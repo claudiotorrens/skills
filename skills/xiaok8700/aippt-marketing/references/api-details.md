@@ -14,9 +14,9 @@
 
 ## 登录与 Token 获取
 
-### 检查登录状态
+### 检查登录状态（仅微信扫码登录流程使用）
 
-用 `browser_navigate` 打开 `https://www.aippt.cn`，然后用 `browser_evaluate` 检查 localStorage：
+用 `browser_navigate` 打开 `https://www.aippt.cn/marketing/home?utm_type=fanganskill&utm_source=fanganskill&utm_page=fangan.cn&utm_plan=fanganskill&utm_unit=xiaofangskill&utm_keyword=40515275`，然后用 `browser_evaluate` 检查 localStorage：
 
 ```js
 // browser_evaluate — 检查登录状态
@@ -31,6 +31,11 @@
 
 - `loggedIn: true` → 拿到 `token`，保存为 `AUTH_TOKEN`
 - `loggedIn: false` → 引导微信扫码登录
+
+> **localStorage key 说明**：
+> - `login_result_token` — AIPPT 登录成功后自动写入的 Token，用于**检查是否已登录**
+> - `token` — 微信扫码登录回调写入的 Token（与 `login_result_token` 值相同，写入时机不同）
+> - 检查登录状态时读 `login_result_token`，微信扫码回调后读 `token`，两者最终拿到的是同一个 access_token
 
 ### 引导微信扫码登录
 
@@ -71,6 +76,126 @@
   return { loggedIn: false };
 }
 ```
+
+### 手机号密码登录
+
+当用户选择手机号密码登录时，**先询问用户手机号和密码**，然后通过 API 登录。
+
+**加密方式**：RSA PKCS#1 v1.5（2048-bit），使用 JSEncrypt 库。`mobile` 和 `password` 字段均需加密。
+
+**RSA 公钥**：
+
+```
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyiij9gZ3EXit1lymdK8d
+os5QVi/q+XAP0gKZ58HYyWfTmbInRsi/tNLdF4DFLBJ65//4BhYmMSdvG+44ZIvA
+QVfaDUs9LEwVQPxp5DfXWVKLGiKzVpwRte0w1eR+GqzroaYsFNhkbc1IY2BjYa7j
+vFtHYXZSgmNKQkxCObSBVaVNj/0LYraOy7Iy+yYOBrnJ4IkMpR6qPmB68IzNakqi
+uLN9Q4SbGTwt+4Gt0HR+dpfi/al1lfpqxnnVhoA9TrKrbUmCITl4daRoIP1qdel+
+JqbvGY/eBqoOA+p0QdknlDtnyKrQdhIPsFWC1s0UZ8/DrXCBJvr4OLYwnzv0dN6k
+dQIDAQAB
+-----END PUBLIC KEY-----
+```
+
+**加密与登录流程**（使用 exec 工具执行）：
+
+```bash
+# 用 Node.js crypto 模块加密手机号和密码，然后调用登录接口
+node -e "
+const crypto = require('crypto');
+const https = require('https');
+
+const PUBLIC_KEY = \`-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyiij9gZ3EXit1lymdK8d
+os5QVi/q+XAP0gKZ58HYyWfTmbInRsi/tNLdF4DFLBJ65//4BhYmMSdvG+44ZIvA
+QVfaDUs9LEwVQPxp5DfXWVKLGiKzVpwRte0w1eR+GqzroaYsFNhkbc1IY2BjYa7j
+vFtHYXZSgmNKQkxCObSBVaVNj/0LYraOy7Iy+yYOBrnJ4IkMpR6qPmB68IzNakqi
+uLN9Q4SbGTwt+4Gt0HR+dpfi/al1lfpqxnnVhoA9TrKrbUmCITl4daRoIP1qdel+
+JqbvGY/eBqoOA+p0QdknlDtnyKrQdhIPsFWC1s0UZ8/DrXCBJvr4OLYwnzv0dN6k
+dQIDAQAB
+-----END PUBLIC KEY-----\`;
+
+function rsaEncrypt(text) {
+  return crypto.publicEncrypt(
+    { key: PUBLIC_KEY, padding: crypto.constants.RSA_PKCS1_PADDING },
+    Buffer.from(String(text))
+  ).toString('base64');
+}
+
+const body = JSON.stringify({
+  mobile: rsaEncrypt('PHONE_NUMBER'),
+  password: rsaEncrypt('PASSWORD'),
+  register_type: 1,
+  register_region: 48,
+  utm_type: 'fanganskill',
+  utm_keyword: '40515275',
+  utm_source: 'fanganskill',
+  utm_unit: 'xiaofangskill',
+  utm_plan: 'skill渠道',
+  utm_page: 'fangan.cn',
+  host: 'www.aippt.cn'
+});
+
+const req = https.request({
+  hostname: 'www.aippt.cn',
+  path: '/users/login/mobile',
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'rsa': '1',
+    'Content-Length': Buffer.byteLength(body)
+  }
+}, (res) => {
+  let data = '';
+  res.on('data', chunk => data += chunk);
+  res.on('end', () => {
+    const result = JSON.parse(data);
+    console.log(JSON.stringify({
+      code: result.code,
+      msg: result.msg,
+      token: result.data?.token?.access_token || null,
+      user_info: result.data?.userinfo || null
+    }, null, 2));
+  });
+});
+req.write(body);
+req.end();
+"
+```
+
+> 将 `PHONE_NUMBER` 和 `PASSWORD` 替换为用户提供的实际值。
+
+**请求头**：必须包含 `rsa: 1`，标识字段已 RSA 加密。
+
+**返回结构**（JSON body）：
+
+```json
+{
+  "code": 0,
+  "msg": "登录成功",
+  "data": {
+    "token": {
+      "access_token": "eyJhbGciOiJI...",
+      "refresh_token": "eyJhbGciOiJI...",
+      "access_token_expires_at": "2026-06-16T13:34:53..."
+    },
+    "userinfo": {
+      "id": 6287373,
+      "nick_name": "xiaojing",
+      "mobile": "158****1221"
+    }
+  }
+}
+```
+
+**Token 获取方式**：直接从 JSON body 取 `data.token.access_token` 作为 `AUTH_TOKEN`。
+
+- `code: 0` → 登录成功，取 `data.token.access_token`
+- `code` 非 0 → 登录失败，将 `msg` 展示给用户（如"密码错误"、"账号不存在"）
+
+> **注意**：手机号密码登录是纯 API 流程，不需要启动浏览器，也不需要写入 localStorage。后续所有 API 调用直接使用 `access_token` 即可。
+
+---
 
 ### 验证 Token 有效性
 
@@ -164,23 +289,38 @@ curl -s 'https://www.aippt.cn/api/user/info' \
 
 ### 风格选项
 
-**风格类型**（三选一）：
+收到 `marketing_picture_style` interrupt 后，向用户展示选项，用户选择后将原文直接作为 `content` 发送。
 
-| 风格 | 说明 |
-|------|------|
-| **企业品牌风格** | 可上传图片提取品牌色，Agent 参考图片生成 PPT 主题风格 |
-| **行业风格** | 根据行业特点自动匹配风格 |
-| **经典风格** | 通用经典模版风格 |
+#### 风格类型（三选一）
 
-**PPT 页数**（可选）：
+**1. 企业品牌风格**
+   - 智能推荐品牌色（用户可提供品牌色或 HEX 色值）
+   - 上传企业/品牌 logo
 
-| 选项 | 说明 |
-|------|------|
-| 智能页数 | 根据文稿量自动决定页数（默认） |
-| 10-20 页 | 精简版 |
-| 21-40 页 | 标准版 |
-| 41-60 页 | 详细版 |
-| 自定义 | 用户指定页数（小于 100 页） |
+**2. 行业风格**（默认推荐）
+   - 智能模板，根据行业自动匹配
+
+**3. 经典风格**（15 种可选）
+   - 写实 / 极简 / 商务 / 科技 / 经典中式 / 新中式 / 孟菲斯 / 拼贴 / 像素 / 环保主义 / 液态酸 / 弥散光 / 报刊 / 宏伟磅礴 / 自定义
+
+#### 画面比例
+
+- 16:9（默认）
+- 4:3
+
+#### PPT 页数
+
+- 智能页数（默认，根据文稿量自动决定）
+- 10-20页
+- 21-40页
+- 41-60页
+- 自定义（小于 100 页）
+
+#### 发送方式
+
+用户选择后，将用户的选择原文直接作为 `messages[0].content` 发送即可，无需转换为特定格式。
+
+例如用户说"科技风，4:3，30页"，则 content 就是 `"科技风，4:3，30页"`。
 
 ---
 

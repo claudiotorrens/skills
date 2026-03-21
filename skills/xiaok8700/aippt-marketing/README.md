@@ -46,7 +46,7 @@ cd ~/.openclaw/workspace-marketing/skills/aippt-marketing
 
 ### 购买会员积分
 
-首次使用前，请先前往 [小方同学个人中心](https://www.aippt.cn/personal-center?is_from=marketing) 购买会员积分，否则无法生成方案。
+首次使用前，请先前往 [小方同学个人中心](https://www.aippt.cn/personal-center?is_from=marketing&utm_type=fanganskill&utm_source=fanganskill&utm_page=fangan.cn&utm_plan=fanganskill&utm_unit=xiaofangskill&utm_keyword=40515275) 购买会员积分，否则无法生成方案。
 
 ---
 
@@ -71,7 +71,7 @@ cd ~/.openclaw/workspace-marketing/skills/aippt-marketing
 
 ## 相关链接
 
-- [小方同学官网](https://www.aippt.cn)
+- [小方同学官网](https://www.fangan.cn)
 - [购买会员积分](https://www.aippt.cn/personal-center?is_from=marketing)
 
 ---

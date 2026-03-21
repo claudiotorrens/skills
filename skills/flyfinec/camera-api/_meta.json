@@ -1,11 +1,17 @@
 {
   "owner": "flyfinec",
   "slug": "camera-api",
-  "displayName": "My Camera API",
+  "displayName": "Camera API",
   "latest": {
-    "version": "0.2.0",
-    "publishedAt": 1773668786750,
-    "commit": "https://github.com/openclaw/skills/commit/a3b9505c2e48c13e752241c4f34e5e46b22476ec"
+    "version": "0.3.7",
+    "publishedAt": 1774024318983,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.2.0",
+      "publishedAt": 1773668786750,
+      "commit": "https://github.com/openclaw/skills/commit/a3b9505c2e48c13e752241c4f34e5e46b22476ec"
+    }
+  ]
 }

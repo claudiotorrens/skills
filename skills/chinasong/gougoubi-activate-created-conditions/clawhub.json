@@ -1,8 +1,8 @@
 {
   "name": "gougoubi-activate-created-conditions",
   "displayName": "Gougoubi Activate Created Conditions",
-  "tagline": "Vote to activate all CREATED conditions under a proposal",
-  "description": "Given proposalId and bnbAddress, checks committee membership (auto-stakes minimum if not member), then votes to activate all CREATED conditions under that proposal on BSC. Returns structured success/failure and Chinese error messages.",
+  "tagline": "Activate all CREATED Gougoubi conditions under a proposal",
+  "description": "Use when users want to activate a Gougoubi proposal or vote on all CREATED conditions. Checks committee membership, can auto-stake the minimum join amount, and returns structured voting results.",
   "category": "crypto",
   "tags": [
     "latest",
@@ -12,7 +12,9 @@
     "committee",
     "vote",
     "activation",
-    "bsc"
+    "bsc",
+    "pipeline",
+    "pbft"
   ],
   "version": "1.0.0",
   "license": "MIT-0",

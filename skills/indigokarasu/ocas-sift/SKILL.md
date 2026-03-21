@@ -1,9 +1,7 @@
 ---
 name: ocas-sift
-description: >
-  Web search, research synthesis, fact verification, and entity extraction.
-  Separates signal from noise across the open web. Topic research engine
-  for the OCAS ecosystem.
+description: Web search, research synthesis, fact verification, and entity extraction. The system's general research engine. Use for topic research, web lookups, fact-checking, document summarization, comparison research, or structured information extraction. Do not use for person-focused OSINT investigations (Scout) or image processing (Look).
+metadata: {"openclaw":{"emoji":"🔬"}}
 ---
 
 # Sift
@@ -24,13 +22,14 @@ Sift retrieves information from the web, evaluates reliability across multiple s
 - Image-to-action processing — use Look
 - Pattern analysis on the knowledge graph — use Corvus
 - Communications and message drafting — use Dispatch
-- Person-focused investigations — use Scout
 
 Sift never performs OSINT investigations on individuals. If the primary entity of a query is a person, Scout should be invoked.
 
-## Core promise
+## Responsibility boundary
 
-Sift converts vague questions into precise search queries, gathers sources, extracts structured information, evaluates consensus, and produces reliable answers. Fast for simple queries, thorough for deep research.
+Sift owns web research, fact verification, and structured entity extraction.
+
+Sift does not own: person-focused OSINT (Scout), image processing (Look), knowledge graph writes (Elephas), pattern analysis (Corvus), social graph (Weave).
 
 ## Commands
 
@@ -41,6 +40,7 @@ Sift converts vague questions into precise search queries, gathers sources, extr
 - `sift.extract` — extract entities, claims, statistics, and relationships from content
 - `sift.thread.list` — list active research threads with entity overlap detection
 - `sift.status` — return current state: active threads, quota usage, source reputation summary
+- `sift.journal` — write journal for the current run; called at end of every run
 
 ## Response modes
 
@@ -55,17 +55,15 @@ Users may override with phrases like "quick answer", "deep dive", "compare", or 
 
 ## Search tier selection
 
-- **Tier 1 — Internal Knowledge**: LLM knowledge, conversation context, Chronicle if available. For fast answers.
-- **Tier 2 — Free Web Search**: Brave Search API, SearXNG, DuckDuckGo. Standard research. Used by default.
-- **Tier 3 — Semantic Research**: Exa, Tavily. Used only for deep research with sparse sources. Quota-limited.
+- **Tier 1 — Internal Knowledge**: LLM knowledge, conversation context, Chronicle if available.
+- **Tier 2 — Free Web Search**: Brave Search API, SearXNG, DuckDuckGo. Default for all queries.
+- **Tier 3 — Semantic Research**: Exa, Tavily. Deep research with sparse sources only. Quota-limited.
 
-Escalation: Tier 2 runs by default. Tier 3 only when deep research is needed and Tier 2 results are insufficient. Quota monitored via periodic heartbeat.
+Read `references/search_tiers.md` for provider details and escalation criteria.
 
 ## Source reputation model
 
 Sift maintains per-domain trust scores based on: cross-source agreement, contradiction frequency, historical accuracy, structured data quality, citation frequency.
-
-Chronicle preferred sources (if available) influence ranking.
 
 ## Structured extraction rules
 
@@ -75,20 +73,20 @@ Extracted entities are emitted as enrichment candidates for Elephas.
 
 ## Chronicle interaction
 
-Sift never writes directly to Chronicle. It emits enrichment candidates. Elephas decides whether to store them.
+Sift never writes directly to Chronicle. It emits enrichment candidates via Signal files to `~/openclaw/db/ocas-elephas/intake/{signal_id}.signal.json`. Elephas decides promotion.
 
-Read `references/schemas.md` for candidate format.
+## Inter-skill interfaces
 
-## Support file map
+Sift may write Signal files to Elephas intake: `~/openclaw/db/ocas-elephas/intake/{signal_id}.signal.json`
 
-- `references/schemas.md` — SearchQuery, SearchSession, ResearchThread, ExtractedEntity, SourceReputation, EnrichmentCandidate, DecisionRecord
-- `references/search_tiers.md` — tier definitions, provider details, escalation criteria, quota monitoring
-- `references/query_rewrite.md` — rewrite mechanics, examples, domain-scoped patterns, local search verticals
+Sift may read from Thread (when present) for recent browsing context to improve query rewriting. This is a cooperative read, not a dependency.
+
+See `spec-ocas-interfaces.md` for signal format.
 
 ## Storage layout
 
 ```
-.sift/
+~/openclaw/data/ocas-sift/
   config.json
   sessions.jsonl
   threads.jsonl
@@ -96,11 +94,76 @@ Read `references/schemas.md` for candidate format.
   sources.jsonl
   decisions.jsonl
   reports/
+
+~/openclaw/journals/ocas-sift/
+  YYYY-MM-DD/
+    {run_id}.json
 ```
 
-## Validation rules
+The OCAS_ROOT environment variable overrides `~/openclaw` if set.
 
-- Every extracted entity has a source reference and confidence level
-- Tier 3 queries do not exceed configured daily quota
-- Research sessions produce structured journal entries
-- Source reputation scores are updated after each session
+Default config.json:
+```json
+{
+  "skill_id": "ocas-sift",
+  "skill_version": "2.0.0",
+  "config_version": "1",
+  "created_at": "",
+  "updated_at": "",
+  "search": {
+    "default_tier": 2,
+    "tier3_daily_limit": 50
+  },
+  "retention": {
+    "days": 30,
+    "max_records": 10000
+  }
+}
+```
+
+## OKRs
+
+Universal OKRs from spec-ocas-journal.md apply to all runs.
+
+```yaml
+skill_okrs:
+  - name: source_accuracy
+    metric: fraction of extracted facts confirmed by cross-source agreement
+    direction: maximize
+    target: 0.85
+    evaluation_window: 30_runs
+  - name: tier3_quota_compliance
+    metric: fraction of days where Tier 3 usage stays within daily limit
+    direction: maximize
+    target: 1.0
+    evaluation_window: 30_runs
+  - name: entity_extraction_precision
+    metric: fraction of extracted entities with valid source reference
+    direction: maximize
+    target: 0.90
+    evaluation_window: 30_runs
+```
+
+## Optional skill cooperation
+
+- Elephas — optionally emit Signal files for Chronicle promotion
+- Thread — may read recent browsing context for query rewriting (cooperative, not required)
+- Weave — may use Weave for entity disambiguation
+- Chronicle — may read Chronicle (read-only) for entity context
+
+## Journal outputs
+
+- Observation Journal — search and extraction runs
+- Research Journal — structured multi-source research sessions
+
+## Visibility
+
+public
+
+## Support file map
+
+File | When to read
+`references/schemas.md` | Before creating sessions, threads, or extraction records
+`references/search_tiers.md` | Before tier selection or escalation
+`references/query_rewrite.md` | Before query rewriting
+`references/journal.md` | Before sift.journal; at end of every run

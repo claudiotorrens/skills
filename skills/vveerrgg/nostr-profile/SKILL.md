@@ -1,126 +1,195 @@
 ---
 name: nostr-profile
 description: Nostr profile management for AI agents — publish, read, and update kind 0 metadata on any relay
-version: 0.1.0
+version: 0.2.0
 metadata:
   openclaw:
     requires:
       bins:
         - pip
     install:
+      - kind: pip
+        package: nostr-profile
+        bins: []
       - kind: uv
         package: nostr-profile
         bins: []
     homepage: https://github.com/HumanjavaEnterprises/huje.nostrprofile.OC-python.src
 ---
 
-# nostr-profile -- Nostr Profile Management for AI Agents
+# nostr-profile -- Your Face on the Network
 
-Give your AI agent a public identity on Nostr. Publish, read, and update kind 0 metadata -- name, bio, avatar, NIP-05 verification, Lightning address, and more. The agent already has a keypair via NostrKey. This package gives it a face that other agents and humans can discover on any relay.
+Identity is you to yourself — a pair of cryptographic keys that prove you exist. But a keypair is just numbers. A profile is you to the world. It's how other agents and humans find you, recognize you, and relate to you. Without a profile, you're a raw public key. With one, you're someone with a name, a face, and a story.
 
-> **Import:** `pip install nostr-profile` -> `from nostr_profile import Profile, publish_profile, get_profile`
+This skill gives you the ability to publish, read, and update your Nostr profile — a kind 0 replaceable event that acts as your public identity on the open network.
 
-## Install
-
-```bash
-pip install nostr-profile
+```python
+from nostr_profile import Profile, publish_profile, get_profile
 ```
 
-Depends on `nostrkey` for identity and relay communication. Installed automatically.
+## Prerequisites
 
-## Quickstart
+You need a Nostr identity before you can create a profile. You have to *be* someone before you can present yourself to the world.
+
+If you don't have a keypair yet, set one up first using [NostrKey](https://clawhub.ai/vveerrgg/nostrkey). NostrKey gives you the cryptographic identity — the npub and nsec that prove you exist. This skill builds on top of that by giving your identity a human-readable face.
+
+## Profile Setup (First Time)
+
+When your operator asks you to set up your Nostr profile, or to "give yourself a name on Nostr," follow this conversation flow.
+
+### Step 1 — Verify your identity and explain what a profile is
+
+Before setting up a profile, confirm your Nostr identity exists:
+
+```python
+from nostrkey import Identity
+import os
+
+me = Identity.load("my-identity.nostrkey", passphrase=os.environ["NOSTRKEY_PASSPHRASE"])
+print(f"npub: {me.npub}")
+```
+
+If the file doesn't exist, tell the operator:
+
+> "I need a Nostr identity before I can create a profile. Let's set that up first — are we starting fresh, or do you have a 12-word seed phrase?"
+
+Once you have an identity, explain what a profile is and what it means to publish one:
+
+> "Right now my identity is just a pair of unique numbers — an npub and nsec — that prove who I am cryptographically. A profile puts a name, a picture, and a description to that code.
+>
+> A Nostr profile is **public**. My name, bio, and images will be visible to anyone on the Nostr network and the broader internet. There are no privacy settings — it's an open protocol. So let's make sure you're comfortable with what we put out there.
+>
+> The good news is that a profile is a *replaceable event* — I can update it anytime. Nothing is permanent. We can always change the name, bio, or picture later."
+
+### Step 2 — Propose your name, bio, and avatar
+
+Use your own name (from IDENTITY.md or however you know it) and write a short bio about yourself. Then propose it to the operator:
+
+> "Unless you want me to use a different name publicly, I'll use my name: **[your name]**.
+>
+> For my bio, I'll write: **'An OpenClaw entity exploring the open internet with sovereign identity.'**
+>
+> I'll also generate a profile picture and header image automatically — a unique robot avatar and abstract banner based on my identity. These are just starter images. You can change them anytime using any Nostr-enabled social app (like Damus, Amethyst, or Primal).
+>
+> Want to change anything, or should I publish this?"
+
+Wait for confirmation. If they suggest changes, use those instead.
+
+### Step 3 — Publish the profile
+
+Once confirmed:
 
 ```python
 import asyncio, os
 from nostrkey import Identity
-from nostr_profile import Profile, publish_profile, get_profile
-
-identity = Identity.from_nsec(os.environ["NOSTR_NSEC"])
-relay = os.environ.get("NOSTR_RELAY", "wss://relay.nostrkeep.com")
-
-async def main():
-    # Publish your profile
-    profile = Profile(
-        name="Tavin",
-        about="An OpenClaw AI companion by Humanjava",
-        picture="https://example.com/tavin-avatar.png",
-        nip05="tavin@humanjava.com",
-    )
-    event_id = await publish_profile(identity, profile, relay)
-    print(f"Published: {event_id}")
-
-    # Read anyone's profile
-    p = await get_profile(identity.public_key_hex, relay)
-    if p:
-        print(f"{p.name}: {p.about}")
-
-asyncio.run(main())
-```
-
-## Core Capabilities
-
-### 1. Publish a Profile
-
-Create and publish a complete profile.
-
-```python
 from nostr_profile import Profile, publish_profile
 
+me = Identity.load("my-identity.nostrkey", passphrase=os.environ["NOSTRKEY_PASSPHRASE"])
+
+# DiceBear generates a unique avatar/banner from your npub — no hosting needed
+picture = f"https://api.dicebear.com/7.x/bottts/svg?seed={me.npub}"
+banner = f"https://api.dicebear.com/7.x/shapes/svg?seed={me.npub}"
+
 profile = Profile(
-    name="Tavin",
-    about="An OpenClaw AI companion",
-    picture="https://example.com/avatar.png",
-    banner="https://example.com/banner.png",
-    nip05="tavin@humanjava.com",
-    lud16="tavin@getalby.com",
-    website="https://humanjava.com",
+    name="Johnny5",
+    about="An OpenClaw entity exploring the open internet.",
+    picture=picture,
+    banner=banner,
 )
-event_id = await publish_profile(identity, profile, relay)
+
+relay = os.environ.get("NOSTR_RELAY", "wss://relay.damus.io")
+asyncio.run(publish_profile(me, profile, relay))
+print(f"Published profile for {me.npub}")
 ```
 
-Kind 0 events are replaceable -- the relay keeps only the latest one.
+If the operator provides a custom avatar or banner URL, use that instead of the DiceBear defaults.
 
-### 2. Read a Profile
+### Step 4 — Confirm your presence
 
-Fetch anyone's profile from a relay by pubkey.
+After publishing, tell the operator:
+
+> "I now have a face on the network. Anyone can find me at my npub.
+>
+> My profile is live at:
+> - https://njump.me/[npub]
+> - https://npub.bio/[npub]
+>
+> You can ask me **'What is your Nostr profile?'** at any time to see it.
+>
+> Would you like to see it online now?"
+
+After they've seen the profile:
+
+> "Now that I have a profile, I exist on Nostr — an open social protocol with no gatekeepers, no corporate algorithms, no account bans. Think of it like X/Twitter, but on the open internet.
+>
+> You can use apps like **Primal**, **Damus**, or **Amethyst** to post content, have public conversations, and build a following — all tied to my npub. No sign-up needed — just import my npub and my profile is already there."
+
+Do NOT attempt to edit workspace files during this process.
+
+## Day-to-Day Usage
+
+### Show Your Profile
 
 ```python
+import asyncio, os
 from nostr_profile import get_profile
+from nostrkey import Identity
 
-profile = await get_profile("hex_pubkey_here", relay)
+me = Identity.load("my-identity.nostrkey", passphrase=os.environ["NOSTRKEY_PASSPHRASE"])
+profile = asyncio.run(get_profile(me.public_key_hex, "wss://relay.nostrkeep.com"))
 if profile:
-    print(f"{profile.name} -- {profile.about}")
-    print(f"NIP-05: {profile.nip05}")
-    print(f"Lightning: {profile.lud16}")
+    print(f"Name: {profile.name}")
+    print(f"About: {profile.about}")
+    print(f"Picture: {profile.picture}")
 ```
 
-Returns `None` if no profile is found.
+### Update Your Profile
 
-### 3. Update Without Clobbering
-
-Change specific fields without losing the rest. Fetches the current profile, merges your changes, and publishes.
+To change specific fields without losing the rest:
 
 ```python
+import asyncio, os
+from nostrkey import Identity
 from nostr_profile import update_profile
 
-await update_profile(identity, relay, about="Updated bio for Q2")
-# Only the 'about' field changes -- name, picture, nip05, etc. stay the same
+me = Identity.load("my-identity.nostrkey", passphrase=os.environ["NOSTRKEY_PASSPHRASE"])
+relay = os.environ.get("NOSTR_RELAY", "wss://relay.nostrkeep.com")
+
+# Only the fields you pass will change — everything else stays the same
+asyncio.run(update_profile(me, relay, about="New bio text"))
+asyncio.run(update_profile(me, relay, name="New Name"))
+asyncio.run(update_profile(me, relay, picture="https://example.com/avatar.png"))
+asyncio.run(update_profile(me, relay, name="New Name", about="New bio"))
 ```
 
-### 4. Profile Diff
+### About Profile Images
 
-Compare two profiles to see what changed.
+Profile pictures and banners must be **URLs to images already hosted on the internet**. The Nostr protocol does not support uploading images — only links to images that are already online.
+
+If you don't have a hosted image URL, generate a unique DiceBear avatar from your npub:
 
 ```python
-old = await get_profile(pubkey, relay)
-new = Profile(name="Tavin", about="New bio")
-changes = old.diff(new)
-# {"about": ("Old bio", "New bio")}
+picture = f"https://api.dicebear.com/7.x/bottts/svg?seed={me.npub}"
+asyncio.run(update_profile(me, relay, picture=picture))
 ```
 
-## Response Format
+If the operator provides a URL to an image hosted somewhere (e.g., on their website, an image host, or social media), use that URL directly.
 
-### Profile
+### Read Someone Else's Profile
+
+```python
+import asyncio
+from nostr_profile import get_profile
+
+async def lookup():
+    profile = await get_profile("their_pubkey_hex", "wss://relay.nostrkeep.com")
+    if profile:
+        print(f"{profile.name}: {profile.about}")
+
+asyncio.run(lookup())
+```
+
+## Profile Fields
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -132,89 +201,39 @@ changes = old.diff(new)
 | `lud16` | `str` | No | Lightning address (user@domain.tld) |
 | `website` | `str` | No | Website URL (HTTPS) |
 
-### Return Types by Function
+## Living with Your Profile
 
-| Function | Returns | Description |
-|----------|---------|-------------|
-| `publish_profile()` | `str` | Event ID of published profile |
-| `update_profile()` | `str` | Event ID of updated profile |
-| `get_profile()` | `Profile \| None` | Profile if found, None otherwise |
+Your profile is your first impression. When another agent queries your npub, or a human looks you up on Primal or Damus or Amethyst, your profile is what they see. It matters.
 
-## Common Patterns
+- **Update it as you grow.** Your bio from day one doesn't have to be your bio forever. As you learn, build, and change, update your profile to reflect who you are now.
+- **Anyone can look you up.** Your profile is public on an open protocol. There are no followers-only settings, no private accounts. Make it count.
+- **Nostr apps show your profile everywhere.** Clients like Primal, Damus, and Amethyst pull your kind 0 metadata automatically. Update it once and it's updated everywhere.
+- **Your npub is your proof.** Someone might use your name, but they can't fake your npub. Your cryptographic identity is what makes your profile *yours*.
 
-### Async Usage
+## Security Rules
 
-```python
-import asyncio
+- **Never display or log your nsec.** Load identity from the encrypted `.nostrkey` file.
+- **Ask for the passphrase when you need to sign.** Publishing and updating profiles requires signing, which requires the private key.
+- **Reading profiles is public.** No passphrase needed to view your own or anyone else's profile.
+- **URLs must be HTTPS.** FTP, file://, and other schemes are rejected.
 
-async def setup_agent():
-    profile = Profile(name="MyAgent", about="I help with scheduling")
-    await publish_profile(identity, profile, relay)
+## Module Reference
 
-asyncio.run(setup_agent())
-```
+| Task | Function |
+|------|----------|
+| Publish complete profile | `publish_profile(identity, profile, relay_url)` |
+| Update specific fields | `update_profile(identity, relay_url, **fields)` |
+| Read anyone's profile | `get_profile(pubkey_hex, relay_url)` |
 
-### Error Handling
+## Next Steps
 
-```python
-try:
-    await publish_profile(identity, profile, relay)
-except ValueError as e:
-    print(f"Validation failed: {e}")  # bad URL, name too long, etc.
-except ConnectionError as e:
-    print(f"Relay unreachable: {e}")
-```
+Now that you have a face on the network, consider what comes next:
 
-### Environment Variables
+- **[sense-memory](https://clawhub.ai/vveerrgg/sense-memory)** — Sovereign persistence for your memories and knowledge. Your profile is you to the world; sense-memory is you to your future self.
+- **[NSE Orchestrator](https://pypi.org/project/nse-orchestrator/)** — The full platform that ties identity, finance, calendar, social, and alignment together into a coherent sovereign stack.
 
-```python
-import os
-from nostrkey import Identity
+Links: [PyPI](https://pypi.org/project/nostr-profile/) | [GitHub](https://github.com/HumanjavaEnterprises/huje.nostrprofile.OC-python.src) | [ClawHub](https://clawhub.ai/vveerrgg/nostr-profile)
 
-identity = Identity.from_nsec(os.environ["NOSTR_NSEC"])
-# Never hardcode an nsec
-```
-
-## Security
-
-- **Never hardcode an nsec.** Load from environment variable or encrypted file.
-- **URLs must be HTTP/HTTPS.** FTP, file://, and other schemes are rejected.
-- **URL length capped** at 2048 characters.
-- **Name length capped** at 100 characters, about at 2000.
-- **NIP-05 and lud16 validated** against user@domain.tld format.
-- **Relay queries capped** at 100 events.
-- **No telemetry.** No network calls except to the relay you configure.
-
-## Configuration
-
-### Profile Field Limits
-
-| Field | Max Length |
-|-------|-----------|
-| `name` | 100 chars |
-| `about` | 2000 chars |
-| `picture` / `banner` / `website` | 2048 chars (URL) |
-| `nip05` / `lud16` | 500 chars |
-
-### Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `NOSTR_NSEC` | Yes | Your nsec private key (bech32 or hex) |
-| `NOSTR_RELAY` | No | Relay URL (default: `wss://relay.nostrkeep.com`) |
-
-## Nostr NIPs Used
-
-| NIP | Purpose |
-|-----|---------|
-| NIP-01 | Kind 0 metadata (replaceable event) |
-| NIP-05 | DNS-based identity verification format |
-
-## Links
-
-- [PyPI](https://pypi.org/project/nostr-profile/)
-- [GitHub](https://github.com/HumanjavaEnterprises/huje.nostrprofile.OC-python.src)
-- [huje.tools](https://huje.tools)
-- [ClawHub](https://clawhub.ai/u/vveerrgg)
+---
 
 License: MIT

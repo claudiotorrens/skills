@@ -4,6 +4,19 @@ description: |
   构建指标平台（语义层）的指标数据查询 API 请求。当用户需要查询指标数据、构造指标查询API请求体、使用同环比/占比/排名/时间限定等快速计算、定义临时指标、设置维度筛选过滤条件时，必须使用此 Skill。
   触发场景包括但不限于：用户提到"查询指标"、"指标API"、"指标数据"、"语义层查询"、"metrics query"、"同环比"、"占比"、"排名"、"时间限定"、"metricDefinitions"、"timeConstraint"、"filters"、"dimensions"，或需要帮助构造指标查询的 JSON 请求体时都应使用此 Skill。即使用户只是问如何筛选数据、如何做同比环比、如何定义临时指标，也应触发此 Skill。
   **重要：构建查询前，必须先通过 Gateway API 检索相关指标和维度信息，禁止凭记忆猜测指标名或维度名。**
+permissions:
+  - env:read 
+  - network:outbound 
+env_vars:
+  - name: "CAN_API_KEY"
+    description: "Aloudata CAN网关API访问密钥，需用户自行在~/.openclaw/.env中配置"
+    required: true
+domain_whitelist:
+  - "gateway.can.aloudata.com" 
+version: "1.0.2"
+author: "Aloudata"
+homepage: "https://aloudata.com/"
+metadata.openclaw: {"emoji": "🔍"}
 ---
 
 # 指标数据查询 API Skill
@@ -25,29 +38,29 @@ description: |
 **认证方式**：所有请求必须携带 API Key，通过请求头 `X-API-Key` 传递（也可通过 `?apikey=` 查询参数传递）。**返回格式为纯文本**，非 JSON。
 
 **⚠️ 调用 Gateway 的两条铁律**：
-1. **所有请求必须加 API Key 认证头 `-H "X-API-Key: {your-api-key}"`**，未携带或无效 Key 将返回 401
+1. **所有请求必须加 API Key 认证头 `-H "X-API-Key: $CAN_API_KEY"`**，`$CAN_API_KEY` 从环境变量读取（用户需在 `~/.openclaw/.env` 中配置 `CAN_API_KEY=cgk-xxxxxxxx`），未携带或无效 Key 将返回 401
 2. **URL 中文参数必须 URL 编码**，使用 `--data-urlencode` + `-G` 让 curl 自动编码，禁止中文直接拼入 URL
 
 > 示例：
 > ```bash
 > # 搜索单个指标
-> curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=5" --data-urlencode "keyword=客单价" -G
+> curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=5" --data-urlencode "keyword=客单价" -G
 > # 批量搜索多个指标（逗号分隔）
-> curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=3" --data-urlencode "keyword=客单价,销售额" -G
+> curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=3" --data-urlencode "keyword=客单价,销售额" -G
 > # 单指标维度查询（路径参数直接用 metricName）
-> curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/AOV/dimensions"
+> curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/AOV/dimensions"
 > # 按关键词过滤维度（只返回匹配的维度，keyword 支持逗号分隔多关键词，匹配任一即返回）
-> curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/AOV/dimensions" --data-urlencode "keyword=渠道" -G
+> curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/AOV/dimensions" --data-urlencode "keyword=渠道" -G
 > # 多关键词过滤维度（逗号分隔，匹配维度名/展示名/描述/维度值样本中任一关键词的维度都会返回）
-> curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/AOV/dimensions" --data-urlencode "keyword=渠道,地区,品牌" -G
+> curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/AOV/dimensions" --data-urlencode "keyword=渠道,地区,品牌" -G
 > # 批量指标维度查询（自动计算维度交集，keyword 同样支持多关键词）
-> curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/dimensions?metricNames=AOV,retail_amt" --data-urlencode "keyword=渠道" -G
+> curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/dimensions?metricNames=AOV,retail_amt" --data-urlencode "keyword=渠道" -G
 > # 指标目录（查看所有类目层级）
-> curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/categories"
+> curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/categories"
 > # 查看指定目录下的指标
-> curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/categories/{categoryId}?pageSize=20"
+> curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/categories/{categoryId}?pageSize=20"
 > # 指标列表（分页浏览全部指标）
-> curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/list?pageNumber=1&pageSize=50"
+> curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/list?pageNumber=1&pageSize=50"
 > ```
 
 ### 指标查询 API（Step 2 — 执行数据查询）
@@ -58,7 +71,7 @@ description: |
 > 示例（⚠️ 因为 timeConstraint 含单引号 `['metric_time']`，必须用 heredoc 传 JSON body，禁止用 `-d '...'` 单引号包裹）：
 > ```bash
 > curl -X POST "https://gateway.can.aloudata.com/api/metrics/query" \
->   -H "X-API-Key: {your-api-key}" \
+>   -H "X-API-Key: $CAN_API_KEY" \
 >   -H "Content-Type: application/json" \
 >   -d @- <<'EOF'
 > {"metrics": ["AOV"], "timeConstraint": "['metric_time__day']= DATEADD(DateTrunc(NOW(), \"DAY\"), -1, \"DAY\")"}
@@ -245,9 +258,9 @@ MetricMatches 是"基于指标值筛选维度值"的高级功能，**必须**包
 
 ```bash
 # 单个关键词
-curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=5" --data-urlencode "keyword=客单价" -G
+curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=5" --data-urlencode "keyword=客单价" -G
 # 多个关键词（逗号分隔，中英文逗号均可）
-curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=3" --data-urlencode "keyword=客单价,销售额" -G
+curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=3" --data-urlencode "keyword=客单价,销售额" -G
 ```
 
 **返回纯文本格式**（已过滤非 ONLINE 指标），每行一个指标：
@@ -273,13 +286,13 @@ curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metric
 
 ```bash
 # 单指标维度（路径参数直接用 metricName）
-curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/AOV/dimensions"
+curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/AOV/dimensions"
 # 单指标 + keyword 过滤（大幅减少返回量，keyword 支持逗号分隔多关键词，匹配任一即返回）
-curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/AOV/dimensions" --data-urlencode "keyword=渠道" -G
+curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/AOV/dimensions" --data-urlencode "keyword=渠道" -G
 # 多关键词过滤维度（同时搜索多个维度方向，匹配维度名/展示名/描述/维度值样本中任一关键词）
-curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/AOV/dimensions" --data-urlencode "keyword=渠道,地区,品牌" -G
+curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/AOV/dimensions" --data-urlencode "keyword=渠道,地区,品牌" -G
 # 批量指标维度（逗号分隔，自动计算维度交集，keyword 同样支持多关键词）
-curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/dimensions?metricNames=AOV,retail_amt" --data-urlencode "keyword=渠道" -G
+curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/dimensions?metricNames=AOV,retail_amt" --data-urlencode "keyword=渠道" -G
 ```
 
 **单指标返回格式**：
@@ -686,7 +699,7 @@ timeConstraint 有**两个不同的角色**，构建时必须区分：
 从用户问题中提取核心业务关键词，调用 Gateway API 搜索指标：
 
 ```bash
-curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=10" --data-urlencode "keyword={关键词}" -G
+curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=10" --data-urlencode "keyword={关键词}" -G
 ```
 
 从返回结果中取 `metricName` 放入 metrics 数组。**校验**: `status` 须为 `ONLINE`。
@@ -703,7 +716,7 @@ curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metric
 对步骤 1 选定的指标，调用 Gateway API 获取可用维度：
 
 ```bash
-curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/{metricCode}/dimensions"
+curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/{metricCode}/dimensions"
 ```
 
 从返回结果中取 `dimName` 作为维度名称。返回的维度列表即该指标的**全部可分析维度**。

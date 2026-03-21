@@ -1,6 +1,6 @@
 ---
 name: job-hunter
-description: LinkedIn job search assistant that scrapes listings, filters by technologies and countries, and scores matches with AI. Use when the user wants to find jobs, search for job openings, look for work, job hunt, or find career opportunities. Triggers on phrases like "find jobs", "job search", "looking for work", "job openings", "search LinkedIn", "buscar trabajo", "ofertas de empleo", "career opportunities".
+description: LinkedIn job search assistant that scrapes listings, filters by technologies and countries, and scores matches with AI. Use when the user wants to find jobs, search for job openings, look for work, job hunt, or find career opportunities. Triggers on phrases like "find jobs", "job search", "looking for work", "job openings", "search LinkedIn", "remote jobs", "buscar trabajo", "ofertas de trabajo", "ofertas de empleo", "empleo remoto", "vacantes", "buscar empleo", "trabajo remoto", "career opportunities", "hiring", "job listings".
 metadata:
   { "openclaw": { "requires": { "bins": ["python3"], "packages": { "pip": ["httpx", "selectolax", "google-genai"] } }, "emoji": "🔍" } }
 ---
@@ -8,20 +8,6 @@ metadata:
 # Job Hunter
 
 AI-powered LinkedIn job search assistant that scrapes real-time listings, filters by technology and location, and scores each match — delivered through chat.
-
-## When to Use
-
-- User wants to search for jobs on LinkedIn
-- User asks to find job openings matching specific criteria
-- User wants to filter jobs by technology, country, or experience level
-- User asks to review saved job searches or saved jobs
-- User says "find jobs", "job search", "buscar trabajo", or similar
-
-## When NOT to Use
-
-- User wants to apply to a job (not supported, just search)
-- User wants to search other job boards (only LinkedIn)
-- User needs resume or CV help (use a different skill)
 
 ## Setup
 

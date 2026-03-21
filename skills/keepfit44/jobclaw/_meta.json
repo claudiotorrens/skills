@@ -1,11 +1,17 @@
 {
   "owner": "keepfit44",
   "slug": "jobclaw",
-  "displayName": "JobClaw",
+  "displayName": "Job Hunter",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773947927036,
-    "commit": "https://github.com/openclaw/skills/commit/7a91e4a2b9c90cbe046b1a04f11d914a1d0bd5fd"
+    "version": "1.0.2",
+    "publishedAt": 1774095335392,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773947927036,
+      "commit": "https://github.com/openclaw/skills/commit/7a91e4a2b9c90cbe046b1a04f11d914a1d0bd5fd"
+    }
+  ]
 }

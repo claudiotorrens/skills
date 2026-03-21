@@ -1,11 +1,17 @@
 {
   "owner": "nhadaututtheky",
   "slug": "rune-kit",
-  "displayName": "Rune — Skill Mesh",
+  "displayName": "Rune",
   "latest": {
-    "version": "2.2.4",
-    "publishedAt": 1773756108837,
-    "commit": "https://github.com/openclaw/skills/commit/3ab8c1845f5fdf8738363dc29acf5e8bc8275066"
+    "version": "2.2.6",
+    "publishedAt": 1774013023426,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.2.4",
+      "publishedAt": 1773756108837,
+      "commit": "https://github.com/openclaw/skills/commit/3ab8c1845f5fdf8738363dc29acf5e8bc8275066"
+    }
+  ]
 }

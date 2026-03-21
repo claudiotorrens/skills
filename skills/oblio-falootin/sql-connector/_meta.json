@@ -1,0 +1,11 @@
+{
+  "owner": "oblio-falootin",
+  "slug": "sql-connector",
+  "displayName": "SQL Connector",
+  "latest": {
+    "version": "2.0.1",
+    "publishedAt": 1773995126145,
+    "commit": null
+  },
+  "history": []
+}

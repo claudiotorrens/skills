@@ -3,9 +3,15 @@
   "slug": "bilibili-video-prompt-analyzer",
   "displayName": "Bilibili AI Video Prompt Analyzer",
   "latest": {
-    "version": "1.1.0",
-    "publishedAt": 1773856389296,
-    "commit": "https://github.com/openclaw/skills/commit/09bebb85d89babd8af12cbe01b0d702af7998088"
+    "version": "1.1.1",
+    "publishedAt": 1773856767985,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.1.0",
+      "publishedAt": 1773856389296,
+      "commit": "https://github.com/openclaw/skills/commit/09bebb85d89babd8af12cbe01b0d702af7998088"
+    }
+  ]
 }

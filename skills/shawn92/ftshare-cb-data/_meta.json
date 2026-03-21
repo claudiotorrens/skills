@@ -3,9 +3,15 @@
   "slug": "ftshare-cb-data",
   "displayName": "Skills of convertible bond data released by ft.tech.",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773667529525,
-    "commit": "https://github.com/openclaw/skills/commit/b1c6ccb033cdbc4a4281654a5f4a8fa1c39aeb56"
+    "version": "1.0.2",
+    "publishedAt": 1773886376351,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773667529525,
+      "commit": "https://github.com/openclaw/skills/commit/b1c6ccb033cdbc4a4281654a5f4a8fa1c39aeb56"
+    }
+  ]
 }

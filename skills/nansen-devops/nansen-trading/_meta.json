@@ -1,0 +1,11 @@
+{
+  "owner": "nansen-devops",
+  "slug": "nansen-trading",
+  "displayName": "Nansen Trading",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1773912858989,
+    "commit": null
+  },
+  "history": []
+}

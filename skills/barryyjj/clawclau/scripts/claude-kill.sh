@@ -1,36 +1,31 @@
-#!/bin/bash
-# claude-kill.sh — Terminate a Claude Code task
-# Usage: claude-kill.sh <task-id>
+#!/usr/bin/env bash
+# claude-kill.sh — 终止 Claude Code 任务
+#
+# 用法: claude-kill.sh <task-id>
 
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/clawclau-lib.sh"
 
-CLAWCLAU_HOME="${CLAWCLAU_HOME:-$HOME/.openclaw/workspace/.clawdbot}"
-TASK_REGISTRY="$CLAWCLAU_HOME/active-tasks.json"
+cc_require tmux jq
 
-# --- Dependency check ---
-command -v tmux >/dev/null 2>&1 || { echo "ERROR: 'tmux' is required but not installed."; exit 1; }
-command -v jq >/dev/null 2>&1 || { echo "ERROR: 'jq' is required but not installed."; exit 1; }
-
-# --- Argument validation ---
-if [ $# -lt 1 ]; then
-    echo "Usage: claude-kill.sh <task-id>"
-    exit 1
+if [[ $# -lt 1 ]]; then
+    echo "Usage: claude-kill.sh <task-id>" >&2; exit 1
 fi
 
 TASK_ID="$1"
-TMUX_SESSION="claude-${TASK_ID}"
+SESSION=$(cc_tmux_session "$TASK_ID")
 
-if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
-    tmux kill-session -t "$TMUX_SESSION"
-    echo "OK: killed tmux session '$TMUX_SESSION'"
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+    tmux kill-session -t "$SESSION"
+    echo "已终止 tmux session '$SESSION'"
 else
-    echo "Session '$TMUX_SESSION' not found (may already be done)"
+    echo "Session '$SESSION' 不存在（任务可能已完成）"
 fi
 
-# --- Update registry ---
-if [ -f "$TASK_REGISTRY" ]; then
-    TIMESTAMP=$(date +%s000)
-    jq --arg id "$TASK_ID" --arg ts "$TIMESTAMP" \
-       '(.[] | select(.id == $id)) |= . + {"status": "killed", "killedAt": ($ts|tonumber)}' \
-       "$TASK_REGISTRY" > "$TASK_REGISTRY.tmp" && mv "$TASK_REGISTRY.tmp" "$TASK_REGISTRY"
+if [[ -f "$CC_REGISTRY" ]]; then
+    NOW=$(cc_now_ms)
+    cc_task_update "$TASK_ID" \
+        "{\"status\":\"killed\",\"killedAt\":$NOW}"
+    echo "已更新注册表状态为 killed"
 fi

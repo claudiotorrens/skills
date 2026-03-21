@@ -1,72 +1,92 @@
-#!/bin/bash
-# claude-monitor.sh — Monitor all Claude Code tasks, auto-detect completion/timeout
-# Recommended: run via cron every 2 minutes
-# Usage: claude-monitor.sh
+#!/usr/bin/env bash
+# claude-monitor.sh — 批量检查所有任务，更新状态，发送通知
+#
+# 用法: claude-monitor.sh
+# 建议通过 cron 每 10 分钟运行一次:
+#   */10 * * * * /Users/yjj/.openclaw/workspace/scripts/claude-monitor.sh >> /tmp/clawclau-monitor.log 2>&1
+#
+# 功能：
+# - 检查所有 running 任务的 tmux session 是否存活
+# - session 结束后更新状态（done/failed）并通知小八
+# - 检查超时，超时后终止 session 并通知
+# - 作为后台 completion detector 的安全兜底
 
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/clawclau-lib.sh"
 
-CLAWCLAU_HOME="${CLAWCLAU_HOME:-$HOME/.openclaw/workspace/.clawdbot}"
-TASK_REGISTRY="$CLAWCLAU_HOME/active-tasks.json"
-LOG_DIR="$CLAWCLAU_HOME/logs"
+export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.openclaw/bin:$PATH"
 
-# --- Dependency check ---
-command -v tmux >/dev/null 2>&1 || { echo "ERROR: 'tmux' is required but not installed."; exit 1; }
-command -v jq >/dev/null 2>&1 || { echo "ERROR: 'jq' is required but not installed."; exit 1; }
+cc_require tmux jq
 
-# --- Check registry exists ---
-if [ ! -f "$TASK_REGISTRY" ]; then
+TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
+echo "[$TIMESTAMP] claude-monitor 开始检查..."
+
+if [[ ! -f "$CC_REGISTRY" ]]; then
+    echo "注册表不存在，跳过。"
     exit 0
 fi
 
-# Get all running tasks
-RUNNING_TASKS=$(jq -r '.[] | select(.status == "running") | .id' "$TASK_REGISTRY" 2>/dev/null)
+# 获取所有 running 状态的任务
+RUNNING_TASKS=$(jq -r '.[] | select(.status == "running") | .id' \
+    "$CC_REGISTRY" 2>/dev/null || echo "")
 
-if [ -z "$RUNNING_TASKS" ]; then
+if [[ -z "$RUNNING_TASKS" ]]; then
+    echo "无运行中任务，退出。"
     exit 0
 fi
+
+NOTIFIED=0
 
 for TASK_ID in $RUNNING_TASKS; do
-    TMUX_SESSION="claude-${TASK_ID}"
+    SESSION=$(cc_tmux_session "$TASK_ID")
 
-    if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
-        # Session still alive — check timeout
-        STARTED=$(jq -r --arg id "$TASK_ID" '.[] | select(.id == $id) | .startedAt' "$TASK_REGISTRY")
-        TIMEOUT=$(jq -r --arg id "$TASK_ID" '.[] | select(.id == $id) | .timeout' "$TASK_REGISTRY")
+    if tmux has-session -t "$SESSION" 2>/dev/null; then
+        # Session 仍存活，检查超时
+        STARTED=$(cc_task_get "$TASK_ID" "startedAt")
+        TIMEOUT=$(cc_task_get "$TASK_ID" "timeout")
+        TIMEOUT="${TIMEOUT:-600}"
         NOW=$(date +%s000)
         ELAPSED=$(( (NOW - STARTED) / 1000 ))
 
-        if [ "$ELAPSED" -gt "$TIMEOUT" ]; then
-            echo "TIMEOUT: $TASK_ID (elapsed ${ELAPSED}s > timeout ${TIMEOUT}s)"
-            tmux kill-session -t "$TMUX_SESSION" 2>/dev/null
-            TIMESTAMP=$(date +%s000)
-            jq --arg id "$TASK_ID" --arg ts "$TIMESTAMP" \
-               '(.[] | select(.id == $id)) |= . + {"status": "timeout", "completedAt": ($ts|tonumber)}' \
-               "$TASK_REGISTRY" > "$TASK_REGISTRY.tmp" && mv "$TASK_REGISTRY.tmp" "$TASK_REGISTRY"
-            # Notify via openclaw if available (optional dependency)
-            command -v openclaw >/dev/null 2>&1 && \
-                openclaw system event --text "Claude task '$TASK_ID' timed out after ${TIMEOUT}s" --mode now 2>/dev/null || true
+        if [[ "$ELAPSED" -gt "$TIMEOUT" ]]; then
+            echo "  TIMEOUT: $TASK_ID (已运行 ${ELAPSED}s > 超时 ${TIMEOUT}s)"
+            tmux kill-session -t "$SESSION" 2>/dev/null || true
+            sleep 1
+            cc_task_update "$TASK_ID" \
+                "{\"status\":\"timeout\",\"completedAt\":$NOW}"
+            cc_notify "[monitor] 任务 $TASK_ID 超时（${TIMEOUT}s），已终止"
+            NOTIFIED=$((NOTIFIED + 1))
+        else
+            echo "  RUNNING: $TASK_ID (已运行 ${ELAPSED}s / ${TIMEOUT}s)"
         fi
     else
-        # Session ended — check result
-        LOG_FILE="$LOG_DIR/${TASK_ID}.log"
-        if [ -f "$LOG_FILE" ] && [ -s "$LOG_FILE" ]; then
+        # Session 已结束，更新状态
+        LOG_FILE=$(cc_task_get "$TASK_ID" "log")
+        NOW=$(date +%s000)
+
+        if [[ -s "$LOG_FILE" ]]; then
             STATUS="done"
         else
             STATUS="failed"
         fi
 
-        TIMESTAMP=$(date +%s000)
-        # Capture last part of log for preview (most useful output is at the end)
-        RESULT=""
-        [ -f "$LOG_FILE" ] && RESULT=$(tail -50 "$LOG_FILE" 2>/dev/null | tr '\n' ' ' | head -c 500)
+        cc_task_update "$TASK_ID" \
+            "{\"status\":\"$STATUS\",\"completedAt\":$NOW}"
 
-        jq --arg id "$TASK_ID" --arg ts "$TIMESTAMP" --arg status "$STATUS" --arg result "$RESULT" \
-           '(.[] | select(.id == $id)) |= . + {"status": $status, "completedAt": ($ts|tonumber), "result": $result}' \
-           "$TASK_REGISTRY" > "$TASK_REGISTRY.tmp" && mv "$TASK_REGISTRY.tmp" "$TASK_REGISTRY"
+        SNIPPET=$(cc_extract_text "$LOG_FILE" 300)
 
-        echo "COMPLETED: $TASK_ID — $STATUS"
-        # Notify via openclaw if available (optional dependency)
-        command -v openclaw >/dev/null 2>&1 && \
-            openclaw system event --text "Claude task '$TASK_ID' completed with status: $STATUS" --mode now 2>/dev/null || true
+        if [[ "$STATUS" == "done" ]]; then
+            MSG="[monitor][完成] 任务 $TASK_ID"
+            [[ -n "$SNIPPET" ]] && MSG+=$'\n'"摘要: ${SNIPPET:0:200}"
+            cc_notify "$MSG"
+        else
+            cc_notify "[monitor][失败] 任务 $TASK_ID（日志为空）"
+        fi
+
+        NOTIFIED=$((NOTIFIED + 1))
+        echo "  COMPLETED: $TASK_ID [$STATUS]"
     fi
 done
+
+echo "Monitor 完成，共处理 $NOTIFIED 个任务状态变更。"

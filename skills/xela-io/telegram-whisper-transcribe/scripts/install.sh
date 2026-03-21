@@ -23,6 +23,15 @@ if [[ ! -d "$BOT_DIR/venv" ]]; then
 fi
 "$BOT_DIR/venv/bin/pip" install -q python-telegram-bot openai
 
+# Create environment file with restricted permissions
+mkdir -p "$BOT_DIR"
+ENV_FILE="$BOT_DIR/.env"
+cat > "$ENV_FILE" << EOF
+TELEGRAM_BOT_TOKEN=$TELEGRAM_TOKEN
+OPENAI_API_KEY=$OPENAI_KEY
+EOF
+chmod 600 "$ENV_FILE"
+
 # Create systemd service
 mkdir -p ~/.config/systemd/user
 cat > ~/.config/systemd/user/transcribe-bot.service << EOF
@@ -35,8 +44,7 @@ Wants=network-online.target
 ExecStart=$BOT_DIR/venv/bin/python3 $BOT_DIR/bot.py
 Restart=always
 RestartSec=5
-Environment=TELEGRAM_BOT_TOKEN=$TELEGRAM_TOKEN
-Environment=OPENAI_API_KEY=$OPENAI_KEY
+EnvironmentFile=$BOT_DIR/.env
 
 [Install]
 WantedBy=default.target

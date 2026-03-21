@@ -3,9 +3,15 @@
   "slug": "telegram-whisper-transcribe",
   "displayName": "Telegram Whisper Transcribe",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773770840605,
-    "commit": "https://github.com/openclaw/skills/commit/dfc8418374b0f3da629c8524910aa412e5a166ad"
+    "version": "1.0.1",
+    "publishedAt": 1773953428275,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773770840605,
+      "commit": "https://github.com/openclaw/skills/commit/dfc8418374b0f3da629c8524910aa412e5a166ad"
+    }
+  ]
 }

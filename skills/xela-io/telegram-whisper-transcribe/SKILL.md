@@ -1,6 +1,13 @@
 ---
 name: telegram-whisper-transcribe
 description: Standalone Telegram bot for voice message transcription via OpenAI Whisper API. No LLM overhead — audio goes directly to Whisper and text comes back in 2-5 seconds. Use when you want a dedicated Telegram bot that only transcribes voice messages, audio files, and video notes without routing through an LLM agent. Supports automatic language detection, runs as a systemd user service, and costs only Whisper API pricing ($0.006/min).
+env_vars:
+  - name: TELEGRAM_BOT_TOKEN
+    description: Telegram Bot API token from @BotFather
+    required: true
+  - name: OPENAI_API_KEY
+    description: OpenAI API key for Whisper transcription
+    required: true
 ---
 
 # Telegram Whisper Transcribe
@@ -37,6 +44,14 @@ python3 -m venv ~/transcribe-bot/venv
 Or manually:
 
 ```bash
+# Create environment file with secrets (restricted permissions)
+cat > ~/transcribe-bot/.env << EOF
+TELEGRAM_BOT_TOKEN=<your-token>
+OPENAI_API_KEY=<your-key>
+EOF
+chmod 600 ~/transcribe-bot/.env
+
+# Create systemd service
 cat > ~/.config/systemd/user/transcribe-bot.service << EOF
 [Unit]
 Description=Telegram Transcribe Bot (Whisper API)
@@ -47,8 +62,7 @@ Wants=network-online.target
 ExecStart=$HOME/transcribe-bot/venv/bin/python3 $HOME/transcribe-bot/bot.py
 Restart=always
 RestartSec=5
-Environment=TELEGRAM_BOT_TOKEN=<your-token>
-Environment=OPENAI_API_KEY=<your-key>
+EnvironmentFile=$HOME/transcribe-bot/.env
 
 [Install]
 WantedBy=default.target

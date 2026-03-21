@@ -5,7 +5,7 @@ homepage: https://developer.1password.com/docs/cli/get-started/
 metadata: {"clawdbot":{"emoji":"🔐","requires":{"bins":["op"]},"install":[{"id":"brew","kind":"brew","formula":"1password-cli","bins":["op"],"label":"Install 1Password CLI (brew)"}]}}
 ---
 
-# 1Password CLI
+# 1Password CLI (Local)
 
 Follow the official CLI get-started steps. Don't guess install commands.
 
